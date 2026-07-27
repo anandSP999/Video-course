@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <!-- Supabase CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 15px; background: #e9ecef; }
+        .container { max-width: 600px; margin: auto; background: #fff; padding: 25px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        h2 { text-align: center; color: #333; margin-top: 0;}
+        label { display: block; font-weight: bold; margin-top: 15px; color: #444; }
+        input, select { width: 100%; padding: 12px; margin-top: 5px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 15px; }
+        .btn { margin-top: 25px; padding: 15px; background: #343a40; color: white; border: none; border-radius: 6px; cursor: pointer; width: 100%; font-size: 16px; font-weight: bold; }
+        .btn:hover { background: #23272b; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Admin Portal</h2>
+    <p style="text-align:center; color:#666;">Add direct approved courses to the platform.</p>
+    
+    <form id="adminCourseForm" onsubmit="addCourse(event)">
+        <label>Course Title</label>
+        <input type="text" id="cTitle" placeholder="e.g. Master Video Editing" required>
+
+        <label>YouTube Video URL</label>
+        <input type="url" id="cVideo" required placeholder="https://youtube.com/watch?v=...">
+
+        <label>Thumbnail Image URL (Optional)</label>
+        <input type="url" id="cThumb" placeholder="https://image-url.com/...">
+
+        <label>Course Type</label>
+        <select id="cType" onchange="togglePrice()">
+            <option value="Free">Free</option>
+            <option value="Paid">Paid</option>
+        </select>
+
+        <div id="priceDiv" style="display:none;">
+            <label>Price (₹)</label>
+            <input type="number" id="cPrice" value="0">
+        </div>
+
+        <button type="submit" class="btn" id="submitBtn">Publish Course Now</button>
+    </form>
+</div>
+
+<script>
+    // Apni Supabase API yahan daalein
+    const SUPABASE_URL = 'YOUR_SUPABASE_URL';
+    const SUPABASE_KEY = 'YOUR_SUPABASE_ANON_KEY';
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    function togglePrice() {
+        const type = document.getElementById('cType').value;
+        document.getElementById('priceDiv').style.display = type === 'Paid' ? 'block' : 'none';
+        if(type === 'Free') document.getElementById('cPrice').value = 0;
+    }
+
+    async function addCourse(e) {
+        e.preventDefault();
+        const btn = document.getElementById('submitBtn');
+        btn.innerText = "Publishing... Please wait";
+
+        const courseData = {
+            title: document.getElementById('cTitle').value,
+            video_url: document.getElementById('cVideo').value,
+            thumbnail_url: document.getElementById('cThumb').value || null,
+            type: document.getElementById('cType').value,
+            price: document.getElementById('cPrice').value,
+            status: 'Approved' // Admin ka data seedha active hota hai
+        };
+
+        const { data, error } = await supabase.from('courses').insert([courseData]);
+
+        if (error) {
+            alert("Error saving to database: " + error.message);
+        } else {
+            alert("Success! Course is now live on Candidate Portal.");
+            document.getElementById('adminCourseForm').reset();
+            togglePrice();
+        }
+        btn.innerText = "Publish Course Now";
+    }
+</script>
+</body>
+</html>
