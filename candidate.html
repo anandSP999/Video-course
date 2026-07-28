@@ -3,13 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Candidate Portal</title>
+    <title>Candidate Portal - Login</title>
     <!-- Supabase CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 15px; background: #f4f7f6; }
         .container { max-width: 600px; margin: auto; background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
         h2 { text-align: center; color: #333; }
+        
+        /* Auth Styles */
+        .auth-container { max-width: 400px; margin: 50px auto; background: #fff; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; color: #555; }
+        .form-group input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
+        .auth-btn { width: 100%; padding: 12px; background: #007bff; color: white; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; }
+        .toggle-link { text-align: center; margin-top: 15px; color: #007bff; cursor: pointer; font-size: 14px; text-decoration: underline; }
+        
+        /* Dashboard Styles */
         .tabs { display: flex; margin-bottom: 20px; border-bottom: 2px solid #eee; }
         .tab { padding: 12px 20px; cursor: pointer; flex: 1; text-align: center; color: #666; font-weight: bold; }
         .tab.active { border-bottom: 3px solid #007bff; color: #007bff; }
@@ -20,11 +30,31 @@
         iframe { width: 100%; height: 220px; border: none; border-radius: 8px; margin-top: 10px; }
         .btn { padding: 12px; background: #28a745; color: white; border: none; border-radius: 6px; cursor: pointer; width: 100%; font-weight: bold; font-size: 16px; margin-top: 10px; }
         .btn-pay { background: #007bff; }
+        .btn-logout { background: #dc3545; margin-top: 20px; }
     </style>
 </head>
 <body>
 
-<div class="container">
+<!-- === AUTHENTICATION SECTION === -->
+<div id="auth-section" class="auth-container">
+    <h2 id="auth-title">Sign In</h2>
+    <div id="auth-error" style="color: red; text-align: center; margin-bottom: 10px; font-size: 14px;"></div>
+    
+    <div class="form-group">
+        <label>Email Address</label>
+        <input type="email" id="auth-email" placeholder="Enter your email" required>
+    </div>
+    <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="auth-password" placeholder="Enter password (min 6 chars)" required>
+    </div>
+    <button class="auth-btn" id="auth-submit-btn" onclick="handleAuth()">Login</button>
+    
+    <div class="toggle-link" onclick="toggleAuthMode()" id="auth-toggle-text">Don't have an account? Sign Up</div>
+</div>
+
+<!-- === MAIN DASHBOARD SECTION (Hidden initially) === -->
+<div id="dashboard-section" class="container" style="display: none;">
     <h2>Student Portal</h2>
     <div class="tabs">
         <div class="tab active" onclick="switchTab('courses')">All Courses</div>
@@ -39,19 +69,109 @@
     <!-- Profile Section -->
     <div id="profile" class="content">
         <h3>My Profile</h3>
-        <p><strong>Email:</strong> student@example.com</p>
+        <p><strong>Email:</strong> <span id="user-email-display">Loading...</span></p>
         <p><strong>Mobile:</strong> Update pending</p>
         <hr>
         <h3>My Subscriptions</h3>
         <p>No active subscriptions yet.</p>
+        <hr>
+        <button class="btn btn-logout" onclick="logoutUser()">Logout Account</button>
     </div>
 </div>
 
 <script>
-    // Apni Supabase API yahan daalein
+    // Supabase Configuration
     const SUPABASE_URL = 'https://goqmkifenqeussjcgdub.supabase.co';
-    const SUPABASE_KEY = 'sb_publishable_iZcdC64W_y3ZDX163KP0fw_sIWcWmcP';
+    const SUPABASE_KEY = 'sb_publishable_iZcdC64W_y3ZDX163KP0fw_sIWcWmcP'; 
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    let isSignUpMode = false;
+
+    // ----- AUTHENTICATION LOGIC -----
+
+    // Check if user is already logged in
+    async function checkSession() {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+            showDashboard(session.user.email);
+        } else {
+            document.getElementById('auth-section').style.display = 'block';
+            document.getElementById('dashboard-section').style.display = 'none';
+        }
+    }
+
+    // Toggle between Login and Sign Up
+    function toggleAuthMode() {
+        isSignUpMode = !isSignUpMode;
+        document.getElementById('auth-error').innerText = '';
+        if (isSignUpMode) {
+            document.getElementById('auth-title').innerText = "Create Account";
+            document.getElementById('auth-submit-btn').innerText = "Sign Up";
+            document.getElementById('auth-toggle-text').innerText = "Already have an account? Sign In";
+        } else {
+            document.getElementById('auth-title').innerText = "Sign In";
+            document.getElementById('auth-submit-btn').innerText = "Login";
+            document.getElementById('auth-toggle-text').innerText = "Don't have an account? Sign Up";
+        }
+    }
+
+    // Handle Login or Sign Up
+    async function handleAuth() {
+        const email = document.getElementById('auth-email').value;
+        const password = document.getElementById('auth-password').value;
+        const errorDiv = document.getElementById('auth-error');
+        const btn = document.getElementById('auth-submit-btn');
+        
+        if(!email || !password) {
+            errorDiv.innerText = "Please fill both fields.";
+            return;
+        }
+
+        btn.innerText = "Please wait...";
+        errorDiv.innerText = "";
+
+        if (isSignUpMode) {
+            // Sign Up User
+            const { data, error } = await supabase.auth.signUp({ email, password });
+            if (error) {
+                errorDiv.innerText = error.message;
+                btn.innerText = "Sign Up";
+            } else {
+                alert("Account created successfully! You can now log in.");
+                toggleAuthMode(); // Switch back to login
+            }
+        } else {
+            // Log In User
+            const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+            if (error) {
+                errorDiv.innerText = error.message;
+                btn.innerText = "Login";
+            } else {
+                showDashboard(data.user.email);
+            }
+        }
+    }
+
+    // Logout
+    async function logoutUser() {
+        await supabase.auth.signOut();
+        document.getElementById('auth-email').value = '';
+        document.getElementById('auth-password').value = '';
+        document.getElementById('auth-submit-btn').innerText = "Login";
+        document.getElementById('auth-section').style.display = 'block';
+        document.getElementById('dashboard-section').style.display = 'none';
+    }
+
+    // Show Dashboard after successful login
+    function showDashboard(userEmail) {
+        document.getElementById('auth-section').style.display = 'none';
+        document.getElementById('dashboard-section').style.display = 'block';
+        document.getElementById('user-email-display').innerText = userEmail;
+        loadCourses(); // Load data from DB
+    }
+
+
+    // ----- DASHBOARD & COURSE LOGIC -----
 
     function switchTab(tabId) {
         document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
@@ -75,7 +195,7 @@
             return;
         }
 
-        if(courses.length === 0) {
+        if(!courses || courses.length === 0) {
             courseList.innerHTML = '<p>No courses available right now.</p>';
             return;
         }
@@ -83,7 +203,6 @@
         courseList.innerHTML = ''; // Clear loading text
 
         courses.forEach(course => {
-            // YouTube ID nikalne ka logic
             let videoId = "";
             if(course.video_url.includes('v=')) {
                 videoId = course.video_url.split('v=')[1].split('&')[0];
@@ -109,9 +228,8 @@
         alert(`Scan QR to pay ₹${price} for "${title}".\n(Payment gateway integration goes here)`);
     }
 
-    // Page load hote hi courses fetch karo
-    window.onload = loadCourses;
+    // Initialize checking session on page load
+    window.onload = checkSession;
 </script>
 </body>
-  </html>
-  
+</html>
