@@ -14,7 +14,8 @@
         .form-group { margin-bottom: 15px; }
         .form-group label { display: block; margin-bottom: 5px; font-weight: bold; color: #555; font-size: 14px;}
         .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 15px; }
-        .btn { padding: 12px; border: none; border-radius: 6px; cursor: pointer; width: 100%; font-weight: bold; font-size: 15px; margin-top: 10px; color: white;}
+        .btn { padding: 12px; border: none; border-radius: 6px; cursor: pointer; width: 100%; font-weight: bold; font-size: 15px; margin-top: 10px; color: white; transition: 0.2s;}
+        .btn:hover { opacity: 0.9; }
         .btn-dark { background: #343a40; }
         .btn-primary { background: #007bff; }
         .btn-success { background: #28a745; }
@@ -33,26 +34,32 @@
         .content-section { display: none; }
         .content-section.active { display: block; }
         
-        /* Stats Grid */
+        /* Stats & Revenue Grid */
         .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 25px; }
         .stat-card { background: #fff; padding: 20px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border-left: 4px solid #343a40;}
         .stat-card h3 { margin: 0 0 5px; font-size: 24px; color: #343a40; }
         .stat-card p { margin: 0; color: #666; font-size: 13px; font-weight: bold; text-transform: uppercase;}
         
-        /* Revenue Grid */
         .revenue-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
         .rev-card { background: #e3f2fd; padding: 15px; border-radius: 8px; text-align: center; border: 1px solid #90caf9; }
         .rev-card h4 { margin: 0; color: #0d47a1; font-size: 20px;}
         .rev-card p { margin: 5px 0 0; font-size: 12px; color: #1565c0; font-weight: bold;}
 
         /* Lists & Tables */
-        .list-card { background: #fff; border-radius: 10px; padding: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 15px; border-left: 4px solid #ccc; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap:10px;}
-        .list-info { flex: 1; min-width: 200px;}
+        .list-card { background: #fff; border-radius: 10px; padding: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 15px; border-left: 4px solid #ccc; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap:10px; position: relative; overflow: hidden;}
+        .list-info { flex: 1; min-width: 200px; z-index: 2;}
         .list-info h4 { margin: 0 0 5px; font-size: 16px; }
         .list-info p { margin: 2px 0; font-size: 13px; color: #555; }
-        .list-actions { display: flex; gap: 8px; }
+        .list-actions { display: flex; gap: 8px; z-index: 2; align-items: center;}
 
-        /* User Details Modal */
+        /* Granted Watermark */
+        .watermark-granted { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-15deg); font-size: 45px; color: rgba(40, 167, 69, 0.08); font-weight: 900; pointer-events: none; z-index: 1; white-space: nowrap; letter-spacing: 5px;}
+
+        /* Banners Preview */
+        .banner-preview-box { width: 100%; max-width: 400px; height: 150px; background: #ddd; border-radius: 12px; overflow: hidden; margin-top: 10px; border: 2px dashed #bbb; display: flex; align-items: center; justify-content: center; color: #888; position: relative;}
+        .banner-preview-box img { width: 100%; height: 100%; object-fit: cover; position: absolute; top:0; left:0; display: none;}
+
+        /* Modals */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; justify-content: center; align-items: center; }
         .modal-content { background: #fff; padding: 25px; border-radius: 12px; width: 90%; max-width: 500px; max-height: 90vh; overflow-y: auto;}
         .detail-row { display: flex; border-bottom: 1px solid #eee; padding: 10px 0; }
@@ -89,8 +96,9 @@
             <div class="sidebar-header">Admin Control</div>
             <div class="menu-item active" onclick="switchMenu('dashboard')">📊 Dashboard</div>
             <div class="menu-item" onclick="switchMenu('approvals')">✅ Course Approvals</div>
-            <div class="menu-item" onclick="switchMenu('enrollments')">🛒 Enrollments</div>
-            <div class="menu-item" onclick="switchMenu('mycourses')">➕ My Courses</div>
+            <div class="menu-item" onclick="switchMenu('enrollments')">🛒 Sales & Access</div>
+            <div class="menu-item" onclick="switchMenu('banners')">📢 Banners</div>
+            <div class="menu-item" onclick="switchMenu('mycourses')">➕ Admin Courses</div>
             <div class="menu-item" onclick="switchMenu('users')">👥 Manage Users</div>
             <div class="menu-item" style="color:#dc3545; margin-top:auto;" onclick="logoutAdmin()">🚪 Logout</div>
         </div>
@@ -101,18 +109,9 @@
                 <h2 style="margin-top:0;">Platform Overview</h2>
                 
                 <div class="revenue-grid">
-                    <div class="rev-card">
-                        <h4 id="rev-today">₹0</h4>
-                        <p>Today's Revenue</p>
-                    </div>
-                    <div class="rev-card">
-                        <h4 id="rev-month">₹0</h4>
-                        <p>This Month</p>
-                    </div>
-                    <div class="rev-card">
-                        <h4 id="rev-year">₹0</h4>
-                        <p>Annual Revenue</p>
-                    </div>
+                    <div class="rev-card"><h4 id="rev-today">₹0</h4><p>Today's Revenue</p></div>
+                    <div class="rev-card"><h4 id="rev-month">₹0</h4><p>This Month</p></div>
+                    <div class="rev-card"><h4 id="rev-year">₹0</h4><p>Annual Revenue</p></div>
                 </div>
 
                 <div class="stats-grid">
@@ -129,23 +128,34 @@
                 <div id="approval-list">Loading pending courses...</div>
             </div>
 
-            <!-- 3. Enrollments / Purchases -->
+            <!-- 3. Enrollments & Access Control -->
             <div id="content-enrollments" class="content-section">
-                <h2>Candidate Enrollments & Access Control</h2>
-                <p style="font-size:13px; color:#666;">Grant time-based access to candidates who purchased courses.</p>
+                <h2>Sales & Custom Access Control</h2>
+                <p style="font-size:13px; color:#666;">Provide customized access duration to students who paid.</p>
                 <div id="enrollment-list">Loading enrollments...</div>
             </div>
 
-            <!-- 4. Admin's Own Courses -->
+            <!-- 4. Banner Management -->
+            <div id="content-banners" class="content-section">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                    <h2 style="margin:0;">Dynamic Banners</h2>
+                    <button class="btn btn-primary btn-small" onclick="document.getElementById('bannerModal').style.display='flex'">+ Add New Banner</button>
+                </div>
+                <div id="banner-list" class="stats-grid" style="grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));">
+                    Loading banners...
+                </div>
+            </div>
+
+            <!-- 5. Admin Courses -->
             <div id="content-mycourses" class="content-section">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-                    <h2>Admin Published Courses</h2>
-                    <button class="btn btn-dark btn-small" onclick="openCourseModal()" style="padding:10px 15px;">+ Create Course</button>
+                    <h2 style="margin:0;">Admin Published Courses</h2>
+                    <button class="btn btn-dark btn-small" onclick="openCourseModal()">+ Create Course</button>
                 </div>
                 <div id="admin-course-list">Loading admin courses...</div>
             </div>
 
-            <!-- 5. Users Management -->
+            <!-- 6. Users -->
             <div id="content-users" class="content-section">
                 <h2>Manage Platform Users</h2>
                 <div style="display:flex; gap:10px; margin-bottom:15px;">
@@ -159,8 +169,8 @@
         <!-- Mobile Bottom Nav -->
         <div class="bottom-nav">
             <div class="nav-tab active" onclick="switchMenu('dashboard')">📊 Dash</div>
-            <div class="nav-tab" onclick="switchMenu('approvals')">✅ Approve</div>
-            <div class="nav-tab" onclick="switchMenu('enrollments')">🛒 Sales</div>
+            <div class="nav-tab" onclick="switchMenu('enrollments')">🛒 Access</div>
+            <div class="nav-tab" onclick="switchMenu('banners')">📢 Ads</div>
             <div class="nav-tab" onclick="switchMenu('mycourses')">➕ Post</div>
             <div class="nav-tab" onclick="switchMenu('users')">👥 Users</div>
             <div class="nav-tab" style="color:#dc3545;" onclick="logoutAdmin()">🚪 Exit</div>
@@ -169,6 +179,38 @@
 </div>
 
 <!-- === MODALS === -->
+<!-- Banner Add Modal -->
+<div id="bannerModal" class="modal">
+    <div class="modal-content">
+        <h3>Create Promotional Banner</h3>
+        <form onsubmit="saveBanner(event)">
+            <div class="form-group">
+                <label>Banner Image URL</label>
+                <input type="url" id="bImage" placeholder="https://image-link.jpg" required oninput="previewBanner()">
+            </div>
+            <div class="form-group">
+                <label>Redirect Link (Optional)</label>
+                <input type="url" id="bLink" placeholder="https://website.com/course...">
+            </div>
+            <div class="form-group">
+                <label>Auto-Delete Expiry Date & Time (Optional)</label>
+                <input type="datetime-local" id="bExpiry">
+            </div>
+            
+            <label style="font-weight:bold; font-size:14px; color:#555;">Live Preview:</label>
+            <div class="banner-preview-box">
+                <span id="bPreviewText">Image Preview</span>
+                <img id="bPreviewImg" src="" alt="preview">
+            </div>
+
+            <div style="display:flex; gap:10px; margin-top:20px;">
+                <button type="button" class="btn btn-secondary" onclick="document.getElementById('bannerModal').style.display='none'">Cancel</button>
+                <button type="submit" class="btn btn-primary">Publish Banner</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <!-- Admin Course Create Modal -->
 <div id="courseModal" class="modal">
     <div class="modal-content">
@@ -199,7 +241,7 @@
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdvcW1raWZlbnFldXNzamNnZHViIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUxNTIyNDMsImV4cCI6MjEwMDcyODI0M30.7lp9uJuJTfO5Wf0V59kGv4GGqdyk0FBtelOUu6UD7ic'; 
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    // --- HARDCODED ADMIN CREDENTIALS (SINGLE USER ONLY) ---
+    // --- HARDCODED ADMIN CREDENTIALS ---
     const ADMIN_EMAIL = "admin@eduportal.com";
     const ADMIN_PASS = "Admin@123";
 
@@ -238,15 +280,14 @@
         if(menuId === 'approvals') loadApprovals();
         if(menuId === 'enrollments') loadEnrollments();
         if(menuId === 'mycourses') loadAdminCourses();
+        if(menuId === 'banners') loadBanners();
     }
 
     // --- DASHBOARD ANALYTICS ---
     async function loadDashboardData() {
-        // Fetch Academies count
         const { data: academies } = await supabaseClient.from('academy_profiles').select('id');
         document.getElementById('stat-academies').innerText = academies ? academies.length : 0;
 
-        // Fetch Courses counts
         const { data: courses } = await supabaseClient.from('courses').select('status');
         let totalC = 0, pendingC = 0;
         if(courses) {
@@ -256,14 +297,11 @@
         document.getElementById('stat-courses').innerText = totalC;
         document.getElementById('stat-pending').innerText = pendingC;
 
-        // Fetch Enrollments for Candidates Count & Revenue
         const { data: enrollments } = await supabaseClient.from('enrollments').select('*');
         if(enrollments) {
-            // Unique Candidates Count
             const uniqueCandidates = [...new Set(enrollments.map(e => e.user_email))];
             document.getElementById('stat-candidates').innerText = uniqueCandidates.length;
 
-            // Calculate Revenue
             let daily = 0, monthly = 0, yearly = 0;
             const now = new Date();
             
@@ -319,7 +357,7 @@
         loadDashboardData();
     }
 
-    // --- ENROLLMENTS & ACCESS GRANTS ---
+    // --- ENROLLMENTS & CUSTOM ACCESS GRANTS ---
     async function loadEnrollments() {
         const list = document.getElementById('enrollment-list');
         list.innerHTML = 'Loading...';
@@ -330,20 +368,29 @@
         list.innerHTML = '';
         data.forEach(e => {
             let isExpired = e.access_until && new Date(e.access_until) < new Date();
+            let isGranted = e.status === 'Active';
             let statusBadge = e.status === 'Pending' ? '<span style="color:orange;">Pending Payment</span>' : 
-                              (isExpired ? '<span style="color:red;">Expired (Needs Renewal)</span>' : '<span style="color:green;">Active Access</span>');
+                              (isExpired ? '<span style="color:red;">Expired</span>' : '<span style="color:green; font-weight:bold;">Granted</span>');
+
+            let watermark = (isGranted && !isExpired) ? `<div class="watermark-granted">✅ GRANTED</div>` : '';
 
             list.innerHTML += `
-                <div class="list-card">
+                <div class="list-card" style="border-left-color: ${isGranted ? (isExpired ? '#dc3545' : '#28a745') : '#ffc107'};">
+                    ${watermark}
                     <div class="list-info">
                         <h4>${e.course_title}</h4>
                         <p><strong>Candidate:</strong> <a href="#" onclick="viewCandidate('${e.user_email}')">${e.user_email}</a></p>
                         <p><strong>Price:</strong> ${e.course_price === 'Free' ? 'Free' : '₹'+e.course_price} | <strong>Status:</strong> ${statusBadge}</p>
                         ${e.access_until ? `<p style="font-size:11px;">Access valid till: ${new Date(e.access_until).toLocaleDateString()}</p>` : ''}
                     </div>
-                    <div class="list-actions" style="flex-direction:column;">
-                        <button class="btn btn-success btn-small" onclick="grantAccess(${e.id}, 3)">Grant 3 Months</button>
-                        <button class="btn btn-primary btn-small" onclick="grantAccess(${e.id}, 12)">Grant 1 Year</button>
+                    
+                    <div class="list-actions" style="flex-wrap: wrap; max-width:250px; background: rgba(255,255,255,0.9); padding:5px; border-radius:8px;">
+                        <button class="btn btn-outline btn-small" style="flex:1;" onclick="grantAccess(${e.id}, 3)">3 Months</button>
+                        <button class="btn btn-outline btn-small" style="flex:1;" onclick="grantAccess(${e.id}, 12)">1 Year</button>
+                        <div style="display:flex; width:100%; gap:5px; margin-top:5px;">
+                            <input type="number" id="customM-${e.id}" placeholder="Months" style="width:70px; padding:5px; border:1px solid #ccc; border-radius:4px;">
+                            <button class="btn btn-success btn-small" style="flex:1;" onclick="grantCustomAccess(${e.id})">Custom Grant</button>
+                        </div>
                     </div>
                 </div>
             `;
@@ -359,9 +406,79 @@
             access_until: futureDate.toISOString() 
         }).eq('id', id);
         
-        alert(`Access granted for ${months} months!`);
         loadEnrollments();
-        loadDashboardData(); // Update revenue if status changed to active
+        loadDashboardData(); 
+    }
+
+    function grantCustomAccess(id) {
+        const val = document.getElementById(`customM-${id}`).value;
+        if(!val || val <= 0) return alert("Enter valid number of months.");
+        grantAccess(id, parseInt(val));
+    }
+
+    // --- BANNER MANAGEMENT ---
+    function previewBanner() {
+        const url = document.getElementById('bImage').value;
+        const img = document.getElementById('bPreviewImg');
+        if(url) { img.src = url; img.style.display = 'block'; document.getElementById('bPreviewText').style.display = 'none'; }
+        else { img.style.display = 'none'; document.getElementById('bPreviewText').style.display = 'block'; }
+    }
+
+    async function loadBanners() {
+        const list = document.getElementById('banner-list');
+        const { data, error } = await supabaseClient.from('banners').select('*').order('created_at', {ascending: false});
+        
+        if(!data || data.length === 0) { list.innerHTML = '<p>No banners added.</p>'; return; }
+        
+        list.innerHTML = '';
+        data.forEach(b => {
+            // Auto Disable check logic for Admin view
+            let isExpired = b.expires_at && new Date(b.expires_at) < new Date();
+            if(isExpired && b.active) {
+                // Auto switch off active status silently
+                supabaseClient.from('banners').update({active: false}).eq('id', b.id);
+                b.active = false;
+            }
+
+            let status = b.active ? `<span style="color:green;font-weight:bold;">🟢 Active</span>` : `<span style="color:red;font-weight:bold;">🔴 Expired/Hidden</span>`;
+            
+            list.innerHTML += `
+                <div style="background:#fff; border-radius:10px; overflow:hidden; box-shadow:0 2px 10px rgba(0,0,0,0.1);">
+                    <img src="${b.image_url}" style="width:100%; height:120px; object-fit:cover;">
+                    <div style="padding:15px;">
+                        <p style="margin:0 0 5px; font-size:13px;">${status}</p>
+                        ${b.link_url ? `<p style="margin:0 0 5px; font-size:12px; color:#007bff; word-break:break-all;">🔗 ${b.link_url}</p>` : ''}
+                        ${b.expires_at ? `<p style="margin:0 0 10px; font-size:12px; color:#888;">Expires: ${new Date(b.expires_at).toLocaleString()}</p>` : ''}
+                        <button class="btn btn-danger btn-small" style="width:100%;" onclick="deleteBanner(${b.id})">Delete Banner</button>
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    async function saveBanner(e) {
+        e.preventDefault();
+        const img = document.getElementById('bImage').value;
+        const link = document.getElementById('bLink').value;
+        const exp = document.getElementById('bExpiry').value;
+
+        const payload = { image_url: img, active: true };
+        if(link) payload.link_url = link;
+        if(exp) payload.expires_at = new Date(exp).toISOString();
+
+        await supabaseClient.from('banners').insert([payload]);
+        
+        document.getElementById('bannerModal').style.display = 'none';
+        document.getElementById('bImage').value = ''; document.getElementById('bLink').value = ''; document.getElementById('bExpiry').value = '';
+        previewBanner();
+        loadBanners();
+    }
+
+    async function deleteBanner(id) {
+        if(confirm("Delete this banner permanently?")) {
+            await supabaseClient.from('banners').delete().eq('id', id);
+            loadBanners();
+        }
     }
 
     // --- ADMIN'S OWN COURSES ---
@@ -396,7 +513,7 @@
             title: document.getElementById('cTitle').value,
             thumbnail_url: document.getElementById('cThumb').value,
             academy_email: ADMIN_EMAIL,
-            status: 'Approved' // Admin ka data seedha active
+            status: 'Approved' 
         };
         await supabaseClient.from('courses').insert([data]);
         document.getElementById('courseModal').style.display = 'none';
@@ -434,7 +551,6 @@
             });
         } 
         else if (type === 'candidates') {
-            // Fetch unique emails from enrollments as candidate list
             const { data } = await supabaseClient.from('enrollments').select('user_email');
             if(!data || data.length === 0) { list.innerHTML = '<p>No candidates found in purchase history.</p>'; return; }
             
@@ -468,28 +584,24 @@
                 <div class="detail-row"><strong>Location:</strong> <span>${data.location || 'N/A'}</span></div>
                 <div class="detail-row"><strong>Bank/UPI:</strong> <span>${data.payment_details || 'N/A'}</span></div>
             `;
-        } else {
-            content.innerHTML = '<p>Details not found.</p>';
         }
         document.getElementById('userDetailsModal').style.display = 'flex';
     }
 
     async function viewCandidate(email) {
-        // Find total purchases by this candidate
         const { data } = await supabaseClient.from('enrollments').select('course_title, status').eq('user_email', email);
         const content = document.getElementById('ud-content');
         document.getElementById('ud-title').innerText = "Candidate Info";
         
-        let purchasesHTML = '';
-        if(data && data.length > 0) {
-            purchasesHTML = data.map(d => `<li>${d.course_title} (${d.status})</li>`).join('');
-        } else {
-            purchasesHTML = '<li>No purchases yet</li>';
-        }
+        let purchasesHTML = (data && data.length > 0) ? data.map(d => `<li>${d.course_title} <span style="font-size:11px; color:${d.status==='Active'?'green':'orange'};">(${d.status})</span></li>`).join('') : '<li>No purchases yet</li>';
 
         content.innerHTML = `
             <div class="detail-row"><strong>Email ID:</strong> <span>${email}</span></div>
-            <div class="detail-row"><strong>Courses Owned:</strong> <span><ul>${purchasesHTML}</ul></span></div>
+            <div class="detail-row"><strong>Contact Number:</strong> <span style="color:#007bff; font-weight:bold;">Securely Stored in Auth</span></div>
+            <div class="detail-row" style="flex-direction:column; border:none; padding-top:15px;">
+                <strong style="width:100%; margin-bottom:5px;">Courses Owned:</strong> 
+                <span style="background:#f9f9f9; padding:10px; border-radius:8px;"><ul style="margin:0; padding-left:20px;">${purchasesHTML}</ul></span>
+            </div>
         `;
         document.getElementById('userDetailsModal').style.display = 'flex';
     }
