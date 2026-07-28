@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student Portal - Gen-Z Gravity</title>
+    <title>Student Portal - Premium Learning</title>
     <!-- Supabase CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
@@ -51,10 +51,8 @@
         .badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; }
         .badge-free { background: #e8f5e9; color: #2e7d32; }
         .badge-paid { background: #e3f2fd; color: #1565c0; }
-        
-        /* Floating Actions (Fav & Share) */
         .card-actions { position: absolute; top: 8px; right: 8px; display: flex; flex-direction: column; gap: 8px; z-index: 5;}
-        .icon-btn { background: rgba(255,255,255,0.95); border: none; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; font-size: 15px; display:flex; justify-content:center; align-items:center; box-shadow: 0 2px 5px rgba(0,0,0,0.2);}
+        .icon-btn { background: rgba(255,255,255,0.95); border: none; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; font-size: 15px; display:flex; align-items:center; justify-content:center; box-shadow: 0 2px 5px rgba(0,0,0,0.2);}
         .icon-btn.active { color: #dc3545; }
 
         /* Video Player & Chapters */
@@ -77,13 +75,14 @@
 
         /* Modals & Inputs */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 2000; justify-content: center; align-items: center; backdrop-filter: blur(5px);}
-        .modal-content { background: #fff; padding: 25px; border-radius: 16px; width: 90%; max-width: 400px; text-align: center;}
+        .modal-content { background: #fff; padding: 25px; border-radius: 16px; width: 90%; max-width: 450px; text-align: center;}
         
         .coupon-box { display: flex; gap: 5px; margin: 15px 0; }
         .coupon-box input { flex: 1; padding: 10px; border-radius: 6px; border: 1px solid #ccc; text-transform: uppercase; pointer-events: auto;}
         
         /* Invoice Details */
-        .invoice-box { text-align: left; background: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px dashed #ccc; margin-bottom: 15px; font-size: 13px;}
+        .invoice-box { text-align: left; background: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px dashed #ccc; margin-bottom: 15px; font-size: 14px;}
+        .invoice-box p { margin: 6px 0;}
         .helpdesk-box { background: #fff3cd; border: 1px solid #ffeeba; padding: 15px; border-radius: 10px; margin-top: 20px; text-align: left;}
         
         .btn { padding: 10px 15px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 14px; width: 100%; margin-top:5px;}
@@ -91,42 +90,6 @@
         .btn-success { background: #28a745; color: white; }
         .btn-warning { background: #ffc107; color: black; }
         .btn-outline { background: transparent; border: 2px solid #007bff; color: #007bff; width: auto;}
-
-        /* Professional Certificate Design (Hidden until print) */
-        #certificate-container { display: none; }
-        
-        /* INTELLIGENT PRINT MEDIA QUERIES (FIXED FOR INVOICE & CERTIFICATE) */
-        @media print {
-            /* Hide all standard UI elements */
-            .btn, .close-btn, .card-actions, .bottom-nav, .sidebar { display: none !important; }
-            
-            /* Logic for Certificate Print */
-            body.print-cert > *:not(#certificate-container) { display: none !important; }
-            body.print-cert #certificate-container { 
-                display: flex !important; position: static; width: 100%; min-height: 100vh;
-                background: url('https://www.transparenttextures.com/patterns/cream-paper.png'), linear-gradient(135deg, #ffffff, #f3f3f3); 
-                border: 15px solid #2c3e50; padding: 40px; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: #2c3e50; font-family: 'Times New Roman', serif;
-            }
-            body.print-cert .cert-header { font-size: 45px; font-weight: bold; text-transform: uppercase; letter-spacing: 3px; color: #c0392b; margin-bottom: 15px;}
-            body.print-cert .cert-sub { font-size: 20px; font-style: italic; margin-bottom: 30px; }
-            body.print-cert .cert-name { font-size: 40px; font-weight: bold; text-decoration: underline; margin-bottom: 25px; font-family: 'Arial', sans-serif;}
-            body.print-cert .cert-desc { font-size: 18px; max-width: 90%; line-height: 1.6; margin-bottom: 40px; }
-            body.print-cert .cert-footer { display: flex; justify-content: space-between; width: 90%; padding-top: 20px; border-top: 2px solid #2c3e50; margin-top: auto;}
-            body.print-cert .cert-footer div { text-align: center; font-size: 16px; font-weight: bold;}
-            body.print-cert .cert-stamp { width: 100px; height: 100px; background: gold; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; text-align: center; border: 3px dashed #c0392b; position: absolute; bottom: 50px; right: 50px; color:#c0392b;}
-
-            /* Logic for Invoice Print */
-            body.print-inv > *:not(#invoiceModal) { display: none !important; }
-            body.print-inv #invoiceModal { 
-                display: block !important; position: static; background: white; width: 100%; height: auto; padding: 20px;
-            }
-            body.print-inv #invoiceModal .modal-content {
-                width: 100%; max-width: 100%; box-shadow: none; padding: 0; text-align: left;
-            }
-            body.print-inv .invoice-box { border: 1px solid #333; padding: 20px; background: white; }
-            body.print-inv .helpdesk-box { border: 1px solid #333; background: white; color: #333;}
-            body.print-inv h2 { color: #333 !important; }
-        }
 
         /* Mobile Nav */
         .bottom-nav { display: none; }
@@ -136,6 +99,50 @@
             .bottom-nav { display: flex; position: fixed; bottom: 0; left: 0; width: 100%; background: #fff; box-shadow: 0 -5px 20px rgba(0,0,0,0.05); z-index: 1000; border-top-left-radius: 15px; border-top-right-radius: 15px;}
             .nav-tab { flex: 1; text-align: center; padding: 12px 2px; font-size: 11px; font-weight: bold; color: #888; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px;}
             .nav-tab.active { color: #007bff; }
+        }
+
+        /* --- INTELLIGENT PRINT MEDIA QUERIES --- */
+        #certificate-container { display: none; }
+        
+        @media print {
+            * { -webkit-print-color-adjust: exact !important; color-adjust: exact !important; print-color-adjust: exact !important; }
+            
+            /* Hide EVERYTHING by default in print */
+            body > * { display: none !important; }
+            
+            /* === IF INVOICE PRINT IS TRIGGERED === */
+            body.print-inv #invoiceModal { 
+                display: block !important; 
+                position: absolute; left: 0; top: 0; width: 100%; background: white; 
+            }
+            body.print-inv #invoiceModal .modal-content {
+                box-shadow: none; border: none; width: 100%; max-width: 100%; padding: 20px;
+            }
+            body.print-inv .btn, body.print-inv .close-btn { display: none !important; }
+
+            /* === IF CERTIFICATE PRINT IS TRIGGERED === */
+            body.print-cert #certificate-container { 
+                display: flex !important; position: absolute; left: 0; top: 0; width: 100%; height: 100vh;
+                background: #fff; padding: 20px; flex-direction: column; align-items: center; justify-content: center;
+            }
+            body.print-cert .cert-border-inner {
+                width: 95%; height: 95%; border: 15px solid #1a252f; padding: 40px;
+                background: linear-gradient(135deg, #ffffff, #f9f9f9); text-align: center; color: #2c3e50; position: relative;
+            }
+            body.print-cert .cert-title { font-size: 50px; font-weight: 900; color: #c0392b; margin: 0 0 5px; text-transform: uppercase; letter-spacing: 3px; font-family: 'Times New Roman', serif;}
+            body.print-cert .cert-website { font-size: 16px; color: #7f8c8d; margin: 0 0 30px; letter-spacing: 2px;}
+            body.print-cert .cert-header { font-size: 35px; font-family: 'Times New Roman', serif; font-style: italic; margin-bottom: 20px;}
+            body.print-cert .cert-sub { font-size: 18px; margin-bottom: 30px; }
+            body.print-cert .cert-name { font-size: 45px; font-weight: bold; text-decoration: underline; margin-bottom: 20px; font-family: 'Arial', sans-serif;}
+            body.print-cert .cert-desc { font-size: 18px; max-width: 700px; margin: 0 auto 50px; line-height: 1.6; }
+            body.print-cert .cert-course { font-size: 24px; color: #c0392b; margin-top: 10px;}
+            
+            body.print-cert .cert-footer { display: flex; justify-content: space-between; align-items: flex-end; width: 90%; margin: auto auto 0; padding-top: 20px;}
+            body.print-cert .footer-col { text-align: center; font-size: 14px; font-weight: bold;}
+            body.print-cert .signature { font-family: 'Brush Script MT', cursive; font-size: 32px; border-bottom: 2px solid #2c3e50; padding-bottom: 5px; margin-bottom: 5px;}
+            
+            body.print-cert .cert-stamp-col { display: flex; justify-content: center; }
+            body.print-cert .cert-stamp { width: 100px; height: 100px; background: #f1c40f; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; text-align: center; border: 3px dashed #c0392b; color:#c0392b; box-shadow: inset 0 0 10px rgba(0,0,0,0.1);}
         }
     </style>
 </head>
@@ -234,7 +241,7 @@
             <!-- 3. Subscriptions (My Learning) Tab -->
             <div id="content-subscriptions" class="content-section">
                 <h2 style="margin-top:0;">My Learning History</h2>
-                <p style="font-size:13px; color:#666;">Click on active courses to view/download Invoice details.</p>
+                <p style="font-size:13px; color:#666;">Click on any active course to download its Official Invoice.</p>
                 <div id="my-subs-list" class="grid-cards"></div>
             </div>
 
@@ -249,12 +256,12 @@
                     </div>
                     <button class="btn btn-primary" onclick="updateMobile()" style="max-width:300px;">💾 Save Changes</button>
                     
-                    <!-- Customer Care Section restored -->
+                    <!-- Customer Care Section -->
                     <div class="helpdesk-box">
                         <h3 style="margin-top:0; color:#856404;">📞 24/7 Platform Customer Support</h3>
                         <p style="margin:5px 0; color:#856404;">Need help with access or payments? Contact Admin.</p>
                         <p style="margin:5px 0; color:#856404;">Helpline: <strong>+91 98765 43210</strong></p>
-                        <p style="margin:5px 0; color:#856404;">Email: <strong>support@eduportal.com</strong></p>
+                        <p style="margin:5px 0; color:#856404;">Email: <strong>support@genzgravity.com</strong></p>
                     </div>
 
                     <button class="btn" style="background:#dc3545; color:white; margin-top:30px; max-width:300px;" onclick="logoutUser()">🚪 Logout</button>
@@ -272,7 +279,7 @@
     </div>
 </div>
 
-<!-- === PAYMENT MODAL WITH COUPON === -->
+<!-- === PAYMENT MODAL === -->
 <div id="paymentModal" class="modal">
     <div class="modal-content">
         <h3 style="margin-top:0;">Secure Payment</h3>
@@ -294,7 +301,7 @@
 <!-- === INVOICE POPUP MODAL === -->
 <div id="invoiceModal" class="modal">
     <div class="modal-content">
-        <h2 style="margin-top:0; color:#007bff; border-bottom:2px solid #eee; padding-bottom:10px;">Tax Invoice</h2>
+        <h2 style="margin-top:0; color:#007bff; border-bottom:2px solid #eee; padding-bottom:10px;">Official Tax Invoice</h2>
         <div class="invoice-box">
             <p><strong>Candidate Email:</strong> <span id="inv-email"></span></p>
             <p><strong>Course Name:</strong> <span id="inv-course"></span></p>
@@ -307,39 +314,43 @@
             <p><strong>Valid Until:</strong> <span id="inv-expiry" style="color:red; font-weight:bold;"></span></p>
         </div>
         <div class="helpdesk-box" style="margin-top:0; margin-bottom:15px; padding:10px; text-align:left;">
-            <h4 style="margin:0 0 5px; color:#856404; font-size:13px;">📞 Helpline Info</h4>
-            <p style="margin:0; font-size:12px; color:#856404;">Call: +91 98765 43210 (Support)</p>
+            <h4 style="margin:0 0 5px; color:#856404; font-size:13px;">📞 Helpline / Support</h4>
+            <p style="margin:0; font-size:12px; color:#856404;">Call: +91 98765 43210 (Gen-Z Gravity Support)</p>
         </div>
-        <button class="btn btn-primary" style="margin-bottom:10px;" onclick="printInvoice()">📥 Save PDF / Print Invoice</button>
+        <button class="btn btn-primary print-btn" style="margin-bottom:10px;" onclick="printInvoice()">📥 Save PDF / Print Invoice</button>
         <button class="btn btn-outline close-btn" onclick="document.getElementById('invoiceModal').style.display='none'">Close</button>
     </div>
 </div>
 
-<!-- === HIDDEN CERTIFICATE TEMPLATE FOR PRINTING === -->
+<!-- === HIDDEN CERTIFICATE HTML FOR PRINTING === -->
 <div id="certificate-container">
-    <div class="cert-header">Certificate of Completion</div>
-    <div class="cert-sub">This is to proudly certify that</div>
-    <div class="cert-name" id="cert-candidate-name">[Candidate Name]</div>
-    <div class="cert-desc">
-        Has successfully completed the comprehensive skill assessment and training program for the course<br>
-        <strong><span id="cert-course-name">[Course Name]</span></strong>.<br><br>
-        Demonstrating exceptional dedication, practical knowledge, and technical proficiency required to meet industry standards.
+    <div class="cert-border-inner">
+        <h1 class="cert-title">Gen-Z Gravity</h1>
+        <p class="cert-website">www.genzgravity.com</p>
+        
+        <h2 class="cert-header">Certificate of Completion</h2>
+        <p class="cert-sub">This official document is proudly presented to</p>
+        
+        <h3 class="cert-name" id="cert-candidate-name">[Candidate Name]</h3>
+        
+        <p class="cert-desc">For successfully completing the comprehensive learning modules and skill assessments for the official training program:</p>
+        <h4 class="cert-course" id="cert-course-name">[Course Name]</h4>
+        
+        <div class="cert-footer">
+            <div class="footer-col">
+                <p><strong>Date of Issue:</strong> <br><span id="cert-date" style="font-weight:normal;">[Date]</span></p>
+                <p><strong>Certificate ID:</strong> <br><span id="cert-id" style="font-weight:normal;">[UID]</span></p>
+            </div>
+            <div class="footer-col cert-stamp-col">
+                <div class="cert-stamp">Official<br>Verified<br>Seal</div>
+            </div>
+            <div class="footer-col">
+                <p class="signature">Admin Signature</p>
+                <p><strong>Authorized Director</strong></p>
+                <p style="font-size:10px; font-weight:normal; margin-top:5px;">Verification Helpline: +91 98765 43210</p>
+            </div>
+        </div>
     </div>
-    <div class="cert-footer">
-        <div>
-            Date Issued<br>
-            <span id="cert-date" style="font-weight:normal;">[Date]</span>
-        </div>
-        <div>
-            Official Verification ID<br>
-            <span id="cert-id" style="font-weight:normal;">[UID]</span>
-        </div>
-        <div>
-            Gen-Z Gravity Admin<br>
-            <span style="font-family:'Brush Script MT', cursive; font-size:28px;">Admin Signature</span>
-        </div>
-    </div>
-    <div class="cert-stamp">Gen-Z<br>Gravity<br>Verified</div>
 </div>
 
 <script>
@@ -372,7 +383,7 @@
     async function checkSession() {
         const { data: { session } } = await supabaseClient.auth.getSession();
         const urlParams = new URLSearchParams(window.location.search);
-        const sharedCourseId = urlParams.get('courseId');
+        const sharedCourseId = urlParams.get('courseId'); 
 
         if (session) {
             currentUserEmail = session.user.email;
@@ -432,7 +443,7 @@
         if(data) {
             container.innerHTML = '';
             data.forEach(b => {
-                container.innerHTML += b.link_url ? `<a href="${b.link_url}" class="banner-item"><img src="${b.image_url}"></a>` : `<div class="banner-item"><img src="${b.image_url}"></div>`;
+                container.innerHTML += b.link_url ? `<a href="${b.link_url}" target="_blank" class="banner-item"><img src="${b.image_url}"></a>` : `<div class="banner-item"><img src="${b.image_url}"></div>`;
             });
         }
     }
@@ -455,8 +466,8 @@
             container.innerHTML += `
                 <div class="course-card searchable-card" data-title="${c.title.toLowerCase()}" onclick="openCourse(${c.id})">
                     <div class="card-actions">
-                        <button class="icon-btn ${isFav ? 'active' : ''}" onclick="toggleFavorite(event, ${c.id})">❤️</button>
-                        <button class="icon-btn" onclick="shareCourse(event, ${c.id})" title="Share Course">🔗</button>
+                        <button class="icon-btn ${isFav ? 'active' : ''}" onclick="toggleFavorite(event, ${c.id})" title="Favorite">❤️</button>
+                        <button class="icon-btn" onclick="shareCourse(event, ${c.id})" title="Share">🔗</button>
                     </div>
                     <img src="${c.thumbnail_url || 'https://via.placeholder.com/400x200?text=Course'}">
                     <div class="course-card-content">
@@ -481,17 +492,18 @@
         else favoriteCourses.push(courseId);
         localStorage.setItem(currentUserEmail + '_favs', JSON.stringify(favoriteCourses));
         renderCourseGrid(allCoursesData, document.getElementById('course-list'));
+        if(document.getElementById('content-favorites').classList.contains('active')) renderFavorites();
     }
 
     function renderFavorites() {
         const favList = document.getElementById('favorites-list');
         const favData = allCoursesData.filter(c => favoriteCourses.includes(c.id));
-        if(favData.length === 0) favList.innerHTML = '<p>No favorites yet.</p>';
+        if(favData.length === 0) favList.innerHTML = '<p>No favorites added yet.</p>';
         else renderCourseGrid(favData, favList);
     }
-    
+
     function shareCourse(e, courseId) {
-        e.stopPropagation();
+        e.stopPropagation(); 
         const shareUrl = `${window.location.origin}${window.location.pathname}?courseId=${courseId}`;
         if (navigator.share) {
             navigator.share({ title: 'Check out this amazing course!', url: shareUrl }).catch(console.error);
@@ -520,7 +532,6 @@
         activeCourseData = courseData; 
         document.getElementById('cv-title').innerText = courseData.title;
 
-        // Fetch Academy details
         if(courseData.academy_email) {
             const { data: acData } = await supabaseClient.from('academy_profiles').select('*').eq('email', courseData.academy_email).single();
             if(acData) {
@@ -532,7 +543,6 @@
             }
         }
 
-        // Fetch User Progress
         const { data: progData } = await supabaseClient.from('course_progress').select('completed_chapters').eq('user_email', currentUserEmail).eq('course_id', courseId).single();
         completedChaptersList = progData ? progData.completed_chapters : [];
 
@@ -606,6 +616,7 @@
         
         document.getElementById('progress-action-box').style.display = 'block';
         document.getElementById('quiz-area').style.display = 'none';
+        
         document.getElementById('mark-complete-btn').style.display = completedChaptersList.includes(chapterId) ? 'none' : 'inline-block';
         
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -615,6 +626,7 @@
     async function markChapterComplete() {
         if(!completedChaptersList.includes(activeChapterId)) {
             completedChaptersList.push(activeChapterId);
+            
             await supabaseClient.from('course_progress').upsert({
                 user_email: currentUserEmail, course_id: activeCourseData.id, completed_chapters: completedChaptersList
             }, { onConflict: 'user_email,course_id' });
@@ -673,7 +685,7 @@
     }
 
     function promptCertificate() {
-        const name = prompt("Enter your FULL NAME to print on the Certificate:", "Ganesh");
+        const name = prompt("Enter your FULL NAME to print on the Certificate:");
         if(!name) return;
 
         document.getElementById('cert-candidate-name').innerText = name;
@@ -739,6 +751,7 @@
             data.forEach(e => {
                 const isActive = e.status === 'Active';
                 let statusHTML = isActive ? `<span class="badge badge-free">Active Access</span>` : `<span class="badge" style="background:#ffc107; color:black;">Pending Approval</span>`;
+                
                 const clickEvt = isActive ? `onclick="openInvoice(${e.id})"` : `onclick="alert('Payment verification pending by Admin.')"`;
 
                 list.innerHTML += `
@@ -778,17 +791,17 @@
                 document.getElementById('inv-contact').innerText = acData.mobile;
             } else {
                 document.getElementById('inv-academy').innerText = "Admin Published";
-                document.getElementById('inv-contact').innerText = "support@eduportal.com";
+                document.getElementById('inv-contact').innerText = "support@genzgravity.com";
             }
         } else {
             document.getElementById('inv-academy').innerText = "Admin Published";
-            document.getElementById('inv-contact').innerText = "support@eduportal.com";
+            document.getElementById('inv-contact').innerText = "support@genzgravity.com";
         }
 
         document.getElementById('invoiceModal').style.display = 'flex';
     }
 
-    // --- PROFILE UPDATE (Mobile Number) ---
+    // --- PROFILE UPDATE ---
     async function updateMobile() {
         const mobile = document.getElementById('user-mobile').value;
         if(!mobile) return alert("Enter valid number");
