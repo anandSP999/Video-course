@@ -8,14 +8,16 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; transition: all 0.3s ease; }
-        body { margin: 0; padding: 0; background: #f4f7f6; color: #333; }
+        
+        /* SECURITY: Disable Text Selection */
+        body { margin: 0; padding: 0; background: #f4f7f6; color: #333; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none; }
         
         /* Auth Styles */
         .auth-container { max-width: 400px; margin: 80px auto; background: #fff; padding: 35px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); animation: slideUp 0.5s ease-out;}
         @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         .form-group { margin-bottom: 20px; }
         .form-group label { display: block; margin-bottom: 8px; font-weight: bold; color: #555; font-size: 14px;}
-        .form-group input { width: 100%; padding: 14px; border: 2px solid #e1e5eb; border-radius: 8px; font-size: 16px; outline: none;}
+        .form-group input { width: 100%; padding: 14px; border: 2px solid #e1e5eb; border-radius: 8px; font-size: 16px; outline: none; pointer-events: auto;}
         .form-group input:focus { border-color: #007bff; }
         .auth-btn { width: 100%; padding: 15px; background: linear-gradient(135deg, #007bff, #0056b3); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 15px rgba(0,123,255,0.3);}
         .toggle-link { text-align: center; margin-top: 20px; color: #007bff; cursor: pointer; font-size: 15px; font-weight: bold;}
@@ -32,58 +34,62 @@
         .content-section.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        /* Banners (Horizontal Scroll) */
+        /* Professional Banners */
         .banner-container { display: flex; overflow-x: auto; gap: 15px; padding-bottom: 15px; margin-bottom: 20px; scroll-snap-type: x mandatory; scrollbar-width: none;}
         .banner-container::-webkit-scrollbar { display: none; }
-        .banner-item { flex: 0 0 85%; max-width: 400px; height: 150px; border-radius: 12px; scroll-snap-align: center; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.1); position: relative;}
-        .banner-item img { width: 100%; height: 100%; object-fit: cover; }
+        .banner-item { flex: 0 0 90%; max-width: 500px; height: 160px; border-radius: 16px; scroll-snap-align: center; overflow: hidden; box-shadow: 0 6px 15px rgba(0,0,0,0.1); position: relative; background: #ddd;}
+        .banner-item img { width: 100%; height: 100%; object-fit: cover; pointer-events: none;}
 
-        /* Course Grid (2-Column specifically) */
-        .grid-cards { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
+        /* 2-Column Course Grid */
+        .grid-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; }
+        @media (max-width: 768px) { .grid-cards { grid-template-columns: repeat(2, 1fr); gap: 12px; } }
+        
         .course-card { background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.05); cursor: pointer; position: relative; display: flex; flex-direction: column;}
-        .course-card img { width: 100%; height: 120px; object-fit: cover; background: #e9ecef;}
+        .course-card img { width: 100%; height: 130px; object-fit: cover; background: #e9ecef; pointer-events: none;}
         .course-card-content { padding: 12px; flex: 1; display: flex; flex-direction: column; justify-content: space-between;}
-        .course-card h4 { margin: 0 0 8px; font-size: 14px; color: #222; line-height: 1.3; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;}
+        .course-card h4 { margin: 0 0 8px; font-size: 14px; color: #222; line-height: 1.4; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;}
         .badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; }
         .badge-free { background: #e8f5e9; color: #2e7d32; }
         .badge-paid { background: #e3f2fd; color: #1565c0; }
         
         /* Floating Buttons on Card (Share & Fav) */
-        .card-actions { position: absolute; top: 8px; right: 8px; display: flex; flex-direction: column; gap: 8px; }
+        .card-actions { position: absolute; top: 8px; right: 8px; display: flex; flex-direction: column; gap: 8px; z-index: 5;}
         .icon-btn { background: rgba(255,255,255,0.95); border: none; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; display: flex; justify-content: center; align-items: center; font-size: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.2);}
         .icon-btn.active { color: #dc3545; }
         .icon-btn:hover { background: #007bff; color: white;}
 
-        /* Chapter / Player View */
+        /* Video Player & Security Watermark */
         .chapter-header { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid #e1e5eb;}
         .chapter-header h2 { margin: 0; font-size: 20px;}
-        .video-player-container { background: #000; border-radius: 12px; overflow: hidden; margin-bottom: 15px; aspect-ratio: 16/9; display: none; }
-        .video-player-container iframe { width: 100%; height: 100%; border: none; }
+        .video-player-container { background: #000; border-radius: 12px; overflow: hidden; margin-bottom: 15px; aspect-ratio: 16/9; display: none; position: relative;}
+        .video-player-container iframe { width: 100%; height: 100%; border: none; position: relative; z-index: 1;}
         
+        /* Dynamic Email Watermark */
+        .watermark { position: absolute; top: 30%; left: 10%; opacity: 0.3; color: white; pointer-events: none; z-index: 10; font-size: 18px; font-weight: bold; text-shadow: 1px 1px 3px black; transform: rotate(-25deg); white-space: nowrap;}
+        
+        /* Academy Info Box */
         .academy-info-box { background: #fff; padding: 15px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); display: none;}
         .academy-info-box h3 { margin: 0 0 5px; font-size: 16px; color: #007bff;}
         .academy-info-box p { margin: 0; font-size: 13px; color: #555;}
 
+        /* Chapters List */
         .chapter-list-item { display: flex; align-items: center; background: #fff; padding: 12px; border-radius: 10px; margin-bottom: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.04); cursor: pointer;}
         .chapter-list-item.locked { opacity: 0.6; cursor: not-allowed; }
-        .ch-thumb { width: 90px; height: 55px; border-radius: 6px; object-fit: cover; margin-right: 12px;}
+        .ch-thumb { width: 90px; height: 55px; border-radius: 6px; object-fit: cover; margin-right: 12px; pointer-events: none;}
         .ch-info h5 { margin: 0 0 3px; font-size: 14px;}
         .ch-info p { margin: 0; font-size: 12px; color: #666;}
 
         /* Modals (Payment & Invoice) */
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; justify-content: center; align-items: center; backdrop-filter: blur(5px);}
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 2000; justify-content: center; align-items: center; backdrop-filter: blur(5px);}
         .modal-content { background: #fff; padding: 25px; border-radius: 16px; width: 90%; max-width: 400px; text-align: center; animation: slideUp 0.3s;}
         
-        /* Invoice Specific */
+        /* Invoice Styling (Admin Customer Care) */
         .invoice-box { text-align: left; background: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px dashed #ccc; margin-bottom: 15px; font-size: 13px;}
         .invoice-box p { margin: 5px 0;}
-        
-        /* Helpdesk Profile Box */
-        .helpdesk-box { background: #fff3cd; border: 1px solid #ffeeba; padding: 15px; border-radius: 10px; margin-top: 20px;}
+        .helpdesk-box { background: #fff3cd; border: 1px solid #ffeeba; padding: 15px; border-radius: 10px; margin-top: 20px; text-align: left;}
         .helpdesk-box h3 { margin:0 0 10px; font-size: 16px; color: #856404;}
         .helpdesk-box p { margin:5px 0; font-size:14px; color: #856404; font-weight:bold;}
 
-        /* Buttons */
         .btn { padding: 10px 15px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 14px; text-align: center; width: 100%;}
         .btn-primary { background: #007bff; color: white; }
         .btn-success { background: #28a745; color: white; }
@@ -99,7 +105,7 @@
             .nav-tab.active { color: #007bff; }
         }
 
-        /* Print Invoice Styling */
+        /* Print Invoice Styling (Bypasses security for printing only invoice) */
         @media print {
             body * { visibility: hidden; }
             #invoiceModal, #invoiceModal * { visibility: visible; }
@@ -123,7 +129,6 @@
 <!-- === DASHBOARD SECTION === -->
 <div id="dashboard-section">
     <div class="dashboard-layout">
-        <!-- PC Sidebar -->
         <div class="sidebar">
             <div class="sidebar-header">EduPortal</div>
             <div class="menu-item active" onclick="switchMenu('courses')">🧭 Explore</div>
@@ -138,20 +143,13 @@
             <div id="content-courses" class="content-section active">
                 <div id="course-grid-view">
                     
-                    <!-- Scrolling Banners -->
-                    <div class="banner-container">
-                        <!-- Clikable Banner -->
-                        <a href="#" class="banner-item">
-                            <img src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=600&q=80" alt="Offer Banner 1">
-                        </a>
-                        <!-- Non Clickable Banner -->
-                        <div class="banner-item">
-                            <img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=600&q=80" alt="Offer Banner 2">
-                        </div>
+                    <!-- Dynamic Banners Container -->
+                    <div class="banner-container" id="banner-slider">
+                        <!-- Loaded dynamically from Supabase -->
                     </div>
 
-                    <h2 style="font-size:22px; margin-top:0;">Explore Courses</h2>
-                    <input type="text" id="searchBar" placeholder="🔍 Search courses..." style="width:100%; padding:12px; border-radius:8px; border:1px solid #ddd; margin-bottom:20px; font-size:14px;" onkeyup="searchCourses()">
+                    <h2 style="font-size:20px; margin-top:0;">Explore Courses</h2>
+                    <input type="text" id="searchBar" placeholder="🔍 Search courses..." style="width:100%; padding:12px; border-radius:8px; border:1px solid #ddd; margin-bottom:15px; font-size:14px; pointer-events:auto;" onkeyup="searchCourses()">
                     
                     <!-- 2 Column Grid -->
                     <div id="course-list" class="grid-cards">Loading amazing courses...</div>
@@ -164,18 +162,19 @@
                         <h2 id="cv-title" style="font-size:18px;">Course Title</h2>
                     </div>
 
-                    <!-- Video Player Box -->
+                    <!-- Video Player Box with Security Watermark -->
                     <div class="video-player-container" id="main-player-box">
+                        <div class="watermark" id="video-watermark">user@example.com</div>
                         <iframe id="main-player" src="" allowfullscreen></iframe>
                     </div>
                     
-                    <!-- Academy Info & Notes Below Video -->
+                    <!-- Academy Info & Notes -->
                     <div id="cv-academy-info" class="academy-info-box">
-                        <h3>Academy Details</h3>
+                        <h3>About the Author</h3>
                         <p><strong>Provider:</strong> <span id="cv-academy-name">Loading...</span></p>
                         <p><strong>Instructor:</strong> <span id="cv-teacher-name">Loading...</span></p>
                         <div id="cv-notes" style="margin-top:10px; padding-top:10px; border-top:1px solid #eee; display:none;">
-                            <strong>📝 Study Notes: </strong> <a id="cv-notes-link" href="#" target="_blank" style="color:#007bff;">View Material</a>
+                            <strong>📝 Study Notes: </strong> <a id="cv-notes-link" href="#" target="_blank" style="color:#007bff; pointer-events:auto;">View Material</a>
                         </div>
                     </div>
 
@@ -197,10 +196,10 @@
                 <div id="favorites-list" class="grid-cards">No favorites added yet.</div>
             </div>
 
-            <!-- 3. My Subscriptions (My Learning) -->
+            <!-- 3. My Subscriptions -->
             <div id="content-subscriptions" class="content-section">
                 <h2 style="font-size:22px; margin-top:0;">My Learning History</h2>
-                <p style="font-size:13px; color:#666;">Click on any active course to download its PDF Invoice / Details.</p>
+                <p style="font-size:13px; color:#666;">Click on active courses to view/download Invoice details.</p>
                 <div id="my-subs-list" class="grid-cards">Loading your courses...</div>
             </div>
 
@@ -209,27 +208,25 @@
                 <h2 style="font-size:22px; margin-top:0;">My Profile</h2>
                 <div style="background:#fff; padding:20px; border-radius:12px; box-shadow:0 4px 10px rgba(0,0,0,0.05);">
                     <p style="font-size:15px;"><strong>Email ID:</strong> <span id="user-email-display" style="color:#007bff;"></span></p>
-                    <div class="form-group" style="margin-top:15px;">
+                    <div class="form-group" style="margin-top:15px; max-width:300px;">
                         <label>Mobile Number</label>
                         <input type="tel" id="user-mobile" placeholder="+91 XXXXX XXXXX">
                     </div>
-                    <button class="btn btn-primary" onclick="updateMobile()">💾 Save Changes</button>
+                    <button class="btn btn-primary" onclick="updateMobile()" style="max-width:300px;">💾 Save Changes</button>
                     
-                    <!-- Customer Care Section -->
+                    <!-- Dedicated Customer Care -->
                     <div class="helpdesk-box">
-                        <h3>📞 24/7 Customer Support</h3>
-                        <p>Need help? Contact us anytime.</p>
+                        <h3>📞 24/7 Platform Customer Support</h3>
+                        <p>Need help with access or payments? Contact Admin.</p>
                         <p>Helpline: +91 98765 43210</p>
                         <p>Email: support@eduportal.com</p>
                     </div>
 
-                    <button class="btn" style="background:#dc3545; color:white; margin-top:30px;" onclick="logoutUser()">🚪 Logout</button>
+                    <button class="btn" style="background:#dc3545; color:white; margin-top:30px; max-width:300px;" onclick="logoutUser()">🚪 Logout</button>
                 </div>
             </div>
-
         </div>
 
-        <!-- Mobile Bottom Nav -->
         <div class="bottom-nav">
             <div class="nav-tab active" onclick="switchMenu('courses')"><span style="font-size:18px;">🧭</span> Explore</div>
             <div class="nav-tab" onclick="switchMenu('favorites')"><span style="font-size:18px;">❤️</span> Favs</div>
@@ -252,32 +249,44 @@
     </div>
 </div>
 
-<!-- Invoice / Validity Popup Modal -->
+<!-- Invoice Popup Modal (Customer Care Focus) -->
 <div id="invoiceModal" class="modal">
     <div class="modal-content">
-        <h2 style="margin-top:0; color:#007bff; border-bottom:2px solid #eee; padding-bottom:10px;">Tax Invoice</h2>
+        <h2 style="margin-top:0; color:#007bff; border-bottom:2px solid #eee; padding-bottom:10px;">Course Access Details</h2>
         <div class="invoice-box">
             <p><strong>Candidate Email:</strong> <span id="inv-email"></span></p>
             <p><strong>Course Name:</strong> <span id="inv-course"></span></p>
             <p><strong>Amount Paid:</strong> ₹<span id="inv-price"></span></p>
             <hr style="border:0; border-top:1px dashed #ccc; margin:10px 0;">
-            <p><strong>Academy Provider:</strong> <span id="inv-academy"></span></p>
-            <p><strong>Academy Contact:</strong> <span id="inv-contact"></span></p>
-            <hr style="border:0; border-top:1px dashed #ccc; margin:10px 0;">
             <p><strong>Purchase Date:</strong> <span id="inv-date"></span></p>
             <p><strong>Valid Until:</strong> <span id="inv-expiry" style="color:red; font-weight:bold;"></span></p>
-            <p><strong>Duration:</strong> <span id="inv-duration"></span></p>
         </div>
+        <!-- Admin Contact shown instead of Academy -->
         <div class="helpdesk-box" style="margin-top:0; margin-bottom:15px; padding:10px; text-align:left;">
-            <h4 style="margin:0 0 5px; color:#856404; font-size:13px;">📞 Helpline Info</h4>
-            <p style="margin:0; font-size:12px;">Call: +91 98765 43210 (Support)</p>
+            <h4 style="margin:0 0 5px; color:#856404; font-size:13px;">📞 Platform Support (Admin)</h4>
+            <p style="margin:0; font-size:12px;">For issues or renewal: +91 98765 43210</p>
+            <p style="margin:0; font-size:12px;">Email: support@eduportal.com</p>
         </div>
-        <button class="btn btn-primary" style="margin-bottom:10px;" onclick="window.print()">📥 Save PDF / Print Invoice</button>
+        <button class="btn btn-primary" style="margin-bottom:10px;" onclick="window.print()">📥 Print / Save PDF</button>
         <button class="btn btn-outline close-btn" onclick="document.getElementById('invoiceModal').style.display='none'">Close</button>
     </div>
 </div>
 
 <script>
+    // --- SECURITY FEATURES (ANTI-PIRACY) ---
+    document.addEventListener('contextmenu', e => e.preventDefault()); // Block Right Click
+    document.addEventListener('keydown', e => {
+        // Block F12, Ctrl+Shift+I, Ctrl+U, Ctrl+S, Ctrl+P
+        if(e.key === 'F12' || (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C')) || (e.ctrlKey && (e.key === 'U' || e.key === 'S' || e.key === 'P'))) {
+            e.preventDefault(); return false;
+        }
+        // Attempt to block Screen Print
+        if(e.key === 'PrintScreen') {
+            navigator.clipboard.writeText('');
+            alert("Screenshots are disabled for security reasons.");
+        }
+    });
+
     // --- SUPABASE SETUP ---
     const SUPABASE_URL = 'https://goqmkifenqeussjcgdub.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdvcW1raWZlbnFldXNzamNnZHViIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUxNTIyNDMsImV4cCI6MjEwMDcyODI0M30.7lp9uJuJTfO5Wf0V59kGv4GGqdyk0FBtelOUu6UD7ic'; 
@@ -287,8 +296,8 @@
     let isSignUpMode = false;
     let activeCourseData = null; 
     let userOwnedCourses = []; 
-    let favoriteCourses = []; // Local favorites array
-    let allCoursesData = []; // Store globally for favorites rendering
+    let favoriteCourses = []; 
+    let allCoursesData = []; 
 
     // --- AUTHENTICATION ---
     async function checkSession() {
@@ -298,8 +307,8 @@
 
         if (session) {
             currentUserEmail = session.user.email;
+            document.getElementById('video-watermark').innerText = currentUserEmail; // Set Watermark
             
-            // Load Local Favorites
             const localFavs = localStorage.getItem(currentUserEmail + '_favs');
             if(localFavs) favoriteCourses = JSON.parse(localFavs);
 
@@ -355,6 +364,7 @@
         const { data } = await supabaseClient.auth.getUser();
         if(data?.user?.user_metadata?.mobile) document.getElementById('user-mobile').value = data.user.user_metadata.mobile;
 
+        loadBanners(); // Load dynamic banners
         await loadCourses();
         loadSubscriptions();
         renderFavorites();
@@ -370,7 +380,22 @@
         if(menuId === 'favorites') renderFavorites();
     }
 
-    // --- FETCH COURSES & FAVORITES ---
+    // --- FETCH BANNERS, COURSES & FAVORITES ---
+    async function loadBanners() {
+        const container = document.getElementById('banner-slider');
+        // Fetch banners from DB. (Fallback provided if table is empty or missing)
+        const { data, error } = await supabaseClient.from('banners').select('*').eq('active', true);
+        
+        if(!error && data && data.length > 0) {
+            container.innerHTML = '';
+            data.forEach(b => {
+                container.innerHTML += b.link_url 
+                    ? `<a href="${b.link_url}" target="_blank" class="banner-item"><img src="${b.image_url}" alt="Promo"></a>`
+                    : `<div class="banner-item"><img src="${b.image_url}" alt="Promo"></div>`;
+            });
+        }
+    }
+
     async function loadUserAccess() {
         const { data } = await supabaseClient.from('enrollments').select('course_title').eq('user_email', currentUserEmail).eq('status', 'Active');
         if(data) userOwnedCourses = data.map(d => d.course_title);
@@ -381,8 +406,7 @@
         const { data: courses, error } = await supabaseClient.from('courses').select('*').eq('status', 'Approved').order('created_at', { ascending: false });
         
         if(error || !courses || courses.length === 0) { list.innerHTML = '<p>No courses available.</p>'; return; }
-        
-        allCoursesData = courses; // Store globally
+        allCoursesData = courses; 
         renderCourseGrid(courses, list);
     }
 
@@ -418,13 +442,10 @@
 
     function toggleFavorite(e, courseId) {
         e.stopPropagation();
-        if(favoriteCourses.includes(courseId)) {
-            favoriteCourses = favoriteCourses.filter(id => id !== courseId);
-        } else {
-            favoriteCourses.push(courseId);
-        }
+        if(favoriteCourses.includes(courseId)) favoriteCourses = favoriteCourses.filter(id => id !== courseId);
+        else favoriteCourses.push(courseId);
+        
         localStorage.setItem(currentUserEmail + '_favs', JSON.stringify(favoriteCourses));
-        // Re-render to update icons
         renderCourseGrid(allCoursesData, document.getElementById('course-list'));
         if(document.getElementById('content-favorites').classList.contains('active')) renderFavorites();
     }
@@ -432,22 +453,15 @@
     function renderFavorites() {
         const favList = document.getElementById('favorites-list');
         const favData = allCoursesData.filter(c => favoriteCourses.includes(c.id));
-        if(favData.length === 0) {
-            favList.innerHTML = '<p>No favorites added yet.</p>';
-        } else {
-            renderCourseGrid(favData, favList);
-        }
+        if(favData.length === 0) favList.innerHTML = '<p>No favorites added yet.</p>';
+        else renderCourseGrid(favData, favList);
     }
 
     function shareCourse(e, courseId) {
         e.stopPropagation();
         const shareUrl = `${window.location.origin}${window.location.pathname}?courseId=${courseId}`;
-        if (navigator.share) {
-            navigator.share({ title: 'Check out this course!', url: shareUrl }).catch(e=>{});
-        } else {
-            navigator.clipboard.writeText(shareUrl);
-            alert("🔗 Link copied! Paste to share.");
-        }
+        if (navigator.share) navigator.share({ title: 'Check out this course!', url: shareUrl }).catch(e=>{});
+        else { navigator.clipboard.writeText(shareUrl); alert("🔗 Link copied!"); }
     }
 
     // --- CHAPTER / COURSE DETAILS VIEW ---
@@ -467,12 +481,15 @@
         activeCourseData = courseData; 
         document.getElementById('cv-title').innerText = courseData.title;
 
-        // Fetch Academy details for description box
+        // Fetch Academy details for video description
         if(courseData.academy_email) {
             const { data: acData } = await supabaseClient.from('academy_profiles').select('*').eq('email', courseData.academy_email).single();
             if(acData) {
                 document.getElementById('cv-academy-name').innerText = acData.academy_name;
                 document.getElementById('cv-teacher-name').innerText = acData.teacher_name;
+            } else {
+                document.getElementById('cv-academy-name').innerText = "Platform Admin";
+                document.getElementById('cv-teacher-name').innerText = "Expert Instructor";
             }
         }
 
@@ -546,7 +563,7 @@
         document.getElementById('main-player-box').style.display = 'block';
         document.getElementById('main-player').src = generateEmbedUrl(url);
         
-        // Show Academy Box & Notes
+        // Show Info Below Video
         document.getElementById('cv-academy-info').style.display = 'block';
         if(notes && notes !== 'null' && notes.trim() !== '') {
             document.getElementById('cv-notes').style.display = 'block';
@@ -561,7 +578,7 @@
     // --- PAYMENT LOGIC ---
     function openPaymentModal() {
         const amt = activeCourseData.priceToPay;
-        const upiId = "YOUR_UPI_ID@ybl"; // Replace this with your actual UPI ID
+        const upiId = "YOUR_UPI_ID@ybl"; // SET YOUR UPI ID HERE
         const upiLink = `upi://pay?pa=${upiId}&pn=EduPortal&am=${amt}&cu=INR`;
         
         document.getElementById('qr-image').src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(upiLink)}`;
@@ -579,7 +596,7 @@
         loadSubscriptions();
     }
 
-    // --- MY SUBSCRIPTIONS & INVOICE POPUP ---
+    // --- MY SUBSCRIPTIONS & INVOICE ---
     async function loadSubscriptions() {
         const list = document.getElementById('my-subs-list');
         const { data, error } = await supabaseClient.from('enrollments').select('*').eq('user_email', currentUserEmail).order('created_at', { ascending: false });
@@ -590,8 +607,6 @@
         data.forEach(e => {
             const isActive = e.status === 'Active';
             let statusHTML = isActive ? `<span class="badge badge-free">Active Access</span>` : `<span class="badge" style="background:#ffc107; color:black;">Pending Approval</span>`;
-            
-            // Add click event if active to open invoice
             const clickEvt = isActive ? `onclick="openInvoice(${e.id})"` : `onclick="alert('Payment verification pending by Admin.')"`;
 
             list.innerHTML += `
@@ -607,7 +622,6 @@
     }
 
     async function openInvoice(enrollmentId) {
-        // Fetch specific enrollment
         const { data: enData } = await supabaseClient.from('enrollments').select('*').eq('id', enrollmentId).single();
         if(!enData) return;
 
@@ -616,34 +630,8 @@
         document.getElementById('inv-price').innerText = enData.course_price === 'Free' ? '0 (Free)' : enData.course_price;
         document.getElementById('inv-date').innerText = new Date(enData.created_at).toLocaleDateString();
         
-        let expiryText = 'Lifetime Access';
-        let durationText = 'N/A';
-        if(enData.access_until) {
-            expiryText = new Date(enData.access_until).toLocaleDateString();
-            const months = Math.round((new Date(enData.access_until) - new Date(enData.created_at)) / (1000 * 60 * 60 * 24 * 30));
-            durationText = months + " Months";
-        }
+        let expiryText = enData.access_until ? new Date(enData.access_until).toLocaleDateString() : 'Lifetime Access';
         document.getElementById('inv-expiry').innerText = expiryText;
-        document.getElementById('inv-duration').innerText = durationText;
-
-        // Fetch Academy Details
-        document.getElementById('inv-academy').innerText = "Loading...";
-        document.getElementById('inv-contact').innerText = "Loading...";
-        
-        const { data: cData } = await supabaseClient.from('courses').select('academy_email').eq('title', enData.course_title).limit(1);
-        if(cData && cData.length > 0 && cData[0].academy_email) {
-            const { data: acData } = await supabaseClient.from('academy_profiles').select('*').eq('email', cData[0].academy_email).single();
-            if(acData) {
-                document.getElementById('inv-academy').innerText = acData.academy_name;
-                document.getElementById('inv-contact').innerText = acData.mobile;
-            } else {
-                document.getElementById('inv-academy').innerText = "Admin Published";
-                document.getElementById('inv-contact').innerText = "support@eduportal.com";
-            }
-        } else {
-            document.getElementById('inv-academy').innerText = "Admin Published";
-            document.getElementById('inv-contact').innerText = "support@eduportal.com";
-        }
 
         document.getElementById('invoiceModal').style.display = 'flex';
     }
