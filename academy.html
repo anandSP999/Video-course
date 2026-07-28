@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Academy Studio</title>
-    <!-- Supabase CDN -->
+    <title>Academy Studio Pro</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
@@ -34,16 +33,27 @@
         .content-section { display: none; }
         .content-section.active { display: block; }
         
+        /* Stats Grid */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        .stat-card { background: #fff; padding: 20px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); text-align: center; border-bottom: 4px solid #6f42c1;}
+        .stat-card h3 { margin: 0; font-size: 28px; color: #6f42c1; }
+        .stat-card p { margin: 5px 0 0; color: #666; font-weight: bold; font-size: 14px;}
+
         /* Grid & Cards */
         .grid-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; }
         .course-card { background: #fff; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: flex; flex-direction: column; border-top: 4px solid #6f42c1;}
-        .course-card img { width: 100%; height: 150px; object-fit: cover; }
+        .course-card img { width: 100%; height: 150px; object-fit: cover; background:#ddd;}
         .course-card-content { padding: 15px; flex: 1;}
         .course-card h4 { margin: 0 0 10px; font-size: 18px; }
+        .status-badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; color: white;}
+        .status-pending { background: #ffc107; color: black; }
+        .status-approved { background: #28a745; }
+        .status-rejected { background: #dc3545; }
         .action-row { display: flex; gap: 10px; padding: 10px 15px; background: #f9f9f9; border-top: 1px solid #eee;}
 
-        /* Chapter List UI (Scrolling, Left Image, Right Title) */
+        /* Chapter List & Sales List UI */
         .chapter-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #eee;}
+        .list-card { background: #fff; border-radius: 10px; padding: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 15px; border-left: 4px solid #6f42c1; }
         .scrolling-list { max-height: 60vh; overflow-y: auto; padding-right: 5px;}
         .chapter-item { display: flex; align-items: center; background: #fff; margin-bottom: 10px; border-radius: 8px; padding: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         .chapter-img { width: 110px; height: 65px; border-radius: 6px; object-fit: cover; background: #000; margin-right: 15px; }
@@ -85,6 +95,7 @@
             <div class="sidebar-header">Academy Studio</div>
             <div class="menu-item active" onclick="switchMenu('dashboard')">📊 Dashboard</div>
             <div class="menu-item" onclick="switchMenu('mycourses')">📂 Manage Courses</div>
+            <div class="menu-item" onclick="switchMenu('history')">💰 Sales History</div>
             <div class="menu-item" onclick="switchMenu('profile')">⚙️ Profile Settings</div>
         </div>
 
@@ -92,8 +103,15 @@
             <!-- 1. Dashboard -->
             <div id="content-dashboard" class="content-section active">
                 <h2>Welcome Academy</h2>
-                <div style="background:#fff; padding:20px; border-radius:10px; box-shadow:0 2px 8px rgba(0,0,0,0.05);">
-                    <p><strong>Note:</strong> Pura system dynamic ho chuka hai. Pehle ek 'Main Course' banayein, fir uske andar 'Chapters/Episodes' add karein.</p>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3 id="stat-courses">0</h3>
+                        <p>Total Courses</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3 id="stat-sales">0</h3>
+                        <p>Total Enrollments</p>
+                    </div>
                 </div>
             </div>
 
@@ -108,7 +126,7 @@
                     <div id="course-list" class="grid-cards">Loading...</div>
                 </div>
 
-                <!-- Chapter Manager View (Hidden by default) -->
+                <!-- Chapter Manager View -->
                 <div id="chapter-manager-view" style="display:none;">
                     <div class="chapter-header">
                         <div>
@@ -123,17 +141,27 @@
                 </div>
             </div>
 
-            <!-- 3. Profile -->
+            <!-- 3. Sales History Tab -->
+            <div id="content-history" class="content-section">
+                <h2>Enrollment & Sales Analytics</h2>
+                <p style="color:#666; font-size:14px;">See how many students purchased your courses.</p>
+                <div id="sales-list">Loading history...</div>
+            </div>
+
+            <!-- 4. Profile -->
             <div id="content-profile" class="content-section">
-                <h2>Academy Profile</h2>
+                <h2>Academy Profile Details</h2>
                 <div style="background:#fff; padding:20px; border-radius:10px;">
                     <form onsubmit="saveProfile(event)">
-                        <div class="form-group"><label>Academy Name</label><input type="text" id="aName" required></div>
+                        <div class="form-group"><label>Academy / Channel Name</label><input type="text" id="aName" required></div>
                         <div class="form-group"><label>Instructor Name</label><input type="text" id="aTeacher" required></div>
                         <div class="form-group"><label>Mobile Number</label><input type="tel" id="aMobile" required></div>
-                        <button type="submit" class="btn btn-success">Update Profile</button>
+                        <div class="form-group"><label>Full Address Proof (Location)</label><textarea id="aAddress" rows="2" placeholder="Enter complete address..." required></textarea></div>
+                        <div class="form-group"><label>Bank Details / UPI ID (For Earnings)</label><textarea id="aPayment" rows="2" placeholder="A/C No, IFSC or UPI ID..." required></textarea></div>
+                        
+                        <button type="submit" class="btn btn-success">💾 Save & Update Profile</button>
                     </form>
-                    <button class="btn btn-danger" onclick="logoutUser()" style="margin-top:20px;">Logout</button>
+                    <button class="btn btn-danger" onclick="logoutUser()" style="margin-top:30px;">🚪 Logout Account</button>
                 </div>
             </div>
         </div>
@@ -141,6 +169,7 @@
         <div class="bottom-nav">
             <div class="nav-tab active" onclick="switchMenu('dashboard')">📊<br>Dash</div>
             <div class="nav-tab" onclick="switchMenu('mycourses')">📂<br>Courses</div>
+            <div class="nav-tab" onclick="switchMenu('history')">💰<br>Sales</div>
             <div class="nav-tab" onclick="switchMenu('profile')">⚙️<br>Profile</div>
         </div>
     </div>
@@ -169,7 +198,7 @@
         <h3 id="chModalTitle">Add New Chapter</h3>
         <form onsubmit="saveChapter(event)">
             <input type="hidden" id="chId">
-            <div class="form-group"><label>Chapter / Episode Title</label><input type="text" id="chTitle" placeholder="e.g. Ep 1: Introduction" required></div>
+            <div class="form-group"><label>Chapter Title</label><input type="text" id="chTitle" required></div>
             <div class="form-group"><label>YouTube Video URL</label><input type="url" id="chVideo" required></div>
             <div class="form-group"><label>Study Notes (Optional)</label><textarea id="chNotes" rows="2"></textarea></div>
             <div class="form-group">
@@ -228,7 +257,7 @@
     function showDashboard() {
         document.getElementById('auth-section').style.display = 'none';
         document.getElementById('dashboard-section').style.display = 'block';
-        loadProfile(); loadCourses();
+        loadProfile(); loadCourses(); loadSalesHistory();
     }
     function switchMenu(menuId) {
         document.querySelectorAll('.content-section').forEach(c => c.classList.remove('active'));
@@ -245,16 +274,19 @@
             document.getElementById('aName').value = data.academy_name || "";
             document.getElementById('aTeacher').value = data.teacher_name || "";
             document.getElementById('aMobile').value = data.mobile || "";
+            document.getElementById('aAddress').value = data.location || "";
+            document.getElementById('aPayment').value = data.payment_details || "";
         }
     }
     async function saveProfile(e) {
         e.preventDefault();
         const profileData = {
             email: currentUserEmail, academy_name: document.getElementById('aName').value,
-            teacher_name: document.getElementById('aTeacher').value, mobile: document.getElementById('aMobile').value
+            teacher_name: document.getElementById('aTeacher').value, mobile: document.getElementById('aMobile').value,
+            location: document.getElementById('aAddress').value, payment_details: document.getElementById('aPayment').value
         };
         await supabaseClient.from('academy_profiles').upsert([profileData], { onConflict: 'email' });
-        alert("Profile Updated!");
+        alert("Profile Setup Complete!");
     }
 
     // --- COURSE MANAGEMENT ---
@@ -262,19 +294,26 @@
         const list = document.getElementById('course-list');
         const { data: courses } = await supabaseClient.from('courses').select('*').eq('academy_email', currentUserEmail).order('created_at', { ascending: false });
         
+        document.getElementById('stat-courses').innerText = courses ? courses.length : 0;
         if(!courses || courses.length === 0) { list.innerHTML = '<p>No courses created yet.</p>'; return; }
         
         list.innerHTML = '';
         courses.forEach(c => {
+            // Status Color Logic
+            let statusClass = 'status-pending';
+            let statusText = c.status || 'Pending';
+            if(statusText === 'Approved') statusClass = 'status-approved';
+            else if(statusText === 'Rejected') statusClass = 'status-rejected';
+
             list.innerHTML += `
                 <div class="course-card">
-                    <img src="${c.thumbnail_url || 'https://via.placeholder.com/400x200?text=No+Thumbnail'}" alt="Course Cover">
+                    <img src="${c.thumbnail_url || 'https://via.placeholder.com/400x200?text=No+Thumbnail'}" alt="Cover">
                     <div class="course-card-content">
                         <h4>${c.title}</h4>
-                        <p style="font-size:13px; color:${c.status==='Approved'?'green':'orange'};">Status: ${c.status}</p>
+                        <p style="margin:0;"><span class="status-badge ${statusClass}">${statusText}</span></p>
                     </div>
                     <div class="action-row">
-                        <button class="btn btn-primary btn-small" onclick="openChapterManager(${c.id}, '${c.title}')" style="flex:1;">View Chapters</button>
+                        <button class="btn btn-primary btn-small" onclick="openChapterManager(${c.id}, '${c.title}')" style="flex:1;">Chapters</button>
                         <button class="btn btn-secondary btn-small" onclick="editCourse(${c.id}, '${c.title}', '${c.thumbnail_url}')">✎ Edit</button>
                         <button class="btn btn-danger btn-small" onclick="deleteCourse(${c.id})">🗑</button>
                     </div>
@@ -311,7 +350,7 @@
         }
     }
 
-    // --- CHAPTER / EPISODE MANAGEMENT ---
+    // --- CHAPTER MANAGEMENT ---
     function openChapterManager(courseId, courseTitle) {
         currentActiveCourseId = courseId;
         document.getElementById('manager-course-title').innerText = courseTitle;
@@ -325,12 +364,10 @@
         document.getElementById('course-grid-view').style.display = 'block';
         loadCourses();
     }
-
     function extractYTThumbnail(url) {
         let videoId = (url.includes('v=')) ? url.split('v=')[1].split('&')[0] : (url.includes('youtu.be/') ? url.split('youtu.be/')[1].split('?')[0] : null);
         return videoId ? `https://img.youtube.com/vi/${videoId}/hqdefault.jpg` : 'https://via.placeholder.com/150x100?text=Video';
     }
-
     async function loadChapters() {
         const list = document.getElementById('chapter-list');
         list.innerHTML = 'Loading chapters...';
@@ -356,7 +393,6 @@
             `;
         });
     }
-
     function openChapterModal() {
         document.getElementById('chId').value = ""; document.getElementById('chTitle').value = ""; document.getElementById('chVideo').value = ""; document.getElementById('chNotes').value = "";
         document.getElementById('chType').value = "Free"; document.getElementById('chPrice').value = "0"; document.getElementById('chPriceDiv').style.display = 'none';
@@ -390,6 +426,41 @@
             await supabaseClient.from('chapters').delete().eq('id', id);
             loadChapters();
         }
+    }
+
+    // --- SALES & ANALYTICS ---
+    async function loadSalesHistory() {
+        const list = document.getElementById('sales-list');
+        
+        // Find courses uploaded by this academy
+        const { data: myCourses } = await supabaseClient.from('courses').select('title').eq('academy_email', currentUserEmail);
+        if(!myCourses || myCourses.length === 0) {
+            list.innerHTML = '<p>No active courses found.</p>';
+            return;
+        }
+
+        const courseTitles = myCourses.map(c => c.title);
+
+        // Get enrollments matching those courses
+        const { data: sales, error } = await supabaseClient.from('enrollments').select('*').in('course_title', courseTitles).order('created_at', { ascending: false });
+        
+        if (error) { list.innerHTML = '<p>Error loading analytics.</p>'; return; }
+        
+        document.getElementById('stat-sales').innerText = sales ? sales.length : 0;
+
+        if (!sales || sales.length === 0) { list.innerHTML = '<p>No enrollments or sales yet.</p>'; return; }
+
+        list.innerHTML = '';
+        sales.forEach(sale => {
+            list.innerHTML += `
+                <div class="list-card">
+                    <h4 style="margin:0 0 5px; font-size:16px;">${sale.course_title}</h4>
+                    <p style="margin:3px 0; font-size:14px;"><strong>Student Email:</strong> ${sale.user_email}</p>
+                    <p style="margin:3px 0; font-size:14px;"><strong>Amount:</strong> ${sale.course_price === 'Free' ? 'Free Enrollment' : '₹' + sale.course_price}</p>
+                    <p style="margin:3px 0; font-size:12px; color:#888;">Date: ${new Date(sale.created_at).toLocaleString()}</p>
+                </div>
+            `;
+        });
     }
 
     window.onload = checkSession;
