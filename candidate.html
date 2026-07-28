@@ -3,233 +3,347 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Candidate Portal - Login</title>
+    <title>Candidate Portal - Dynamic Dashboard</title>
     <!-- Supabase CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 15px; background: #f4f7f6; }
-        .container { max-width: 600px; margin: auto; background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
-        h2 { text-align: center; color: #333; }
+        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { margin: 0; padding: 0; background: #f4f7f6; color: #333; }
         
         /* Auth Styles */
         .auth-container { max-width: 400px; margin: 50px auto; background: #fff; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
         .form-group { margin-bottom: 15px; }
         .form-group label { display: block; margin-bottom: 5px; font-weight: bold; color: #555; }
-        .form-group input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 16px; }
+        .form-group input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 16px; }
         .auth-btn { width: 100%; padding: 14px; background: #007bff; color: white; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; }
-        .auth-btn:active { background: #0056b3; }
-        .toggle-link { text-align: center; margin-top: 15px; color: #007bff; cursor: pointer; font-size: 15px; text-decoration: underline; font-weight: bold;}
+        .toggle-link { text-align: center; margin-top: 15px; color: #007bff; cursor: pointer; font-size: 15px; font-weight: bold; text-decoration: underline;}
+
+        /* --- Dynamic Dashboard Layout (PC) --- */
+        #dashboard-section { display: none; height: 100vh; }
+        .dashboard-layout { display: flex; height: 100%; }
         
-        /* Dashboard Styles */
-        .tabs { display: flex; margin-bottom: 20px; border-bottom: 2px solid #eee; }
-        .tab { padding: 12px 20px; cursor: pointer; flex: 1; text-align: center; color: #666; font-weight: bold; }
-        .tab.active { border-bottom: 3px solid #007bff; color: #007bff; }
-        .content { display: none; }
-        .content.active { display: block; }
-        .course-card { border: 1px solid #eee; padding: 15px; margin-bottom: 15px; border-radius: 10px; background: #fafafa; }
-        .course-card h4 { margin-top: 0; color: #222; }
-        iframe { width: 100%; height: 220px; border: none; border-radius: 8px; margin-top: 10px; }
-        .btn { padding: 12px; background: #28a745; color: white; border: none; border-radius: 6px; cursor: pointer; width: 100%; font-weight: bold; font-size: 16px; margin-top: 10px; }
+        /* Sidebar (PC) */
+        .sidebar { width: 260px; background: #fff; box-shadow: 2px 0 10px rgba(0,0,0,0.05); display: flex; flex-direction: column; }
+        .sidebar-header { padding: 20px; font-size: 22px; font-weight: bold; color: #007bff; border-bottom: 1px solid #eee; text-align: center; }
+        .menu-item { padding: 18px 20px; font-size: 16px; font-weight: bold; color: #555; cursor: pointer; border-bottom: 1px solid #f9f9f9; }
+        .menu-item:hover, .menu-item.active { background: #f0f7ff; color: #007bff; border-left: 4px solid #007bff; }
+        
+        /* Main Content */
+        .main-content { flex: 1; padding: 30px; overflow-y: auto; }
+        .content-section { display: none; }
+        .content-section.active { display: block; }
+        
+        /* Search Bar */
+        .search-bar { width: 100%; padding: 14px; border-radius: 8px; border: 1px solid #ccc; font-size: 16px; margin-bottom: 20px; background: #fff; }
+
+        /* Course Cards */
+        .courses-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+        .course-card { background: #fff; border-radius: 10px; padding: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .course-card h4 { margin: 0 0 10px 0; font-size: 18px; }
+        iframe { width: 100%; height: 200px; border: none; border-radius: 8px; background: #000; }
+        
+        /* Buttons */
+        .btn { padding: 12px; border: none; border-radius: 6px; cursor: pointer; width: 100%; font-weight: bold; font-size: 16px; margin-top: 15px; color: white;}
+        .btn-free { background: #28a745; }
         .btn-pay { background: #007bff; }
-        .btn-logout { background: #dc3545; margin-top: 20px; }
+        .btn-save { background: #17a2b8; width: auto; padding: 10px 20px; }
+        .btn-logout { background: #dc3545; width: auto; padding: 10px 20px; margin-top: 20px;}
+
+        /* --- Mobile Layout (Bottom Nav) --- */
+        .bottom-nav { display: none; }
+        
+        @media (max-width: 768px) {
+            .dashboard-layout { flex-direction: column; }
+            .sidebar { display: none; } /* Hide sidebar on mobile */
+            .main-content { padding: 15px; padding-bottom: 80px; }
+            .courses-grid { grid-template-columns: 1fr; }
+            
+            /* Bottom Navigation Bar */
+            .bottom-nav { display: flex; position: fixed; bottom: 0; left: 0; width: 100%; background: #fff; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); z-index: 1000; }
+            .nav-tab { flex: 1; text-align: center; padding: 15px 0; font-size: 14px; font-weight: bold; color: #666; cursor: pointer; border-top: 3px solid transparent;}
+            .nav-tab.active { color: #007bff; border-top: 3px solid #007bff; background: #f0f7ff; }
+        }
     </style>
 </head>
 <body>
 
 <!-- === AUTHENTICATION SECTION === -->
 <div id="auth-section" class="auth-container">
-    <h2 id="auth-title">Sign In</h2>
+    <h2 id="auth-title">Candidate Login</h2>
     <div id="auth-error" style="color: #dc3545; text-align: center; margin-bottom: 15px; font-weight: bold;"></div>
     
     <div class="form-group">
         <label>Email Address</label>
-        <input type="email" id="auth-email" placeholder="Enter your email" required>
+        <input type="email" id="auth-email" placeholder="Enter email" required>
     </div>
     <div class="form-group">
         <label>Password</label>
         <input type="password" id="auth-password" placeholder="Min 6 characters" required>
     </div>
-    <button class="auth-btn" id="auth-submit-btn" onclick="handleAuth()">Login</button>
-    
-    <div class="toggle-link" onclick="toggleAuthMode()" id="auth-toggle-text">New here? Create ID (Sign Up)</div>
+    <button class="auth-btn" id="auth-submit-btn" onclick="handleAuth()">Login to Dashboard</button>
+    <div class="toggle-link" onclick="toggleAuthMode()" id="auth-toggle-text">New Candidate? Create Account</div>
 </div>
 
 <!-- === MAIN DASHBOARD SECTION === -->
-<div id="dashboard-section" class="container" style="display: none;">
-    <h2>Student Portal</h2>
-    <div class="tabs">
-        <div class="tab active" onclick="switchTab('courses')">All Courses</div>
-        <div class="tab" onclick="switchTab('profile')">My Profile</div>
-    </div>
+<div id="dashboard-section">
+    <div class="dashboard-layout">
+        
+        <!-- PC Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">EduPortal</div>
+            <div class="menu-item active" onclick="switchMenu('courses')">📚 All Courses</div>
+            <div class="menu-item" onclick="switchMenu('subscriptions')">✅ My Subscriptions</div>
+            <div class="menu-item" onclick="switchMenu('profile')">👤 My Profile</div>
+        </div>
 
-    <div id="courses" class="content active">
-        <div id="course-list">Loading courses... Please wait.</div>
-    </div>
+        <!-- Main Content Area -->
+        <div class="main-content">
+            
+            <!-- 1. All Courses Tab -->
+            <div id="content-courses" class="content-section active">
+                <h2>Explore Courses</h2>
+                <input type="text" id="search-input" class="search-bar" placeholder="🔍 Search courses by name..." onkeyup="searchCourses()">
+                <div id="course-list" class="courses-grid">Loading courses...</div>
+            </div>
 
-    <div id="profile" class="content">
-        <h3>My Profile</h3>
-        <p><strong>Email ID:</strong> <span id="user-email-display" style="color:#007bff; font-weight:bold;">Loading...</span></p>
-        <p><strong>Mobile Number:</strong> Update pending</p>
-        <hr>
-        <button class="btn btn-logout" onclick="logoutUser()">Logout Account</button>
+            <!-- 2. My Subscriptions Tab -->
+            <div id="content-subscriptions" class="content-section">
+                <h2>My Subscriptions</h2>
+                <div id="my-subs-list" class="courses-grid">Loading your courses...</div>
+            </div>
+
+            <!-- 3. Profile Tab -->
+            <div id="content-profile" class="content-section">
+                <h2>Candidate Profile</h2>
+                <div style="background:#fff; padding:20px; border-radius:10px; box-shadow:0 2px 8px rgba(0,0,0,0.05);">
+                    <p><strong>Email ID:</strong> <span id="user-email-display" style="color:#007bff;">Loading...</span></p>
+                    
+                    <div class="form-group" style="margin-top:20px;">
+                        <label>Update Mobile Number</label>
+                        <input type="tel" id="user-mobile" placeholder="+91 XXXXX XXXXX" style="max-width:300px;">
+                        <br>
+                        <button class="btn btn-save" onclick="updateMobile()">💾 Save Number</button>
+                        <span id="mobile-msg" style="color:green; margin-left:10px; font-weight:bold;"></span>
+                    </div>
+
+                    <hr style="margin: 30px 0; border:1px solid #eee;">
+                    <button class="btn btn-logout" onclick="logoutUser()">🚪 Logout Account</button>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Mobile Bottom Navigation -->
+        <div class="bottom-nav">
+            <div class="nav-tab active" onclick="switchMenu('courses')">📚<br>Courses</div>
+            <div class="nav-tab" onclick="switchMenu('subscriptions')">✅<br>My Subs</div>
+            <div class="nav-tab" onclick="switchMenu('profile')">👤<br>Profile</div>
+        </div>
+
     </div>
 </div>
 
 <script>
-    // Aapki Sahi Supabase API Details
+    // Supabase Setup
     const SUPABASE_URL = 'https://goqmkifenqeussjcgdub.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdvcW1raWZlbnFldXNzamNnZHViIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUxNTIyNDMsImV4cCI6MjEwMDcyODI0M30.7lp9uJuJTfO5Wf0V59kGv4GGqdyk0FBtelOUu6UD7ic'; 
-    
-    // Naming conflict bachane ke liye 'supabaseClient' use kiya hai
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+    let currentUserEmail = "";
     let isSignUpMode = false;
 
-    // 1. Check Login Status
+    // --- AUTHENTICATION ---
     async function checkSession() {
-        const { data: { session }, error } = await supabaseClient.auth.getSession();
-        
+        const { data: { session } } = await supabaseClient.auth.getSession();
         if (session) {
-            showDashboard(session.user.email);
+            currentUserEmail = session.user.email;
+            showDashboard();
         } else {
             document.getElementById('auth-section').style.display = 'block';
             document.getElementById('dashboard-section').style.display = 'none';
         }
     }
 
-    // 2. Toggle Login / Sign Up
     function toggleAuthMode() {
         isSignUpMode = !isSignUpMode;
         document.getElementById('auth-error').innerText = '';
-        
-        if (isSignUpMode) {
-            document.getElementById('auth-title').innerText = "Create New ID";
-            document.getElementById('auth-submit-btn').innerText = "Sign Up Now";
-            document.getElementById('auth-toggle-text').innerText = "Already have an account? Sign In";
-        } else {
-            document.getElementById('auth-title').innerText = "Sign In";
-            document.getElementById('auth-submit-btn').innerText = "Login";
-            document.getElementById('auth-toggle-text').innerText = "New here? Create ID (Sign Up)";
-        }
+        document.getElementById('auth-title').innerText = isSignUpMode ? "Create Account" : "Candidate Login";
+        document.getElementById('auth-submit-btn').innerText = isSignUpMode ? "Sign Up Now" : "Login to Dashboard";
+        document.getElementById('auth-toggle-text').innerText = isSignUpMode ? "Already have an account? Login" : "New Candidate? Create Account";
     }
 
-    // 3. Handle Sign In & Sign Up
     async function handleAuth() {
         const email = document.getElementById('auth-email').value;
         const password = document.getElementById('auth-password').value;
         const errorDiv = document.getElementById('auth-error');
         const btn = document.getElementById('auth-submit-btn');
         
-        if(!email || !password) {
-            errorDiv.innerText = "⚠️ Please enter both Email and Password!";
-            return;
-        }
-
-        if(password.length < 6) {
-            errorDiv.innerText = "⚠️ Password must be at least 6 characters!";
-            return;
-        }
-
-        btn.innerText = "Processing...";
-        errorDiv.innerText = "";
+        if(!email || password.length < 6) { errorDiv.innerText = "Valid email and min 6 char password required."; return; }
+        
+        btn.innerText = "Processing..."; errorDiv.innerText = "";
 
         try {
             if (isSignUpMode) {
-                // ID Banane ka logic
-                const { data, error } = await supabaseClient.auth.signUp({ email: email, password: password });
-                
+                const { data, error } = await supabaseClient.auth.signUp({ email, password });
                 if (error) throw error;
-                
-                alert("✅ ID Created Successfully! Dashboard is loading...");
-                showDashboard(data.user.email);
-
+                currentUserEmail = data.user.email;
+                showDashboard();
             } else {
-                // Login karne ka logic
-                const { data, error } = await supabaseClient.auth.signInWithPassword({ email: email, password: password });
-                
+                const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
                 if (error) throw error;
-                
-                showDashboard(data.user.email);
+                currentUserEmail = data.user.email;
+                showDashboard();
             }
         } catch (err) {
-            console.error("Auth Error:", err);
-            errorDiv.innerText = "❌ Error: " + err.message;
-            btn.innerText = isSignUpMode ? "Sign Up Now" : "Login";
+            errorDiv.innerText = "Error: " + err.message;
+            btn.innerText = isSignUpMode ? "Sign Up Now" : "Login to Dashboard";
         }
     }
 
-    // 4. Logout Logic
     async function logoutUser() {
         await supabaseClient.auth.signOut();
-        document.getElementById('auth-email').value = '';
-        document.getElementById('auth-password').value = '';
-        document.getElementById('auth-section').style.display = 'block';
-        document.getElementById('dashboard-section').style.display = 'none';
-        alert("Logged out successfully!");
+        location.reload(); // Reload page to clear state
     }
 
-    // 5. Show Dashboard Screen
-    function showDashboard(userEmail) {
+    // --- DASHBOARD UI ---
+    function showDashboard() {
         document.getElementById('auth-section').style.display = 'none';
         document.getElementById('dashboard-section').style.display = 'block';
-        document.getElementById('user-email-display').innerText = userEmail || "Candidate";
-        loadCourses();
-    }
-
-    // 6. Switch Tabs
-    function switchTab(tabId) {
-        document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
-        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-        document.getElementById(tabId).classList.add('active');
-        event.target.classList.add('active');
-    }
-
-    // 7. Load Courses from Supabase
-    async function loadCourses() {
-        const courseList = document.getElementById('course-list');
+        document.getElementById('user-email-display').innerText = currentUserEmail;
         
-        try {
-            const { data: courses, error } = await supabaseClient
-                .from('courses')
-                .select('*')
-                .eq('status', 'Approved')
-                .order('created_at', { ascending: false });
-
-            if (error) throw error;
-
-            if(!courses || courses.length === 0) {
-                courseList.innerHTML = '<p style="text-align:center; color:#666;">No courses available right now.</p>';
-                return;
+        // Fetch User Metadata (Mobile Number)
+        supabaseClient.auth.getUser().then(({ data }) => {
+            if(data.user && data.user.user_metadata && data.user.user_metadata.mobile) {
+                document.getElementById('user-mobile').value = data.user.user_metadata.mobile;
             }
+        });
 
-            courseList.innerHTML = '';
+        loadCourses();
+        loadSubscriptions();
+    }
 
-            courses.forEach(course => {
-                let videoId = "";
-                if(course.video_url.includes('v=')) {
-                    videoId = course.video_url.split('v=')[1].split('&')[0];
-                } else if(course.video_url.includes('youtu.be/')) {
-                    videoId = course.video_url.split('youtu.be/')[1].split('?')[0];
-                }
+    function switchMenu(menuId) {
+        // Hide all sections
+        document.querySelectorAll('.content-section').forEach(c => c.classList.remove('active'));
+        // Remove active class from PC sidebar and Mobile bottom nav
+        document.querySelectorAll('.menu-item').forEach(i => i.classList.remove('active'));
+        document.querySelectorAll('.nav-tab').forEach(i => i.classList.remove('active'));
+        
+        // Activate selected
+        document.getElementById('content-' + menuId).classList.add('active');
+        
+        // Update active states based on text content match
+        document.querySelectorAll('.menu-item, .nav-tab').forEach(el => {
+            if(el.innerHTML.toLowerCase().includes(menuId) || el.innerHTML.toLowerCase().includes(menuId.substring(0,4))) {
+                el.classList.add('active');
+            }
+        });
+    }
 
-                let actionBtn = course.type === 'Free' 
-                    ? `<button class="btn">Watch Free</button>`
-                    : `<button class="btn btn-pay" onclick="payUPI('${course.title}', ${course.price})">Pay ₹${course.price} via UPI/QR</button>`;
+    // --- FUNCTIONALITY ---
 
-                courseList.innerHTML += `
-                    <div class="course-card">
-                        <h4>${course.title} <span style="color: ${course.type === 'Free' ? '#28a745' : '#007bff'}">(${course.type})</span></h4>
-                        ${videoId ? `<iframe src="https://www.youtube.com/embed/${videoId}" allowfullscreen></iframe>` : `<p style="color:red;">Invalid Video URL</p>`}
-                        ${actionBtn}
-                    </div>
-                `;
-            });
-        } catch (err) {
-            courseList.innerHTML = '<p style="color:red; font-weight:bold;">Error loading courses: ' + err.message + '</p>';
+    // 1. Course Search Filter
+    function searchCourses() {
+        let input = document.getElementById('search-input').value.toLowerCase();
+        let cards = document.getElementsByClassName('searchable-course');
+        
+        for (let i = 0; i < cards.length; i++) {
+            let title = cards[i].getAttribute('data-title').toLowerCase();
+            cards[i].style.display = title.includes(input) ? "" : "none";
         }
     }
 
-    // On Page Load
+    // 2. Update Mobile Number
+    async function updateMobile() {
+        const mobile = document.getElementById('user-mobile').value;
+        const msg = document.getElementById('mobile-msg');
+        
+        if(!mobile) { msg.innerText = "Enter number!"; msg.style.color="red"; return; }
+        
+        msg.innerText = "Saving..."; msg.style.color="blue";
+        
+        const { data, error } = await supabaseClient.auth.updateUser({
+            data: { mobile: mobile }
+        });
+
+        if(error) {
+            msg.innerText = "Failed!"; msg.style.color="red";
+        } else {
+            msg.innerText = "Saved Successfully!"; msg.style.color="green";
+            setTimeout(() => msg.innerText="", 3000);
+        }
+    }
+
+    // 3. Load All Courses
+    async function loadCourses() {
+        const courseList = document.getElementById('course-list');
+        const { data: courses, error } = await supabaseClient.from('courses').select('*').eq('status', 'Approved').order('created_at', { ascending: false });
+
+        if (error) { courseList.innerHTML = '<p style="color:red;">Error: ' + error.message + '</p>'; return; }
+        if (!courses || courses.length === 0) { courseList.innerHTML = '<p>No courses found.</p>'; return; }
+
+        courseList.innerHTML = '';
+        courses.forEach(course => {
+            let videoId = (course.video_url.includes('v=')) ? course.video_url.split('v=')[1].split('&')[0] : (course.video_url.includes('youtu.be/') ? course.video_url.split('youtu.be/')[1].split('?')[0] : "");
+
+            let actionBtn = course.type === 'Free' 
+                ? `<button class="btn btn-free" onclick="enrollCourse('${course.title}', 'Free')">Add to My Subs (Free)</button>`
+                : `<button class="btn btn-pay" onclick="enrollCourse('${course.title}', '${course.price}')">Pay ₹${course.price} via UPI</button>`;
+
+            courseList.innerHTML += `
+                <div class="course-card searchable-course" data-title="${course.title}">
+                    <h4>${course.title} <span style="color: ${course.type==='Free'?'#28a745':'#007bff'}">(${course.type})</span></h4>
+                    ${videoId ? `<iframe src="https://www.youtube.com/embed/${videoId}" allowfullscreen></iframe>` : `<p>Invalid Video URL</p>`}
+                    ${actionBtn}
+                </div>
+            `;
+        });
+    }
+
+    // 4. Enroll / Purchase Course (Saves to Subscriptions)
+    async function enrollCourse(title, price) {
+        if(price !== 'Free') {
+            alert(`Scan QR to pay ₹${price} for "${title}".\n(Saving as pending verification...)`);
+        }
+        
+        const { data, error } = await supabaseClient.from('enrollments').insert([
+            { user_email: currentUserEmail, course_title: title, course_price: price }
+        ]);
+
+        if(error) {
+            alert("Error saving subscription: " + error.message);
+        } else {
+            alert(`"${title}" added to your Subscriptions!`);
+            loadSubscriptions(); // Refresh list
+        }
+    }
+
+    // 5. Load My Subscriptions
+    async function loadSubscriptions() {
+        const subsList = document.getElementById('my-subs-list');
+        const { data: subs, error } = await supabaseClient.from('enrollments').select('*').eq('user_email', currentUserEmail).order('created_at', { ascending: false });
+
+        if (error) { subsList.innerHTML = '<p>Error loading subscriptions.</p>'; return; }
+        if (!subs || subs.length === 0) { subsList.innerHTML = '<p>You have not purchased any courses yet.</p>'; return; }
+
+        subsList.innerHTML = '';
+        subs.forEach(sub => {
+            let statusHTML = sub.course_price === 'Free' 
+                ? `<span style="background:#28a745; color:white; padding:3px 8px; border-radius:4px; font-size:12px;">Active</span>`
+                : `<span style="background:#ffc107; color:black; padding:3px 8px; border-radius:4px; font-size:12px;">Payment Pending</span>`;
+
+            subsList.innerHTML += `
+                <div class="course-card" style="border-left: 4px solid #007bff;">
+                    <h4 style="margin-bottom:5px;">${sub.course_title}</h4>
+                    <p style="margin:5px 0; color:#555;"><strong>Type:</strong> ${sub.course_price === 'Free' ? 'Free Course' : 'Paid (₹' + sub.course_price + ')'}</p>
+                    <p style="margin:0;"><strong>Status:</strong> ${statusHTML}</p>
+                    <button class="btn btn-free" style="margin-top:10px;">Go to Course Content</button>
+                </div>
+            `;
+        });
+    }
+
+    // Start App
     window.onload = checkSession;
 </script>
 </body>
