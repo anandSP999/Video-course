@@ -95,30 +95,37 @@
         /* Professional Certificate Design (Hidden until print) */
         #certificate-container { display: none; }
         
-        /* Intelligent Print Media Queries */
+        /* INTELLIGENT PRINT MEDIA QUERIES (FIXED FOR INVOICE & CERTIFICATE) */
         @media print {
-            body * { visibility: hidden; }
+            /* Hide all standard UI elements */
+            .btn, .close-btn, .card-actions, .bottom-nav, .sidebar { display: none !important; }
             
-            /* If Certificate Print */
-            body.print-cert #certificate-container, body.print-cert #certificate-container * { visibility: visible; }
+            /* Logic for Certificate Print */
+            body.print-cert > *:not(#certificate-container) { display: none !important; }
             body.print-cert #certificate-container { 
-                display: flex !important; position: absolute; left: 0; top: 0; width: 1123px; height: 794px; 
+                display: flex !important; position: static; width: 100%; min-height: 100vh;
                 background: url('https://www.transparenttextures.com/patterns/cream-paper.png'), linear-gradient(135deg, #ffffff, #f3f3f3); 
-                border: 20px solid #2c3e50; padding: 50px; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: #2c3e50; font-family: 'Times New Roman', serif;
+                border: 15px solid #2c3e50; padding: 40px; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: #2c3e50; font-family: 'Times New Roman', serif;
             }
-            body.print-cert .cert-header { font-size: 65px; font-weight: bold; text-transform: uppercase; letter-spacing: 5px; color: #c0392b; margin-bottom: 20px;}
-            body.print-cert .cert-sub { font-size: 25px; font-style: italic; margin-bottom: 40px; }
-            body.print-cert .cert-name { font-size: 55px; font-weight: bold; text-decoration: underline; margin-bottom: 30px; font-family: 'Arial', sans-serif;}
-            body.print-cert .cert-desc { font-size: 22px; max-width: 800px; line-height: 1.6; margin-bottom: 50px; }
-            body.print-cert .cert-footer { display: flex; justify-content: space-between; width: 80%; margin-top: auto; padding-top: 30px; border-top: 2px solid #2c3e50;}
-            body.print-cert .cert-footer div { text-align: center; font-size: 18px; font-weight: bold;}
-            body.print-cert .cert-stamp { width: 120px; height: 120px; background: gold; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: bold; text-align: center; border: 4px dashed #c0392b; position: absolute; bottom: 80px; right: 100px; color:#c0392b;}
-            
-            /* If Invoice Print */
-            body.print-inv #invoiceModal, body.print-inv #invoiceModal * { visibility: visible; }
-            body.print-inv #invoiceModal { position: absolute; left: 0; top: 0; width: 100%; background: white; padding: 20px;}
-            
-            .btn, .close-btn, .card-actions { display: none !important; }
+            body.print-cert .cert-header { font-size: 45px; font-weight: bold; text-transform: uppercase; letter-spacing: 3px; color: #c0392b; margin-bottom: 15px;}
+            body.print-cert .cert-sub { font-size: 20px; font-style: italic; margin-bottom: 30px; }
+            body.print-cert .cert-name { font-size: 40px; font-weight: bold; text-decoration: underline; margin-bottom: 25px; font-family: 'Arial', sans-serif;}
+            body.print-cert .cert-desc { font-size: 18px; max-width: 90%; line-height: 1.6; margin-bottom: 40px; }
+            body.print-cert .cert-footer { display: flex; justify-content: space-between; width: 90%; padding-top: 20px; border-top: 2px solid #2c3e50; margin-top: auto;}
+            body.print-cert .cert-footer div { text-align: center; font-size: 16px; font-weight: bold;}
+            body.print-cert .cert-stamp { width: 100px; height: 100px; background: gold; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; text-align: center; border: 3px dashed #c0392b; position: absolute; bottom: 50px; right: 50px; color:#c0392b;}
+
+            /* Logic for Invoice Print */
+            body.print-inv > *:not(#invoiceModal) { display: none !important; }
+            body.print-inv #invoiceModal { 
+                display: block !important; position: static; background: white; width: 100%; height: auto; padding: 20px;
+            }
+            body.print-inv #invoiceModal .modal-content {
+                width: 100%; max-width: 100%; box-shadow: none; padding: 0; text-align: left;
+            }
+            body.print-inv .invoice-box { border: 1px solid #333; padding: 20px; background: white; }
+            body.print-inv .helpdesk-box { border: 1px solid #333; background: white; color: #333;}
+            body.print-inv h2 { color: #333 !important; }
         }
 
         /* Mobile Nav */
@@ -227,7 +234,7 @@
             <!-- 3. Subscriptions (My Learning) Tab -->
             <div id="content-subscriptions" class="content-section">
                 <h2 style="margin-top:0;">My Learning History</h2>
-                <p style="font-size:13px; color:#666;">Click on any active course to download its PDF Invoice.</p>
+                <p style="font-size:13px; color:#666;">Click on active courses to view/download Invoice details.</p>
                 <div id="my-subs-list" class="grid-cards"></div>
             </div>
 
@@ -365,7 +372,7 @@
     async function checkSession() {
         const { data: { session } } = await supabaseClient.auth.getSession();
         const urlParams = new URLSearchParams(window.location.search);
-        const sharedCourseId = urlParams.get('courseId'); // Look for shared course link
+        const sharedCourseId = urlParams.get('courseId');
 
         if (session) {
             currentUserEmail = session.user.email;
@@ -376,7 +383,6 @@
             await loadUserAccess(); 
             showDashboard();
             
-            // Auto open course if link was shared
             if(sharedCourseId) openCourse(sharedCourseId);
         } else {
             document.getElementById('auth-section').style.display = 'block';
@@ -407,7 +413,6 @@
         document.getElementById('dashboard-section').style.display = 'block';
         document.getElementById('user-email-display').innerText = currentUserEmail;
         
-        // Fetch and show Mobile
         const { data } = await supabaseClient.auth.getUser();
         if(data?.user?.user_metadata?.mobile) document.getElementById('user-mobile').value = data.user.user_metadata.mobile;
 
@@ -450,7 +455,7 @@
             container.innerHTML += `
                 <div class="course-card searchable-card" data-title="${c.title.toLowerCase()}" onclick="openCourse(${c.id})">
                     <div class="card-actions">
-                        <button class="icon-btn ${isFav ? 'active' : ''}" onclick="toggleFavorite(event, ${c.id})" title="Favorite">❤️</button>
+                        <button class="icon-btn ${isFav ? 'active' : ''}" onclick="toggleFavorite(event, ${c.id})">❤️</button>
                         <button class="icon-btn" onclick="shareCourse(event, ${c.id})" title="Share Course">🔗</button>
                     </div>
                     <img src="${c.thumbnail_url || 'https://via.placeholder.com/400x200?text=Course'}">
@@ -485,18 +490,12 @@
         else renderCourseGrid(favData, favList);
     }
     
-    // SHARE BUTTON LOGIC RESTORED
     function shareCourse(e, courseId) {
-        e.stopPropagation(); // prevent opening the course
+        e.stopPropagation();
         const shareUrl = `${window.location.origin}${window.location.pathname}?courseId=${courseId}`;
-        
         if (navigator.share) {
-            navigator.share({
-                title: 'Check out this amazing course!',
-                url: shareUrl
-            }).catch(console.error);
+            navigator.share({ title: 'Check out this amazing course!', url: shareUrl }).catch(console.error);
         } else {
-            // Fallback for PC
             navigator.clipboard.writeText(shareUrl);
             alert("🔗 Course link copied to clipboard! Share it with friends.");
         }
@@ -521,7 +520,7 @@
         activeCourseData = courseData; 
         document.getElementById('cv-title').innerText = courseData.title;
 
-        // Fetch Academy details for description box
+        // Fetch Academy details
         if(courseData.academy_email) {
             const { data: acData } = await supabaseClient.from('academy_profiles').select('*').eq('email', courseData.academy_email).single();
             if(acData) {
@@ -554,7 +553,6 @@
 
         if(!chapters || chapters.length === 0) { list.innerHTML = '<p>No videos added yet.</p>'; return; }
 
-        // Check if course fully completed
         if(hasAccess && chapters.length > 0 && completedChaptersList.length === chapters.length) {
             document.getElementById('certificate-box').style.display = 'block';
         }
@@ -597,7 +595,6 @@
         }
         document.getElementById('main-player').src = embed;
         
-        // Show Academy Box & Notes
         document.getElementById('cv-academy-info').style.display = 'block';
         if(notes && notes !== 'null' && notes.trim() !== '') {
             document.getElementById('cv-notes').style.display = 'block';
@@ -609,7 +606,6 @@
         
         document.getElementById('progress-action-box').style.display = 'block';
         document.getElementById('quiz-area').style.display = 'none';
-        
         document.getElementById('mark-complete-btn').style.display = completedChaptersList.includes(chapterId) ? 'none' : 'inline-block';
         
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -619,7 +615,6 @@
     async function markChapterComplete() {
         if(!completedChaptersList.includes(activeChapterId)) {
             completedChaptersList.push(activeChapterId);
-            
             await supabaseClient.from('course_progress').upsert({
                 user_email: currentUserEmail, course_id: activeCourseData.id, completed_chapters: completedChaptersList
             }, { onConflict: 'user_email,course_id' });
@@ -637,7 +632,7 @@
         
         qzText.innerText = "Loading assessment..."; qzOpt.innerHTML = "";
         
-        const { data, error } = await supabaseClient.from('quizzes').select('*').eq('chapter_id', activeChapterId).single();
+        const { data } = await supabaseClient.from('quizzes').select('*').eq('chapter_id', activeChapterId).single();
         
         if(!data) {
             qzText.innerText = "No assessment available for this chapter right now.";
@@ -735,7 +730,7 @@
         loadSubscriptions();
     }
 
-    // --- MY SUBSCRIPTIONS & INVOICE ---
+    // --- MY SUBSCRIPTIONS & INVOICE POPUP ---
     async function loadSubscriptions() {
         const list = document.getElementById('my-subs-list');
         const { data } = await supabaseClient.from('enrollments').select('*').eq('user_email', currentUserEmail).order('created_at', { ascending: false });
@@ -744,8 +739,6 @@
             data.forEach(e => {
                 const isActive = e.status === 'Active';
                 let statusHTML = isActive ? `<span class="badge badge-free">Active Access</span>` : `<span class="badge" style="background:#ffc107; color:black;">Pending Approval</span>`;
-                
-                // RESTORED: Clickable card that opens invoice
                 const clickEvt = isActive ? `onclick="openInvoice(${e.id})"` : `onclick="alert('Payment verification pending by Admin.')"`;
 
                 list.innerHTML += `
@@ -774,7 +767,6 @@
         if(enData.access_until) expiryText = new Date(enData.access_until).toLocaleDateString();
         document.getElementById('inv-expiry').innerText = expiryText;
 
-        // Fetch Academy Details for Invoice
         document.getElementById('inv-academy').innerText = "Loading...";
         document.getElementById('inv-contact').innerText = "Loading...";
         
@@ -796,7 +788,7 @@
         document.getElementById('invoiceModal').style.display = 'flex';
     }
 
-    // --- PROFILE UPDATE (Mobile Number restoration) ---
+    // --- PROFILE UPDATE (Mobile Number) ---
     async function updateMobile() {
         const mobile = document.getElementById('user-mobile').value;
         if(!mobile) return alert("Enter valid number");
