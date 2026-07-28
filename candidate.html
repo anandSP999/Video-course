@@ -3,347 +3,535 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Candidate Portal - Dynamic Dashboard</title>
+    <title>Student Portal - Learn & Grow</title>
     <!-- Supabase CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; transition: all 0.3s ease; }
         body { margin: 0; padding: 0; background: #f4f7f6; color: #333; }
         
         /* Auth Styles */
-        .auth-container { max-width: 400px; margin: 50px auto; background: #fff; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        .form-group { margin-bottom: 15px; }
-        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; color: #555; }
-        .form-group input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 16px; }
-        .auth-btn { width: 100%; padding: 14px; background: #007bff; color: white; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; }
-        .toggle-link { text-align: center; margin-top: 15px; color: #007bff; cursor: pointer; font-size: 15px; font-weight: bold; text-decoration: underline;}
+        .auth-container { max-width: 400px; margin: 80px auto; background: #fff; padding: 35px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); transform: translateY(0); animation: slideUp 0.5s ease-out;}
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 8px; font-weight: bold; color: #555; font-size: 14px;}
+        .form-group input { width: 100%; padding: 14px; border: 2px solid #e1e5eb; border-radius: 8px; font-size: 16px; outline: none;}
+        .form-group input:focus { border-color: #007bff; }
+        .auth-btn { width: 100%; padding: 15px; background: linear-gradient(135deg, #007bff, #0056b3); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 15px rgba(0,123,255,0.3);}
+        .auth-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,123,255,0.4); }
+        .toggle-link { text-align: center; margin-top: 20px; color: #007bff; cursor: pointer; font-size: 15px; font-weight: bold;}
 
-        /* --- Dynamic Dashboard Layout (PC) --- */
-        #dashboard-section { display: none; height: 100vh; }
+        /* Dashboard Layout (PC) */
+        #dashboard-section { display: none; height: 100vh; overflow: hidden; }
         .dashboard-layout { display: flex; height: 100%; }
-        
-        /* Sidebar (PC) */
-        .sidebar { width: 260px; background: #fff; box-shadow: 2px 0 10px rgba(0,0,0,0.05); display: flex; flex-direction: column; }
-        .sidebar-header { padding: 20px; font-size: 22px; font-weight: bold; color: #007bff; border-bottom: 1px solid #eee; text-align: center; }
-        .menu-item { padding: 18px 20px; font-size: 16px; font-weight: bold; color: #555; cursor: pointer; border-bottom: 1px solid #f9f9f9; }
-        .menu-item:hover, .menu-item.active { background: #f0f7ff; color: #007bff; border-left: 4px solid #007bff; }
-        
-        /* Main Content */
-        .main-content { flex: 1; padding: 30px; overflow-y: auto; }
-        .content-section { display: none; }
+        .sidebar { width: 280px; background: #fff; box-shadow: 4px 0 15px rgba(0,0,0,0.03); display: flex; flex-direction: column; z-index: 10;}
+        .sidebar-header { padding: 30px 20px; font-size: 24px; font-weight: 800; color: #007bff; border-bottom: 1px solid #f0f0f0; text-align: center; letter-spacing: 1px;}
+        .menu-item { padding: 18px 25px; font-size: 16px; font-weight: bold; color: #666; cursor: pointer; border-left: 4px solid transparent; display: flex; align-items: center; gap: 12px;}
+        .menu-item:hover { background: #f8fbff; color: #007bff; padding-left: 30px;}
+        .menu-item.active { background: #f0f7ff; color: #007bff; border-left-color: #007bff; }
+        .main-content { flex: 1; padding: 30px; overflow-y: auto; background: #f4f7f6; padding-bottom: 100px;}
+        .content-section { display: none; animation: fadeIn 0.4s; }
         .content-section.active { display: block; }
-        
-        /* Search Bar */
-        .search-bar { width: 100%; padding: 14px; border-radius: 8px; border: 1px solid #ccc; font-size: 16px; margin-bottom: 20px; background: #fff; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        /* Course Cards */
-        .courses-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
-        .course-card { background: #fff; border-radius: 10px; padding: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-        .course-card h4 { margin: 0 0 10px 0; font-size: 18px; }
-        iframe { width: 100%; height: 200px; border: none; border-radius: 8px; background: #000; }
+        /* Course Grid & Cards */
+        .grid-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 25px; }
+        .course-card { background: #fff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05); cursor: pointer; position: relative;}
+        .course-card:hover { transform: translateY(-8px); box-shadow: 0 12px 25px rgba(0,0,0,0.1); }
+        .course-card img { width: 100%; height: 160px; object-fit: cover; background: #e9ecef;}
+        .course-card-content { padding: 20px; }
+        .course-card h4 { margin: 0 0 10px; font-size: 18px; color: #222; line-height: 1.3;}
+        .badge { display: inline-block; padding: 5px 10px; border-radius: 6px; font-size: 12px; font-weight: bold; }
+        .badge-free { background: #e8f5e9; color: #2e7d32; }
+        .badge-paid { background: #e3f2fd; color: #1565c0; }
+        
+        .share-btn { position: absolute; top: 10px; right: 10px; background: rgba(255,255,255,0.9); border: none; border-radius: 50%; width: 35px; height: 35px; cursor: pointer; display: flex; justify-content: center; align-items: center; font-size: 18px; box-shadow: 0 2px 5px rgba(0,0,0,0.2);}
+        .share-btn:hover { background: #007bff; color: white;}
+
+        /* Chapter Detail View */
+        .chapter-header { display: flex; align-items: center; gap: 15px; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 2px solid #e1e5eb;}
+        .chapter-header h2 { margin: 0; font-size: 24px;}
+        .video-player-container { background: #000; border-radius: 12px; overflow: hidden; margin-bottom: 20px; aspect-ratio: 16/9; display: none; box-shadow: 0 10px 30px rgba(0,0,0,0.2);}
+        .video-player-container iframe { width: 100%; height: 100%; border: none; }
+        .chapter-list-item { display: flex; align-items: center; background: #fff; padding: 15px; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); cursor: pointer; border-left: 4px solid transparent;}
+        .chapter-list-item:hover { transform: translateX(5px); border-left-color: #007bff; box-shadow: 0 4px 12px rgba(0,0,0,0.08);}
+        .chapter-list-item.locked { opacity: 0.7; cursor: not-allowed; }
+        .chapter-list-item.locked:hover { transform: none; border-left-color: #dc3545;}
+        .ch-thumb { width: 120px; height: 70px; border-radius: 8px; object-fit: cover; margin-right: 15px;}
+        .ch-info { flex: 1; }
+        .ch-info h5 { margin: 0 0 5px; font-size: 16px;}
+        .ch-info p { margin: 0; font-size: 13px; color: #666;}
+
+        /* Payment Modal */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; justify-content: center; align-items: center; backdrop-filter: blur(5px);}
+        .modal-content { background: #fff; padding: 30px; border-radius: 16px; width: 90%; max-width: 400px; text-align: center; animation: slideUp 0.3s;}
+        .qr-code { width: 200px; height: 200px; margin: 20px auto; border: 2px solid #eee; border-radius: 10px; padding: 10px;}
         
         /* Buttons */
-        .btn { padding: 12px; border: none; border-radius: 6px; cursor: pointer; width: 100%; font-weight: bold; font-size: 16px; margin-top: 15px; color: white;}
-        .btn-free { background: #28a745; }
-        .btn-pay { background: #007bff; }
-        .btn-save { background: #17a2b8; width: auto; padding: 10px 20px; }
-        .btn-logout { background: #dc3545; width: auto; padding: 10px 20px; margin-top: 20px;}
+        .btn { padding: 12px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 15px; text-align: center;}
+        .btn-primary { background: #007bff; color: white; }
+        .btn-success { background: #28a745; color: white; }
+        .btn-outline { background: transparent; border: 2px solid #007bff; color: #007bff; }
 
-        /* --- Mobile Layout (Bottom Nav) --- */
+        /* Mobile Layout */
         .bottom-nav { display: none; }
-        
         @media (max-width: 768px) {
             .dashboard-layout { flex-direction: column; }
-            .sidebar { display: none; } /* Hide sidebar on mobile */
-            .main-content { padding: 15px; padding-bottom: 80px; }
-            .courses-grid { grid-template-columns: 1fr; }
-            
-            /* Bottom Navigation Bar */
-            .bottom-nav { display: flex; position: fixed; bottom: 0; left: 0; width: 100%; background: #fff; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); z-index: 1000; }
-            .nav-tab { flex: 1; text-align: center; padding: 15px 0; font-size: 14px; font-weight: bold; color: #666; cursor: pointer; border-top: 3px solid transparent;}
-            .nav-tab.active { color: #007bff; border-top: 3px solid #007bff; background: #f0f7ff; }
+            .sidebar { display: none; }
+            .main-content { padding: 15px; padding-bottom: 90px; }
+            .bottom-nav { display: flex; position: fixed; bottom: 0; left: 0; width: 100%; background: #fff; box-shadow: 0 -5px 20px rgba(0,0,0,0.05); z-index: 1000; border-top-left-radius: 20px; border-top-right-radius: 20px;}
+            .nav-tab { flex: 1; text-align: center; padding: 15px 5px; font-size: 12px; font-weight: bold; color: #888; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 5px;}
+            .nav-tab.active { color: #007bff; }
+            .nav-tab.active::after { content: ''; display: block; width: 20px; height: 4px; background: #007bff; border-radius: 2px; margin-top: 4px;}
+            .share-btn { width: 40px; height: 40px; font-size: 20px;}
         }
     </style>
 </head>
 <body>
 
-<!-- === AUTHENTICATION SECTION === -->
+<!-- === AUTH SECTION === -->
 <div id="auth-section" class="auth-container">
-    <h2 id="auth-title">Candidate Login</h2>
+    <h2 id="auth-title" style="color:#007bff; text-align:center; font-size:28px; margin-top:0;">Student Login</h2>
+    <p style="text-align:center; color:#666; margin-bottom:25px;">Welcome back to EduPortal</p>
     <div id="auth-error" style="color: #dc3545; text-align: center; margin-bottom: 15px; font-weight: bold;"></div>
     
-    <div class="form-group">
-        <label>Email Address</label>
-        <input type="email" id="auth-email" placeholder="Enter email" required>
-    </div>
-    <div class="form-group">
-        <label>Password</label>
-        <input type="password" id="auth-password" placeholder="Min 6 characters" required>
-    </div>
-    <button class="auth-btn" id="auth-submit-btn" onclick="handleAuth()">Login to Dashboard</button>
-    <div class="toggle-link" onclick="toggleAuthMode()" id="auth-toggle-text">New Candidate? Create Account</div>
+    <div class="form-group"><label>Email Address</label><input type="email" id="auth-email" required></div>
+    <div class="form-group"><label>Password</label><input type="password" id="auth-password" required></div>
+    <button class="auth-btn" id="auth-submit-btn" onclick="handleAuth()">Sign In to Dashboard</button>
+    <div class="toggle-link" onclick="toggleAuthMode()" id="auth-toggle-text">New Student? Create Account</div>
 </div>
 
-<!-- === MAIN DASHBOARD SECTION === -->
+<!-- === DASHBOARD SECTION === -->
 <div id="dashboard-section">
     <div class="dashboard-layout">
-        
         <!-- PC Sidebar -->
         <div class="sidebar">
             <div class="sidebar-header">EduPortal</div>
-            <div class="menu-item active" onclick="switchMenu('courses')">📚 All Courses</div>
+            <div class="menu-item active" onclick="switchMenu('courses')">📚 Explore Courses</div>
             <div class="menu-item" onclick="switchMenu('subscriptions')">✅ My Subscriptions</div>
             <div class="menu-item" onclick="switchMenu('profile')">👤 My Profile</div>
         </div>
 
-        <!-- Main Content Area -->
         <div class="main-content">
             
-            <!-- 1. All Courses Tab -->
+            <!-- 1. Explore Courses (Main Grid) -->
             <div id="content-courses" class="content-section active">
-                <h2>Explore Courses</h2>
-                <input type="text" id="search-input" class="search-bar" placeholder="🔍 Search courses by name..." onkeyup="searchCourses()">
-                <div id="course-list" class="courses-grid">Loading courses...</div>
-            </div>
+                <div id="course-grid-view">
+                    <h2 style="font-size:26px; margin-top:0;">Find Your Next Course</h2>
+                    <input type="text" id="searchBar" placeholder="🔍 Search courses..." style="width:100%; padding:15px; border-radius:10px; border:1px solid #ddd; margin-bottom:25px; font-size:16px;" onkeyup="searchCourses()">
+                    <div id="course-list" class="grid-cards">Loading amazing courses...</div>
+                </div>
 
-            <!-- 2. My Subscriptions Tab -->
-            <div id="content-subscriptions" class="content-section">
-                <h2>My Subscriptions</h2>
-                <div id="my-subs-list" class="courses-grid">Loading your courses...</div>
-            </div>
-
-            <!-- 3. Profile Tab -->
-            <div id="content-profile" class="content-section">
-                <h2>Candidate Profile</h2>
-                <div style="background:#fff; padding:20px; border-radius:10px; box-shadow:0 2px 8px rgba(0,0,0,0.05);">
-                    <p><strong>Email ID:</strong> <span id="user-email-display" style="color:#007bff;">Loading...</span></p>
-                    
-                    <div class="form-group" style="margin-top:20px;">
-                        <label>Update Mobile Number</label>
-                        <input type="tel" id="user-mobile" placeholder="+91 XXXXX XXXXX" style="max-width:300px;">
-                        <br>
-                        <button class="btn btn-save" onclick="updateMobile()">💾 Save Number</button>
-                        <span id="mobile-msg" style="color:green; margin-left:10px; font-weight:bold;"></span>
+                <!-- Chapter View (Inside a Course) -->
+                <div id="chapter-view" style="display:none;">
+                    <div class="chapter-header">
+                        <button class="btn btn-outline" style="padding:8px 15px;" onclick="closeChapterView()">⬅ Back</button>
+                        <h2 id="cv-title">Course Title</h2>
                     </div>
 
+                    <!-- Main Video Player Box -->
+                    <div class="video-player-container" id="main-player-box">
+                        <iframe id="main-player" src="" allowfullscreen></iframe>
+                    </div>
+                    
+                    <div id="cv-notes" style="background:#e3f2fd; padding:15px; border-radius:8px; margin-bottom:20px; display:none;">
+                        <strong>Study Notes: </strong> <a id="cv-notes-link" href="#" target="_blank" style="color:#0d47a1;">View Material</a>
+                    </div>
+
+                    <!-- Payment Action Box -->
+                    <div id="payment-box" style="display:none; background:#fff3cd; padding:20px; border-radius:12px; text-align:center; margin-bottom:20px; box-shadow:0 4px 10px rgba(0,0,0,0.05);">
+                        <h3 style="margin-top:0; color:#856404;">Unlock Full Access</h3>
+                        <p>This is a premium course. Purchase now to unlock all videos and materials.</p>
+                        <button class="btn btn-success" style="width:100%; max-width:300px; font-size:18px;" onclick="openPaymentModal()">Pay ₹<span id="pay-amt"></span> via UPI</button>
+                    </div>
+
+                    <div id="chapter-list-container">
+                        <!-- Chapters Load Here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. My Subscriptions -->
+            <div id="content-subscriptions" class="content-section">
+                <h2 style="font-size:26px; margin-top:0;">My Learning</h2>
+                <div id="my-subs-list" class="grid-cards">Loading your courses...</div>
+            </div>
+
+            <!-- 3. Profile -->
+            <div id="content-profile" class="content-section">
+                <h2 style="font-size:26px; margin-top:0;">My Profile</h2>
+                <div style="background:#fff; padding:30px; border-radius:16px; box-shadow:0 4px 15px rgba(0,0,0,0.05);">
+                    <p style="font-size:18px;"><strong>Email ID:</strong> <span id="user-email-display" style="color:#007bff;"></span></p>
+                    <div class="form-group" style="margin-top:25px; max-width:300px;">
+                        <label>Mobile Number</label>
+                        <input type="tel" id="user-mobile" placeholder="+91 XXXXX XXXXX">
+                    </div>
+                    <button class="btn btn-primary" onclick="updateMobile()">💾 Save Details</button>
                     <hr style="margin: 30px 0; border:1px solid #eee;">
-                    <button class="btn btn-logout" onclick="logoutUser()">🚪 Logout Account</button>
+                    <button class="btn" style="background:#dc3545; color:white;" onclick="logoutUser()">🚪 Logout Account</button>
                 </div>
             </div>
 
         </div>
 
-        <!-- Mobile Bottom Navigation -->
+        <!-- Mobile Bottom Nav -->
         <div class="bottom-nav">
-            <div class="nav-tab active" onclick="switchMenu('courses')">📚<br>Courses</div>
-            <div class="nav-tab" onclick="switchMenu('subscriptions')">✅<br>My Subs</div>
-            <div class="nav-tab" onclick="switchMenu('profile')">👤<br>Profile</div>
+            <div class="nav-tab active" onclick="switchMenu('courses')"><span style="font-size:20px;">📚</span> Explore</div>
+            <div class="nav-tab" onclick="switchMenu('subscriptions')"><span style="font-size:20px;">✅</span> My Subs</div>
+            <div class="nav-tab" onclick="switchMenu('profile')"><span style="font-size:20px;">👤</span> Profile</div>
         </div>
+    </div>
+</div>
 
+<!-- === PAYMENT MODAL === -->
+<div id="paymentModal" class="modal">
+    <div class="modal-content">
+        <h3 style="margin-top:0;">Complete Payment</h3>
+        <p style="color:#666;">Scan QR or click pay button from your mobile.</p>
+        
+        <!-- Generated QR Code Image -->
+        <img id="qr-image" class="qr-code" src="" alt="UPI QR Code">
+        
+        <!-- Mobile Pay Button (Hidden on PC usually, but good for mobile users) -->
+        <a id="mobile-pay-btn" href="#" class="btn btn-primary" style="display:block; text-decoration:none; margin-bottom:15px;">Pay via PhonePe / GPay</a>
+        
+        <button class="btn btn-success" style="width:100%; margin-bottom:10px;" onclick="confirmPaymentSent()">I Have Paid ✅</button>
+        <button class="btn btn-outline" style="width:100%;" onclick="document.getElementById('paymentModal').style.display='none'">Cancel</button>
     </div>
 </div>
 
 <script>
-    // Supabase Setup
+    // --- SUPABASE SETUP ---
     const SUPABASE_URL = 'https://goqmkifenqeussjcgdub.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdvcW1raWZlbnFldXNzamNnZHViIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUxNTIyNDMsImV4cCI6MjEwMDcyODI0M30.7lp9uJuJTfO5Wf0V59kGv4GGqdyk0FBtelOUu6UD7ic'; 
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     let currentUserEmail = "";
     let isSignUpMode = false;
+    let activeCourseData = null; // Stores current open course details
+    let userOwnedCourses = []; // List of course titles user has active access to
 
     // --- AUTHENTICATION ---
     async function checkSession() {
         const { data: { session } } = await supabaseClient.auth.getSession();
+        
+        // Handle Share URL Routing (If user clicked a share link)
+        const urlParams = new URLSearchParams(window.location.search);
+        const sharedCourseId = urlParams.get('courseId');
+
         if (session) {
             currentUserEmail = session.user.email;
+            await loadUserAccess(); // Check what they own
             showDashboard();
+            if(sharedCourseId) openCourse(sharedCourseId);
         } else {
             document.getElementById('auth-section').style.display = 'block';
-            document.getElementById('dashboard-section').style.display = 'none';
         }
     }
 
     function toggleAuthMode() {
         isSignUpMode = !isSignUpMode;
         document.getElementById('auth-error').innerText = '';
-        document.getElementById('auth-title').innerText = isSignUpMode ? "Create Account" : "Candidate Login";
-        document.getElementById('auth-submit-btn').innerText = isSignUpMode ? "Sign Up Now" : "Login to Dashboard";
-        document.getElementById('auth-toggle-text').innerText = isSignUpMode ? "Already have an account? Login" : "New Candidate? Create Account";
+        document.getElementById('auth-title').innerText = isSignUpMode ? "Create Account" : "Student Login";
+        document.getElementById('auth-submit-btn').innerText = isSignUpMode ? "Sign Up Now" : "Sign In to Dashboard";
+        document.getElementById('auth-toggle-text').innerText = isSignUpMode ? "Already have an account? Login" : "New Student? Create Account";
     }
 
     async function handleAuth() {
         const email = document.getElementById('auth-email').value;
         const password = document.getElementById('auth-password').value;
-        const errorDiv = document.getElementById('auth-error');
         const btn = document.getElementById('auth-submit-btn');
+        const err = document.getElementById('auth-error');
         
-        if(!email || password.length < 6) { errorDiv.innerText = "Valid email and min 6 char password required."; return; }
+        if(password.length < 6) { err.innerText = "Password min 6 chars"; return; }
         
-        btn.innerText = "Processing..."; errorDiv.innerText = "";
-
+        btn.innerText = "Please wait..."; err.innerText = "";
         try {
-            if (isSignUpMode) {
-                const { data, error } = await supabaseClient.auth.signUp({ email, password });
-                if (error) throw error;
-                currentUserEmail = data.user.email;
-                showDashboard();
+            if(isSignUpMode) {
+                const { error } = await supabaseClient.auth.signUp({email, password});
+                if(error) throw error;
             } else {
-                const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-                if (error) throw error;
-                currentUserEmail = data.user.email;
-                showDashboard();
+                const { error } = await supabaseClient.auth.signInWithPassword({email, password});
+                if(error) throw error;
             }
-        } catch (err) {
-            errorDiv.innerText = "Error: " + err.message;
-            btn.innerText = isSignUpMode ? "Sign Up Now" : "Login to Dashboard";
+            location.reload();
+        } catch(e) {
+            err.innerText = e.message;
+            btn.innerText = isSignUpMode ? "Sign Up Now" : "Sign In to Dashboard";
         }
     }
 
     async function logoutUser() {
         await supabaseClient.auth.signOut();
-        location.reload(); // Reload page to clear state
+        location.replace(window.location.pathname); // clear URL params
     }
 
     // --- DASHBOARD UI ---
-    function showDashboard() {
+    async function showDashboard() {
         document.getElementById('auth-section').style.display = 'none';
         document.getElementById('dashboard-section').style.display = 'block';
         document.getElementById('user-email-display').innerText = currentUserEmail;
         
-        // Fetch User Metadata (Mobile Number)
-        supabaseClient.auth.getUser().then(({ data }) => {
-            if(data.user && data.user.user_metadata && data.user.user_metadata.mobile) {
-                document.getElementById('user-mobile').value = data.user.user_metadata.mobile;
-            }
-        });
+        // Load User Mobile
+        const { data } = await supabaseClient.auth.getUser();
+        if(data?.user?.user_metadata?.mobile) {
+            document.getElementById('user-mobile').value = data.user.user_metadata.mobile;
+        }
 
         loadCourses();
         loadSubscriptions();
     }
 
     function switchMenu(menuId) {
-        // Hide all sections
         document.querySelectorAll('.content-section').forEach(c => c.classList.remove('active'));
-        // Remove active class from PC sidebar and Mobile bottom nav
-        document.querySelectorAll('.menu-item').forEach(i => i.classList.remove('active'));
-        document.querySelectorAll('.nav-tab').forEach(i => i.classList.remove('active'));
-        
-        // Activate selected
+        document.querySelectorAll('.menu-item, .nav-tab').forEach(i => i.classList.remove('active'));
         document.getElementById('content-' + menuId).classList.add('active');
+        document.querySelectorAll(`[onclick="switchMenu('${menuId}')"]`).forEach(el => el.classList.add('active'));
         
-        // Update active states based on text content match
-        document.querySelectorAll('.menu-item, .nav-tab').forEach(el => {
-            if(el.innerHTML.toLowerCase().includes(menuId) || el.innerHTML.toLowerCase().includes(menuId.substring(0,4))) {
-                el.classList.add('active');
-            }
+        if(menuId === 'courses') closeChapterView();
+    }
+
+    // --- FETCH DATA ---
+    async function loadUserAccess() {
+        // Find which courses this user has ACTIVE access to
+        const { data } = await supabaseClient.from('enrollments').select('course_title').eq('user_email', currentUserEmail).eq('status', 'Active');
+        if(data) userOwnedCourses = data.map(d => d.course_title);
+    }
+
+    async function loadCourses() {
+        const list = document.getElementById('course-list');
+        const { data: courses, error } = await supabaseClient.from('courses').select('*').eq('status', 'Approved').order('created_at', { ascending: false });
+        
+        if(error || !courses || courses.length === 0) { list.innerHTML = '<p>No courses available right now.</p>'; return; }
+        
+        list.innerHTML = '';
+        courses.forEach(c => {
+            // Check if user owns this course or if it's entirely free
+            // For UI simplicity on main grid, we just show a tag. Real check happens inside.
+            list.innerHTML += `
+                <div class="course-card searchable-card" data-title="${c.title.toLowerCase()}" onclick="openCourse(${c.id}, '${c.title}')">
+                    <img src="${c.thumbnail_url || 'https://via.placeholder.com/400x200?text=Course'}" alt="Course Image">
+                    <button class="share-btn" onclick="shareCourse(event, ${c.id})" title="Share Course">🔗</button>
+                    <div class="course-card-content">
+                        <h4>${c.title}</h4>
+                        <span class="badge ${userOwnedCourses.includes(c.title) ? 'badge-free' : 'badge-paid'}">
+                            ${userOwnedCourses.includes(c.title) ? 'Enrolled / Owned' : 'Explore Chapters'}
+                        </span>
+                    </div>
+                </div>
+            `;
         });
     }
 
-    // --- FUNCTIONALITY ---
-
-    // 1. Course Search Filter
     function searchCourses() {
-        let input = document.getElementById('search-input').value.toLowerCase();
-        let cards = document.getElementsByClassName('searchable-course');
-        
-        for (let i = 0; i < cards.length; i++) {
-            let title = cards[i].getAttribute('data-title').toLowerCase();
-            cards[i].style.display = title.includes(input) ? "" : "none";
+        const input = document.getElementById('searchBar').value.toLowerCase();
+        const cards = document.getElementsByClassName('searchable-card');
+        for (let card of cards) {
+            card.style.display = card.getAttribute('data-title').includes(input) ? "" : "none";
         }
     }
 
-    // 2. Update Mobile Number
+    // --- CHAPTER / COURSE DETAILS VIEW ---
+    async function openCourse(courseId, courseTitleFallback = "") {
+        document.getElementById('course-grid-view').style.display = 'none';
+        document.getElementById('chapter-view').style.display = 'block';
+        document.getElementById('main-player-box').style.display = 'none'; // hide player initially
+        document.getElementById('cv-notes').style.display = 'none';
+        
+        const list = document.getElementById('chapter-list-container');
+        list.innerHTML = '<p style="text-align:center;">Loading syllabus...</p>';
+
+        // Get Course Details
+        const { data: courseData } = await supabaseClient.from('courses').select('*').eq('id', courseId).single();
+        if(!courseData) { list.innerHTML = '<p>Course not found.</p>'; return; }
+
+        activeCourseData = courseData; // Store for payment reference
+        document.getElementById('cv-title').innerText = courseData.title;
+
+        // Get Chapters
+        const { data: chapters } = await supabaseClient.from('chapters').select('*').eq('course_id', courseId).order('created_at', { ascending: true });
+        
+        const hasAccess = userOwnedCourses.includes(courseData.title);
+        
+        // Find if this is a paid course overall (if any chapter has price)
+        let totalCoursePrice = 0;
+        if(chapters) {
+            chapters.forEach(ch => { if(ch.type === 'Paid') totalCoursePrice += parseInt(ch.price || 0); });
+        }
+
+        // Show Payment Box if it's paid and user doesn't own it
+        const payBox = document.getElementById('payment-box');
+        if(!hasAccess && totalCoursePrice > 0) {
+            payBox.style.display = 'block';
+            document.getElementById('pay-amt').innerText = totalCoursePrice;
+            activeCourseData.priceToPay = totalCoursePrice; // Attach calculated price
+        } else {
+            payBox.style.display = 'none';
+            // If Free course and not in DB, auto-enroll them quietly
+            if(!hasAccess && totalCoursePrice === 0) {
+                supabaseClient.from('enrollments').insert([{ user_email: currentUserEmail, course_title: courseData.title, course_price: 'Free', status: 'Active' }]);
+                userOwnedCourses.push(courseData.title);
+            }
+        }
+
+        if(!chapters || chapters.length === 0) { list.innerHTML = '<p>No videos added to this course yet.</p>'; return; }
+
+        list.innerHTML = '';
+        chapters.forEach((ch, index) => {
+            const thumbUrl = extractThumbnail(ch.video_url);
+            const isLocked = !hasAccess && ch.type === 'Paid';
+            const actionIcon = isLocked ? '🔒 Locked' : '▶ Play';
+            
+            list.innerHTML += `
+                <div class="chapter-list-item ${isLocked ? 'locked' : ''}" onclick="playVideo('${ch.video_url}', '${ch.notes}', ${isLocked})">
+                    <img src="${thumbUrl}" class="ch-thumb" alt="Thumb">
+                    <div class="ch-info">
+                        <h5>Ep ${index + 1}: ${ch.chapter_title}</h5>
+                        <p>${ch.type === 'Free' ? 'Free Preview' : 'Premium Video'}</p>
+                    </div>
+                    <div style="font-weight:bold; color:${isLocked ? '#dc3545' : '#28a745'}">${actionIcon}</div>
+                </div>
+            `;
+        });
+    }
+
+    function closeChapterView() {
+        document.getElementById('chapter-view').style.display = 'none';
+        document.getElementById('course-grid-view').style.display = 'block';
+        document.getElementById('main-player').src = ""; // Stop video
+        // Remove URL param if any
+        window.history.replaceState({}, document.title, window.location.pathname);
+    }
+
+    // --- UNIVERSAL VIDEO PLAYER LOGIC ---
+    function extractThumbnail(url) {
+        if(!url) return 'https://via.placeholder.com/150x100?text=Video';
+        if(url.includes('youtube.com') || url.includes('youtu.be')) {
+            let vid = url.includes('v=') ? url.split('v=')[1].split('&')[0] : url.split('youtu.be/')[1].split('?')[0];
+            return `https://img.youtube.com/vi/${vid}/hqdefault.jpg`;
+        }
+        return 'https://via.placeholder.com/150x100?text=Play'; // Default for Drive/Vimeo
+    }
+
+    function generateEmbedUrl(url) {
+        if (url.includes('youtube.com') || url.includes('youtu.be')) {
+            let vid = url.includes('v=') ? url.split('v=')[1].split('&')[0] : url.split('youtu.be/')[1].split('?')[0];
+            return `https://www.youtube.com/embed/${vid}?autoplay=1`;
+        } else if (url.includes('vimeo.com')) {
+            let vid = url.split('vimeo.com/')[1];
+            return `https://player.vimeo.com/video/${vid}?autoplay=1`;
+        } else if (url.includes('drive.google.com')) {
+            return url.replace(/\/view.*$/, '/preview');
+        } else {
+            return url; // fallback standard iframe
+        }
+    }
+
+    function playVideo(url, notes, isLocked) {
+        if(isLocked) {
+            alert("🔒 This chapter is locked. Please purchase the course to watch.");
+            window.scrollTo({ top: 0, behavior: 'smooth' }); // Scroll to buy box
+            return;
+        }
+        
+        // Show Player
+        document.getElementById('main-player-box').style.display = 'block';
+        document.getElementById('main-player').src = generateEmbedUrl(url);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+
+        // Show Notes if exist
+        if(notes && notes !== 'null' && notes.trim() !== '') {
+            document.getElementById('cv-notes').style.display = 'block';
+            document.getElementById('cv-notes-link').href = (notes.startsWith('http')) ? notes : '#';
+            if(!notes.startsWith('http')) document.getElementById('cv-notes-link').innerText = notes; // if simple text
+        } else {
+            document.getElementById('cv-notes').style.display = 'none';
+        }
+    }
+
+    // --- PAYMENT & ENROLLMENT LOGIC ---
+    function openPaymentModal() {
+        const amt = activeCourseData.priceToPay;
+        // 🛑 IMPORTANT: Put your UPI ID here
+        const upiId = "8866653002@kotakbank"; 
+        
+        // Generate UPI URI
+        const upiLink = `upi://pay?pa=${upiId}&pn=EduPortal&am=${amt}&cu=INR`;
+        
+        // Setup QR for PC
+        document.getElementById('qr-image').src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(upiLink)}`;
+        
+        // Setup Button for Mobile
+        document.getElementById('mobile-pay-btn').href = upiLink;
+        
+        document.getElementById('paymentModal').style.display = 'flex';
+    }
+
+    async function confirmPaymentSent() {
+        document.getElementById('paymentModal').style.display = 'none';
+        alert("⏳ Request Sent! Admin will verify your payment and grant access within few hours.");
+        
+        // Send to Database for Admin Approval
+        await supabaseClient.from('enrollments').insert([{ 
+            user_email: currentUserEmail, 
+            course_title: activeCourseData.title, 
+            course_price: activeCourseData.priceToPay.toString(), 
+            status: 'Pending' 
+        }]);
+    }
+
+    // --- MY SUBSCRIPTIONS ---
+    async function loadSubscriptions() {
+        const list = document.getElementById('my-subs-list');
+        const { data, error } = await supabaseClient.from('enrollments').select('*').eq('user_email', currentUserEmail).order('created_at', { ascending: false });
+        
+        if(error || !data || data.length === 0) { list.innerHTML = '<p>No enrollments found.</p>'; return; }
+        
+        list.innerHTML = '';
+        data.forEach(e => {
+            let statusHTML = e.status === 'Active' 
+                ? `<span class="badge badge-free">Active Access</span>`
+                : `<span class="badge" style="background:#ffc107; color:black;">Pending Approval</span>`;
+                
+            list.innerHTML += `
+                <div class="course-card" style="border-left: 4px solid ${e.status === 'Active' ? '#28a745' : '#ffc107'};">
+                    <div class="course-card-content">
+                        <h4>${e.course_title}</h4>
+                        <p style="margin:5px 0 10px 0;">${statusHTML}</p>
+                        <p style="margin:0; font-size:12px; color:#888;">Valid till: ${e.access_until ? new Date(e.access_until).toLocaleDateString() : 'Lifetime / Pending'}</p>
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    // --- SHARE FEATURE ---
+    function shareCourse(e, courseId) {
+        e.stopPropagation(); // prevent opening the course
+        const shareUrl = `${window.location.origin}${window.location.pathname}?courseId=${courseId}`;
+        
+        if (navigator.share) {
+            navigator.share({
+                title: 'Check out this amazing course!',
+                url: shareUrl
+            }).catch(console.error);
+        } else {
+            // Fallback for PC
+            navigator.clipboard.writeText(shareUrl);
+            alert("🔗 Course link copied to clipboard! Share it with friends.");
+        }
+    }
+
+    // --- PROFILE UPDATE ---
     async function updateMobile() {
         const mobile = document.getElementById('user-mobile').value;
-        const msg = document.getElementById('mobile-msg');
+        if(!mobile) return alert("Enter valid number");
         
-        if(!mobile) { msg.innerText = "Enter number!"; msg.style.color="red"; return; }
-        
-        msg.innerText = "Saving..."; msg.style.color="blue";
-        
-        const { data, error } = await supabaseClient.auth.updateUser({
-            data: { mobile: mobile }
-        });
-
-        if(error) {
-            msg.innerText = "Failed!"; msg.style.color="red";
-        } else {
-            msg.innerText = "Saved Successfully!"; msg.style.color="green";
-            setTimeout(() => msg.innerText="", 3000);
-        }
+        const { error } = await supabaseClient.auth.updateUser({ data: { mobile: mobile } });
+        if(error) alert("Failed: " + error.message);
+        else alert("Profile Updated Successfully!");
     }
 
-    // 3. Load All Courses
-    async function loadCourses() {
-        const courseList = document.getElementById('course-list');
-        const { data: courses, error } = await supabaseClient.from('courses').select('*').eq('status', 'Approved').order('created_at', { ascending: false });
-
-        if (error) { courseList.innerHTML = '<p style="color:red;">Error: ' + error.message + '</p>'; return; }
-        if (!courses || courses.length === 0) { courseList.innerHTML = '<p>No courses found.</p>'; return; }
-
-        courseList.innerHTML = '';
-        courses.forEach(course => {
-            let videoId = (course.video_url.includes('v=')) ? course.video_url.split('v=')[1].split('&')[0] : (course.video_url.includes('youtu.be/') ? course.video_url.split('youtu.be/')[1].split('?')[0] : "");
-
-            let actionBtn = course.type === 'Free' 
-                ? `<button class="btn btn-free" onclick="enrollCourse('${course.title}', 'Free')">Add to My Subs (Free)</button>`
-                : `<button class="btn btn-pay" onclick="enrollCourse('${course.title}', '${course.price}')">Pay ₹${course.price} via UPI</button>`;
-
-            courseList.innerHTML += `
-                <div class="course-card searchable-course" data-title="${course.title}">
-                    <h4>${course.title} <span style="color: ${course.type==='Free'?'#28a745':'#007bff'}">(${course.type})</span></h4>
-                    ${videoId ? `<iframe src="https://www.youtube.com/embed/${videoId}" allowfullscreen></iframe>` : `<p>Invalid Video URL</p>`}
-                    ${actionBtn}
-                </div>
-            `;
-        });
-    }
-
-    // 4. Enroll / Purchase Course (Saves to Subscriptions)
-    async function enrollCourse(title, price) {
-        if(price !== 'Free') {
-            alert(`Scan QR to pay ₹${price} for "${title}".\n(Saving as pending verification...)`);
-        }
-        
-        const { data, error } = await supabaseClient.from('enrollments').insert([
-            { user_email: currentUserEmail, course_title: title, course_price: price }
-        ]);
-
-        if(error) {
-            alert("Error saving subscription: " + error.message);
-        } else {
-            alert(`"${title}" added to your Subscriptions!`);
-            loadSubscriptions(); // Refresh list
-        }
-    }
-
-    // 5. Load My Subscriptions
-    async function loadSubscriptions() {
-        const subsList = document.getElementById('my-subs-list');
-        const { data: subs, error } = await supabaseClient.from('enrollments').select('*').eq('user_email', currentUserEmail).order('created_at', { ascending: false });
-
-        if (error) { subsList.innerHTML = '<p>Error loading subscriptions.</p>'; return; }
-        if (!subs || subs.length === 0) { subsList.innerHTML = '<p>You have not purchased any courses yet.</p>'; return; }
-
-        subsList.innerHTML = '';
-        subs.forEach(sub => {
-            let statusHTML = sub.course_price === 'Free' 
-                ? `<span style="background:#28a745; color:white; padding:3px 8px; border-radius:4px; font-size:12px;">Active</span>`
-                : `<span style="background:#ffc107; color:black; padding:3px 8px; border-radius:4px; font-size:12px;">Payment Pending</span>`;
-
-            subsList.innerHTML += `
-                <div class="course-card" style="border-left: 4px solid #007bff;">
-                    <h4 style="margin-bottom:5px;">${sub.course_title}</h4>
-                    <p style="margin:5px 0; color:#555;"><strong>Type:</strong> ${sub.course_price === 'Free' ? 'Free Course' : 'Paid (₹' + sub.course_price + ')'}</p>
-                    <p style="margin:0;"><strong>Status:</strong> ${statusHTML}</p>
-                    <button class="btn btn-free" style="margin-top:10px;">Go to Course Content</button>
-                </div>
-            `;
-        });
-    }
-
-    // Start App
     window.onload = checkSession;
 </script>
 </body>
