@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student Portal - Gen-Z Gravity Learning</title>
+    <title>Student Portal - Gen-Z Gravity</title>
+    <!-- Supabase CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; transition: all 0.3s ease; }
@@ -50,8 +51,10 @@
         .badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; }
         .badge-free { background: #e8f5e9; color: #2e7d32; }
         .badge-paid { background: #e3f2fd; color: #1565c0; }
+        
+        /* Floating Actions (Fav & Share) */
         .card-actions { position: absolute; top: 8px; right: 8px; display: flex; flex-direction: column; gap: 8px; z-index: 5;}
-        .icon-btn { background: rgba(255,255,255,0.95); border: none; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; font-size: 15px;}
+        .icon-btn { background: rgba(255,255,255,0.95); border: none; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; font-size: 15px; display:flex; justify-content:center; align-items:center; box-shadow: 0 2px 5px rgba(0,0,0,0.2);}
         .icon-btn.active { color: #dc3545; }
 
         /* Video Player & Chapters */
@@ -64,11 +67,12 @@
         .chapter-list-item.locked { opacity: 0.6; cursor: not-allowed; }
         .chapter-list-item.completed { border-left: 4px solid #28a745; }
         .ch-thumb { width: 90px; height: 55px; border-radius: 6px; object-fit: cover; margin-right: 12px;}
-
+        
+        .academy-info-box { background: #fff; padding: 15px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); display: none;}
+        
         /* Quiz Box */
         .quiz-box { background: #fdfdfd; border: 1px solid #ddd; padding: 20px; border-radius: 12px; margin-top: 15px; display: none;}
         .quiz-option { display: block; padding: 12px; margin-bottom: 8px; background: #f4f7f6; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight:bold; border: 2px solid transparent; pointer-events:auto;}
-        .quiz-option:hover { border-color: #007bff; }
         .quiz-option.selected { background: #cce5ff; border-color: #007bff; }
 
         /* Modals & Inputs */
@@ -78,29 +82,43 @@
         .coupon-box { display: flex; gap: 5px; margin: 15px 0; }
         .coupon-box input { flex: 1; padding: 10px; border-radius: 6px; border: 1px solid #ccc; text-transform: uppercase; pointer-events: auto;}
         
+        /* Invoice Details */
+        .invoice-box { text-align: left; background: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px dashed #ccc; margin-bottom: 15px; font-size: 13px;}
+        .helpdesk-box { background: #fff3cd; border: 1px solid #ffeeba; padding: 15px; border-radius: 10px; margin-top: 20px; text-align: left;}
+        
         .btn { padding: 10px 15px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 14px; width: 100%; margin-top:5px;}
         .btn-primary { background: #007bff; color: white; }
         .btn-success { background: #28a745; color: white; }
         .btn-warning { background: #ffc107; color: black; }
         .btn-outline { background: transparent; border: 2px solid #007bff; color: #007bff; width: auto;}
 
-        /* Professional Certificate Design (Only visible when printing) */
+        /* Professional Certificate Design (Hidden until print) */
         #certificate-container { display: none; }
+        
+        /* Intelligent Print Media Queries */
         @media print {
             body * { visibility: hidden; }
-            #certificate-container, #certificate-container * { visibility: visible; }
-            #certificate-container { 
-                display: flex !important; position: absolute; left: 0; top: 0; width: 1123px; height: 794px; /* A4 Landscape */
+            
+            /* If Certificate Print */
+            body.print-cert #certificate-container, body.print-cert #certificate-container * { visibility: visible; }
+            body.print-cert #certificate-container { 
+                display: flex !important; position: absolute; left: 0; top: 0; width: 1123px; height: 794px; 
                 background: url('https://www.transparenttextures.com/patterns/cream-paper.png'), linear-gradient(135deg, #ffffff, #f3f3f3); 
                 border: 20px solid #2c3e50; padding: 50px; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: #2c3e50; font-family: 'Times New Roman', serif;
             }
-            .cert-header { font-size: 65px; font-weight: bold; text-transform: uppercase; letter-spacing: 5px; color: #c0392b; margin-bottom: 20px;}
-            .cert-sub { font-size: 25px; font-style: italic; margin-bottom: 40px; }
-            .cert-name { font-size: 55px; font-weight: bold; text-decoration: underline; margin-bottom: 30px; font-family: 'Arial', sans-serif;}
-            .cert-desc { font-size: 22px; max-width: 800px; line-height: 1.6; margin-bottom: 50px; }
-            .cert-footer { display: flex; justify-content: space-between; width: 80%; margin-top: auto; padding-top: 30px; border-top: 2px solid #2c3e50;}
-            .cert-footer div { text-align: center; font-size: 18px; font-weight: bold;}
-            .cert-stamp { width: 120px; height: 120px; background: gold; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: bold; text-align: center; border: 4px dashed #c0392b; position: absolute; bottom: 80px; right: 100px; color:#c0392b;}
+            body.print-cert .cert-header { font-size: 65px; font-weight: bold; text-transform: uppercase; letter-spacing: 5px; color: #c0392b; margin-bottom: 20px;}
+            body.print-cert .cert-sub { font-size: 25px; font-style: italic; margin-bottom: 40px; }
+            body.print-cert .cert-name { font-size: 55px; font-weight: bold; text-decoration: underline; margin-bottom: 30px; font-family: 'Arial', sans-serif;}
+            body.print-cert .cert-desc { font-size: 22px; max-width: 800px; line-height: 1.6; margin-bottom: 50px; }
+            body.print-cert .cert-footer { display: flex; justify-content: space-between; width: 80%; margin-top: auto; padding-top: 30px; border-top: 2px solid #2c3e50;}
+            body.print-cert .cert-footer div { text-align: center; font-size: 18px; font-weight: bold;}
+            body.print-cert .cert-stamp { width: 120px; height: 120px; background: gold; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: bold; text-align: center; border: 4px dashed #c0392b; position: absolute; bottom: 80px; right: 100px; color:#c0392b;}
+            
+            /* If Invoice Print */
+            body.print-inv #invoiceModal, body.print-inv #invoiceModal * { visibility: visible; }
+            body.print-inv #invoiceModal { position: absolute; left: 0; top: 0; width: 100%; background: white; padding: 20px;}
+            
+            .btn, .close-btn, .card-actions { display: none !important; }
         }
 
         /* Mobile Nav */
@@ -137,6 +155,7 @@
 
         <div class="main-content">
             
+            <!-- 1. Explore Tab -->
             <div id="content-courses" class="content-section active">
                 <div id="course-grid-view">
                     <div class="banner-container" id="banner-slider"></div>
@@ -154,6 +173,16 @@
                     <div class="video-player-container" id="main-player-box">
                         <div class="watermark" id="video-watermark">user@example.com</div>
                         <iframe id="main-player" src="" allowfullscreen></iframe>
+                    </div>
+
+                    <!-- Academy Info Box -->
+                    <div id="cv-academy-info" class="academy-info-box">
+                        <h3 style="color:#007bff; margin:0 0 5px;">About the Author</h3>
+                        <p><strong>Provider:</strong> <span id="cv-academy-name">Loading...</span></p>
+                        <p><strong>Instructor:</strong> <span id="cv-teacher-name">Loading...</span></p>
+                        <div id="cv-notes" style="margin-top:10px; padding-top:10px; border-top:1px solid #eee; display:none;">
+                            <strong>📝 Study Notes: </strong> <a id="cv-notes-link" href="#" target="_blank" style="color:#007bff; pointer-events:auto;">View Material</a>
+                        </div>
                     </div>
 
                     <!-- Progress & Assessment Box -->
@@ -178,6 +207,7 @@
                         <button class="btn btn-success" style="max-width:300px; font-size:18px;" onclick="promptCertificate()">🏆 Generate Verified Certificate</button>
                     </div>
 
+                    <!-- Payment Prompt -->
                     <div id="payment-box" style="display:none; background:#fff3cd; padding:15px; border-radius:10px; text-align:center; margin-bottom:20px;">
                         <h3 style="margin:0 0 10px; color:#856404;">Unlock Premium Access</h3>
                         <button class="btn btn-success" onclick="openPaymentModal()">Pay ₹<span id="pay-amt"></span> via UPI</button>
@@ -188,16 +218,39 @@
                 </div>
             </div>
 
-            <!-- Other Tabs (Favorites, Subscriptions, Profile) remain same structural layout -->
-            <div id="content-favorites" class="content-section"><h2 style="margin-top:0;">Favorites</h2><div id="favorites-list" class="grid-cards"></div></div>
-            <div id="content-subscriptions" class="content-section"><h2 style="margin-top:0;">My Learning History</h2><div id="my-subs-list" class="grid-cards"></div></div>
+            <!-- 2. Favorites Tab -->
+            <div id="content-favorites" class="content-section">
+                <h2 style="margin-top:0;">Favorites</h2>
+                <div id="favorites-list" class="grid-cards"></div>
+            </div>
+
+            <!-- 3. Subscriptions (My Learning) Tab -->
+            <div id="content-subscriptions" class="content-section">
+                <h2 style="margin-top:0;">My Learning History</h2>
+                <p style="font-size:13px; color:#666;">Click on any active course to download its PDF Invoice.</p>
+                <div id="my-subs-list" class="grid-cards"></div>
+            </div>
+
+            <!-- 4. Profile Tab -->
             <div id="content-profile" class="content-section">
                 <h2 style="margin-top:0;">My Profile</h2>
-                <div style="background:#fff; padding:20px; border-radius:12px;">
-                    <p><strong>Email:</strong> <span id="user-email-display" style="color:#007bff;"></span></p>
-                    <div class="form-group"><label>Mobile</label><input type="tel" id="user-mobile"></div>
-                    <button class="btn btn-primary" onclick="updateMobile()">💾 Save Changes</button>
-                    <button class="btn" style="background:#dc3545; color:white; margin-top:20px;" onclick="logoutUser()">🚪 Logout</button>
+                <div style="background:#fff; padding:20px; border-radius:12px; box-shadow:0 4px 10px rgba(0,0,0,0.05);">
+                    <p style="font-size:15px;"><strong>Email ID:</strong> <span id="user-email-display" style="color:#007bff;"></span></p>
+                    <div class="form-group" style="margin-top:15px; max-width:300px;">
+                        <label>Mobile Number</label>
+                        <input type="tel" id="user-mobile" placeholder="+91 XXXXX XXXXX">
+                    </div>
+                    <button class="btn btn-primary" onclick="updateMobile()" style="max-width:300px;">💾 Save Changes</button>
+                    
+                    <!-- Customer Care Section restored -->
+                    <div class="helpdesk-box">
+                        <h3 style="margin-top:0; color:#856404;">📞 24/7 Platform Customer Support</h3>
+                        <p style="margin:5px 0; color:#856404;">Need help with access or payments? Contact Admin.</p>
+                        <p style="margin:5px 0; color:#856404;">Helpline: <strong>+91 98765 43210</strong></p>
+                        <p style="margin:5px 0; color:#856404;">Email: <strong>support@eduportal.com</strong></p>
+                    </div>
+
+                    <button class="btn" style="background:#dc3545; color:white; margin-top:30px; max-width:300px;" onclick="logoutUser()">🚪 Logout</button>
                 </div>
             </div>
 
@@ -228,6 +281,30 @@
         <a id="mobile-pay-btn" href="#" class="btn btn-primary" style="display:block; text-decoration:none; margin-bottom:10px;">Pay via PhonePe / GPay</a>
         <button class="btn btn-success" style="margin-bottom:10px;" onclick="confirmPaymentSent()">I Have Paid ✅</button>
         <button class="btn btn-outline" onclick="document.getElementById('paymentModal').style.display='none'">Cancel</button>
+    </div>
+</div>
+
+<!-- === INVOICE POPUP MODAL === -->
+<div id="invoiceModal" class="modal">
+    <div class="modal-content">
+        <h2 style="margin-top:0; color:#007bff; border-bottom:2px solid #eee; padding-bottom:10px;">Tax Invoice</h2>
+        <div class="invoice-box">
+            <p><strong>Candidate Email:</strong> <span id="inv-email"></span></p>
+            <p><strong>Course Name:</strong> <span id="inv-course"></span></p>
+            <p><strong>Amount Paid:</strong> ₹<span id="inv-price"></span></p>
+            <hr style="border:0; border-top:1px dashed #ccc; margin:10px 0;">
+            <p><strong>Academy Provider:</strong> <span id="inv-academy"></span></p>
+            <p><strong>Academy Contact:</strong> <span id="inv-contact"></span></p>
+            <hr style="border:0; border-top:1px dashed #ccc; margin:10px 0;">
+            <p><strong>Purchase Date:</strong> <span id="inv-date"></span></p>
+            <p><strong>Valid Until:</strong> <span id="inv-expiry" style="color:red; font-weight:bold;"></span></p>
+        </div>
+        <div class="helpdesk-box" style="margin-top:0; margin-bottom:15px; padding:10px; text-align:left;">
+            <h4 style="margin:0 0 5px; color:#856404; font-size:13px;">📞 Helpline Info</h4>
+            <p style="margin:0; font-size:12px; color:#856404;">Call: +91 98765 43210 (Support)</p>
+        </div>
+        <button class="btn btn-primary" style="margin-bottom:10px;" onclick="printInvoice()">📥 Save PDF / Print Invoice</button>
+        <button class="btn btn-outline close-btn" onclick="document.getElementById('invoiceModal').style.display='none'">Close</button>
     </div>
 </div>
 
@@ -287,6 +364,9 @@
     // --- AUTHENTICATION ---
     async function checkSession() {
         const { data: { session } } = await supabaseClient.auth.getSession();
+        const urlParams = new URLSearchParams(window.location.search);
+        const sharedCourseId = urlParams.get('courseId'); // Look for shared course link
+
         if (session) {
             currentUserEmail = session.user.email;
             document.getElementById('video-watermark').innerText = currentUserEmail; 
@@ -295,15 +375,20 @@
 
             await loadUserAccess(); 
             showDashboard();
+            
+            // Auto open course if link was shared
+            if(sharedCourseId) openCourse(sharedCourseId);
         } else {
             document.getElementById('auth-section').style.display = 'block';
         }
     }
+    
     function toggleAuthMode() {
         isSignUpMode = !isSignUpMode;
         document.getElementById('auth-title').innerText = isSignUpMode ? "Create Account" : "Student Login";
         document.getElementById('auth-submit-btn').innerText = isSignUpMode ? "Sign Up Now" : "Sign In";
     }
+    
     async function handleAuth() {
         const email = document.getElementById('auth-email').value;
         const password = document.getElementById('auth-password').value;
@@ -313,7 +398,8 @@
             location.reload();
         } catch(e) { document.getElementById('auth-error').innerText = e.message; }
     }
-    async function logoutUser() { await supabaseClient.auth.signOut(); location.reload(); }
+    
+    async function logoutUser() { await supabaseClient.auth.signOut(); location.replace(window.location.pathname); }
 
     // --- UI NAV & FETCH ---
     async function showDashboard() {
@@ -321,8 +407,13 @@
         document.getElementById('dashboard-section').style.display = 'block';
         document.getElementById('user-email-display').innerText = currentUserEmail;
         
+        // Fetch and show Mobile
+        const { data } = await supabaseClient.auth.getUser();
+        if(data?.user?.user_metadata?.mobile) document.getElementById('user-mobile').value = data.user.user_metadata.mobile;
+
         loadBanners(); await loadCourses(); loadSubscriptions(); renderFavorites();
     }
+    
     function switchMenu(menuId) {
         document.querySelectorAll('.content-section, .menu-item, .nav-tab').forEach(el => el.classList.remove('active'));
         document.getElementById('content-' + menuId).classList.add('active');
@@ -359,7 +450,8 @@
             container.innerHTML += `
                 <div class="course-card searchable-card" data-title="${c.title.toLowerCase()}" onclick="openCourse(${c.id})">
                     <div class="card-actions">
-                        <button class="icon-btn ${isFav ? 'active' : ''}" onclick="toggleFavorite(event, ${c.id})">❤️</button>
+                        <button class="icon-btn ${isFav ? 'active' : ''}" onclick="toggleFavorite(event, ${c.id})" title="Favorite">❤️</button>
+                        <button class="icon-btn" onclick="shareCourse(event, ${c.id})" title="Share Course">🔗</button>
                     </div>
                     <img src="${c.thumbnail_url || 'https://via.placeholder.com/400x200?text=Course'}">
                     <div class="course-card-content">
@@ -392,12 +484,30 @@
         if(favData.length === 0) favList.innerHTML = '<p>No favorites yet.</p>';
         else renderCourseGrid(favData, favList);
     }
+    
+    // SHARE BUTTON LOGIC RESTORED
+    function shareCourse(e, courseId) {
+        e.stopPropagation(); // prevent opening the course
+        const shareUrl = `${window.location.origin}${window.location.pathname}?courseId=${courseId}`;
+        
+        if (navigator.share) {
+            navigator.share({
+                title: 'Check out this amazing course!',
+                url: shareUrl
+            }).catch(console.error);
+        } else {
+            // Fallback for PC
+            navigator.clipboard.writeText(shareUrl);
+            alert("🔗 Course link copied to clipboard! Share it with friends.");
+        }
+    }
 
     // --- COURSE, PROGRESS & CERTIFICATE ---
     async function openCourse(courseId) {
         document.getElementById('course-grid-view').style.display = 'none';
         document.getElementById('chapter-view').style.display = 'block';
         document.getElementById('main-player-box').style.display = 'none';
+        document.getElementById('cv-academy-info').style.display = 'none';
         document.getElementById('payment-box').style.display = 'none';
         document.getElementById('certificate-box').style.display = 'none';
         document.getElementById('progress-action-box').style.display = 'none';
@@ -410,6 +520,18 @@
         if(!courseData) return;
         activeCourseData = courseData; 
         document.getElementById('cv-title').innerText = courseData.title;
+
+        // Fetch Academy details for description box
+        if(courseData.academy_email) {
+            const { data: acData } = await supabaseClient.from('academy_profiles').select('*').eq('email', courseData.academy_email).single();
+            if(acData) {
+                document.getElementById('cv-academy-name').innerText = acData.academy_name;
+                document.getElementById('cv-teacher-name').innerText = acData.teacher_name;
+            } else {
+                document.getElementById('cv-academy-name').innerText = "Platform Admin";
+                document.getElementById('cv-teacher-name').innerText = "Expert Instructor";
+            }
+        }
 
         // Fetch User Progress
         const { data: progData } = await supabaseClient.from('course_progress').select('completed_chapters').eq('user_email', currentUserEmail).eq('course_id', courseId).single();
@@ -444,7 +566,7 @@
             const thumbUrl = ch.video_url.includes('youtu') ? `https://img.youtube.com/vi/${ch.video_url.split(ch.video_url.includes('v=')?'v=':'youtu.be/')[1].split('&')[0].split('?')[0]}/hqdefault.jpg` : 'https://via.placeholder.com/150';
             
             list.innerHTML += `
-                <div class="chapter-list-item ${isLocked ? 'locked' : ''} ${isCompleted ? 'completed' : ''}" onclick="playVideo(${ch.id}, '${ch.video_url}', ${isLocked})">
+                <div class="chapter-list-item ${isLocked ? 'locked' : ''} ${isCompleted ? 'completed' : ''}" onclick="playVideo(${ch.id}, '${ch.video_url}', '${ch.notes}', ${isLocked})">
                     <img src="${thumbUrl}" class="ch-thumb">
                     <div class="ch-info">
                         <h5>Ep ${index + 1}: ${ch.chapter_title} ${isCompleted ? '✅' : ''}</h5>
@@ -459,9 +581,10 @@
         document.getElementById('chapter-view').style.display = 'none';
         document.getElementById('course-grid-view').style.display = 'block';
         document.getElementById('main-player').src = ""; 
+        window.history.replaceState({}, document.title, window.location.pathname);
     }
 
-    function playVideo(chapterId, url, isLocked) {
+    function playVideo(chapterId, url, notes, isLocked) {
         if(isLocked) return alert("🔒 Chapter is locked. Purchase the course to access.");
         
         activeChapterId = chapterId;
@@ -474,10 +597,19 @@
         }
         document.getElementById('main-player').src = embed;
         
+        // Show Academy Box & Notes
+        document.getElementById('cv-academy-info').style.display = 'block';
+        if(notes && notes !== 'null' && notes.trim() !== '') {
+            document.getElementById('cv-notes').style.display = 'block';
+            document.getElementById('cv-notes-link').href = notes.startsWith('http') ? notes : '#';
+            if(!notes.startsWith('http')) document.getElementById('cv-notes-link').innerText = notes; 
+        } else {
+            document.getElementById('cv-notes').style.display = 'none';
+        }
+        
         document.getElementById('progress-action-box').style.display = 'block';
         document.getElementById('quiz-area').style.display = 'none';
         
-        // Hide Complete button if already complete
         document.getElementById('mark-complete-btn').style.display = completedChaptersList.includes(chapterId) ? 'none' : 'inline-block';
         
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -493,7 +625,7 @@
             }, { onConflict: 'user_email,course_id' });
             
             alert("Chapter marked as completed! 🎉");
-            openCourse(activeCourseData.id); // Refresh view to show tick mark and check certificate status
+            openCourse(activeCourseData.id); 
         }
     }
 
@@ -532,13 +664,19 @@
         const res = document.getElementById('quiz-result');
         if(selectedOptionIdx === currentQuizData.correct_option) {
             res.innerHTML = "✅ Correct! Excellent work."; res.style.color = "green";
-            markChapterComplete(); // Auto complete on pass
+            markChapterComplete(); 
         } else {
             res.innerHTML = "❌ Incorrect. Try again!"; res.style.color = "red";
         }
     }
 
-    // --- CERTIFICATE GENERATION ---
+    // --- PRINTING LOGIC (INVOICE VS CERTIFICATE) ---
+    function printInvoice() {
+        document.body.classList.add('print-inv');
+        window.print();
+        document.body.classList.remove('print-inv');
+    }
+
     function promptCertificate() {
         const name = prompt("Enter your FULL NAME to print on the Certificate:", "Ganesh");
         if(!name) return;
@@ -546,10 +684,11 @@
         document.getElementById('cert-candidate-name').innerText = name;
         document.getElementById('cert-course-name').innerText = activeCourseData.title;
         document.getElementById('cert-date').innerText = new Date().toLocaleDateString();
-        document.getElementById('cert-id').innerText = "GZG-" + Math.floor(Math.random() * 900000 + 100000); // Random UID
+        document.getElementById('cert-id').innerText = "GZG-" + Math.floor(Math.random() * 900000 + 100000);
 
-        // Trigger print (CSS handles hiding everything else)
+        document.body.classList.add('print-cert');
         window.print();
+        document.body.classList.remove('print-cert');
     }
 
     // --- COUPON & PAYMENT LOGIC ---
@@ -596,6 +735,7 @@
         loadSubscriptions();
     }
 
+    // --- MY SUBSCRIPTIONS & INVOICE ---
     async function loadSubscriptions() {
         const list = document.getElementById('my-subs-list');
         const { data } = await supabaseClient.from('enrollments').select('*').eq('user_email', currentUserEmail).order('created_at', { ascending: false });
@@ -604,17 +744,65 @@
             data.forEach(e => {
                 const isActive = e.status === 'Active';
                 let statusHTML = isActive ? `<span class="badge badge-free">Active Access</span>` : `<span class="badge" style="background:#ffc107; color:black;">Pending Approval</span>`;
+                
+                // RESTORED: Clickable card that opens invoice
+                const clickEvt = isActive ? `onclick="openInvoice(${e.id})"` : `onclick="alert('Payment verification pending by Admin.')"`;
+
                 list.innerHTML += `
-                    <div class="course-card" style="border-left: 4px solid ${isActive ? '#28a745' : '#ffc107'};">
+                    <div class="course-card" style="border-left: 4px solid ${isActive ? '#28a745' : '#ffc107'}; cursor:pointer;" ${clickEvt}>
                         <div class="course-card-content">
                             <h4>${e.course_title}</h4>
                             <p style="margin:5px 0 8px 0;">${statusHTML}</p>
-                            <p style="margin:0; font-size:11px; color:#888;">Valid till: ${e.access_until ? new Date(e.access_until).toLocaleDateString() : 'Lifetime'}</p>
+                            <p style="margin:0; font-size:11px; color:#888;">Valid till: ${e.access_until ? new Date(e.access_until).toLocaleDateString() : 'Lifetime (Click for Invoice)'}</p>
                         </div>
                     </div>
                 `;
             });
         }
+    }
+
+    async function openInvoice(enrollmentId) {
+        const { data: enData } = await supabaseClient.from('enrollments').select('*').eq('id', enrollmentId).single();
+        if(!enData) return;
+
+        document.getElementById('inv-email').innerText = enData.user_email;
+        document.getElementById('inv-course').innerText = enData.course_title;
+        document.getElementById('inv-price').innerText = enData.course_price === 'Free' ? '0 (Free)' : enData.course_price;
+        document.getElementById('inv-date').innerText = new Date(enData.created_at).toLocaleDateString();
+        
+        let expiryText = 'Lifetime Access';
+        if(enData.access_until) expiryText = new Date(enData.access_until).toLocaleDateString();
+        document.getElementById('inv-expiry').innerText = expiryText;
+
+        // Fetch Academy Details for Invoice
+        document.getElementById('inv-academy').innerText = "Loading...";
+        document.getElementById('inv-contact').innerText = "Loading...";
+        
+        const { data: cData } = await supabaseClient.from('courses').select('academy_email').eq('title', enData.course_title).limit(1);
+        if(cData && cData.length > 0 && cData[0].academy_email) {
+            const { data: acData } = await supabaseClient.from('academy_profiles').select('*').eq('email', cData[0].academy_email).single();
+            if(acData) {
+                document.getElementById('inv-academy').innerText = acData.academy_name;
+                document.getElementById('inv-contact').innerText = acData.mobile;
+            } else {
+                document.getElementById('inv-academy').innerText = "Admin Published";
+                document.getElementById('inv-contact').innerText = "support@eduportal.com";
+            }
+        } else {
+            document.getElementById('inv-academy').innerText = "Admin Published";
+            document.getElementById('inv-contact').innerText = "support@eduportal.com";
+        }
+
+        document.getElementById('invoiceModal').style.display = 'flex';
+    }
+
+    // --- PROFILE UPDATE (Mobile Number restoration) ---
+    async function updateMobile() {
+        const mobile = document.getElementById('user-mobile').value;
+        if(!mobile) return alert("Enter valid number");
+        const { error } = await supabaseClient.auth.updateUser({ data: { mobile: mobile } });
+        if(error) alert("Failed: " + error.message);
+        else alert("Profile Updated Successfully!");
     }
 
     window.onload = checkSession;
