@@ -3,85 +3,186 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Academy Portal</title>
+    <title>Academy Partner Portal</title>
     <!-- Supabase CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 15px; background: #fff8e1; }
-        .container { max-width: 600px; margin: auto; background: #fff; padding: 25px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.08); }
-        h2 { text-align: center; color: #ff8f00; margin-top: 0;}
-        h3 { color: #333; margin-bottom: 5px; }
-        input, textarea, select { width: 100%; padding: 12px; margin-top: 5px; margin-bottom: 15px; border: 1px solid #ced4da; border-radius: 6px; box-sizing: border-box; font-size: 15px;}
-        label { font-weight: bold; color: #555; }
-        .btn { padding: 15px; color: white; border: none; border-radius: 6px; cursor: pointer; width: 100%; font-size: 16px; font-weight: bold;}
+        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { margin: 0; padding: 0; background: #fff8e1; color: #333; }
+        
+        /* --- Dynamic Dashboard Layout (PC) --- */
+        .dashboard-layout { display: flex; height: 100vh; overflow: hidden; }
+        
+        /* Sidebar (PC) */
+        .sidebar { width: 260px; background: #fff; box-shadow: 2px 0 10px rgba(0,0,0,0.05); display: flex; flex-direction: column; z-index: 10; }
+        .sidebar-header { padding: 20px; font-size: 22px; font-weight: bold; color: #ff8f00; border-bottom: 1px solid #eee; text-align: center; }
+        .menu-item { padding: 18px 20px; font-size: 16px; font-weight: bold; color: #555; cursor: pointer; border-bottom: 1px solid #f9f9f9; display: flex; align-items: center; gap: 10px; }
+        .menu-item:hover, .menu-item.active { background: #fff3e0; color: #ff8f00; border-left: 4px solid #ff8f00; }
+        
+        /* Main Content */
+        .main-content { flex: 1; padding: 30px; overflow-y: auto; }
+        .content-section { display: none; background: #fff; padding: 25px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); max-width: 700px; margin: 0 auto;}
+        .content-section.active { display: block; }
+        
+        /* Form Styles */
+        h2 { color: #ff8f00; margin-top: 0; border-bottom: 2px solid #fff3e0; padding-bottom: 10px; }
+        label { display: block; font-weight: bold; margin-top: 15px; color: #555; }
+        input, textarea, select { width: 100%; padding: 12px; margin-top: 5px; border: 1px solid #ccc; border-radius: 6px; font-size: 15px; }
+        
+        /* Buttons */
+        .btn { padding: 14px; border: none; border-radius: 6px; cursor: pointer; width: 100%; font-weight: bold; font-size: 16px; margin-top: 20px; color: white;}
         .btn-profile { background: #17a2b8; }
+        .btn-profile:hover { background: #138496; }
         .btn-course { background: #ffc107; color: #000; }
-        hr { margin: 30px 0; border: 1px solid #f0f0f0; }
+        .btn-course:hover { background: #e0a800; }
+        
+        /* Uploads List */
+        .course-card { border: 1px solid #eee; padding: 15px; margin-top: 15px; border-radius: 8px; background: #fafafa; border-left: 4px solid #ffc107; }
+        .course-card h4 { margin: 0 0 5px 0; color: #333; }
+        .badge { padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; color: #fff; }
+        .badge-pending { background: #ffc107; color: #000; }
+        .badge-approved { background: #28a745; }
+
+        /* --- Mobile Layout (Bottom Nav) --- */
+        .bottom-nav { display: none; }
+        
+        @media (max-width: 768px) {
+            .dashboard-layout { flex-direction: column; height: 100vh; }
+            .sidebar { display: none; }
+            .main-content { padding: 15px; padding-bottom: 90px; }
+            
+            .bottom-nav { display: flex; position: fixed; bottom: 0; left: 0; width: 100%; background: #fff; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); z-index: 1000; }
+            .nav-tab { flex: 1; text-align: center; padding: 12px 0; font-size: 13px; font-weight: bold; color: #666; cursor: pointer; border-top: 3px solid transparent;}
+            .nav-tab.active { color: #ff8f00; border-top: 3px solid #ff8f00; background: #fff3e0; }
+            .nav-icon { display: block; font-size: 20px; margin-bottom: 4px; }
+        }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h2>Academy Partner Portal</h2>
+<div class="dashboard-layout">
+    
+    <!-- PC Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-header">Academy Portal</div>
+        <div class="menu-item active" onclick="switchMenu('profile')">👤 Academy Profile</div>
+        <div class="menu-item" onclick="switchMenu('upload')">➕ Upload Course</div>
+        <div class="menu-item" onclick="switchMenu('mycourses')">📁 My Uploads</div>
+    </div>
 
-    <h3>1. Setup Academy Profile</h3>
-    <form id="profileForm" onsubmit="saveProfile(event)">
-        <label>Academy Name</label>
-        <input type="text" id="aName" placeholder="e.g. Tech Vision Academy" required>
+    <!-- Main Content Area -->
+    <div class="main-content">
         
-        <label>Head Teacher Name</label>
-        <input type="text" id="aTeacher" required>
-        
-        <label>Contact Mobile Number</label>
-        <input type="tel" id="aMobile" required>
-        
-        <label>Payment / UPI Details</label>
-        <textarea id="aPayment" rows="2" placeholder="UPI ID or Bank Ac No" required></textarea>
-        
-        <button type="submit" class="btn btn-profile" id="profBtn">Save Profile Settings</button>
-    </form>
-
-    <hr>
-
-    <h3>2. Upload Course (Pending Approval)</h3>
-    <form id="courseForm" onsubmit="submitCourse(event)">
-        <label>Course Title</label>
-        <input type="text" id="acTitle" required>
-
-        <label>YouTube Video URL</label>
-        <input type="url" id="acVideo" required>
-
-        <label>Course Type</label>
-        <select id="acType" onchange="toggleAcPrice()">
-            <option value="Free">Free</option>
-            <option value="Paid">Paid</option>
-        </select>
-
-        <div id="acPriceDiv" style="display:none;">
-            <label>Price (₹)</label>
-            <input type="number" id="acPrice" value="0">
+        <!-- 1. Academy Profile Tab -->
+        <div id="content-profile" class="content-section active">
+            <h2>Setup Academy Profile</h2>
+            <form id="profileForm" onsubmit="saveProfile(event)">
+                <label>Academy Name</label>
+                <input type="text" id="aName" placeholder="e.g. Future Tech Academy" required>
+                
+                <label>Head Teacher Name</label>
+                <input type="text" id="aTeacher" placeholder="Enter full name" required>
+                
+                <label>Contact Mobile Number</label>
+                <input type="tel" id="aMobile" placeholder="+91 XXXXX XXXXX" required>
+                
+                <label>Payment / UPI Details (For receiving course payments)</label>
+                <textarea id="aPayment" rows="3" placeholder="Enter UPI ID or Bank Account Details" required></textarea>
+                
+                <button type="submit" class="btn btn-profile" id="profBtn">💾 Save Profile Settings</button>
+            </form>
         </div>
 
-        <button type="submit" class="btn btn-course" id="crsBtn">Submit to Admin for Review</button>
-    </form>
+        <!-- 2. Upload Course Tab -->
+        <div id="content-upload" class="content-section">
+            <h2>Upload New Course</h2>
+            <p style="color:#666; font-size:14px;">Submitted courses will be reviewed by Admin before showing on the Candidate website.</p>
+            
+            <form id="courseForm" onsubmit="submitCourse(event)">
+                <label>Course Title</label>
+                <input type="text" id="acTitle" placeholder="e.g. Master Video Editing" required>
+
+                <label>YouTube Video URL</label>
+                <input type="url" id="acVideo" placeholder="https://youtube.com/watch?v=..." required>
+
+                <label>Course Type</label>
+                <select id="acType" onchange="toggleAcPrice()">
+                    <option value="Free">Free</option>
+                    <option value="Paid">Paid</option>
+                </select>
+
+                <div id="acPriceDiv" style="display:none;">
+                    <label>Course Price (₹)</label>
+                    <input type="number" id="acPrice" value="0">
+                </div>
+
+                <button type="submit" class="btn btn-course" id="crsBtn">🚀 Submit for Admin Approval</button>
+            </form>
+        </div>
+
+        <!-- 3. My Uploads Tab (Bonus) -->
+        <div id="content-mycourses" class="content-section">
+            <h2>My Uploaded Courses</h2>
+            <button class="btn" style="background:#f4f4f4; color:#333; margin-top:0; padding:10px;" onclick="loadMyCourses()">🔄 Refresh List</button>
+            <div id="my-course-list">
+                <p style="color:#666; margin-top:20px;">Click refresh to load your uploaded courses.</p>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Mobile Bottom Navigation -->
+    <div class="bottom-nav">
+        <div class="nav-tab active" onclick="switchMenu('profile')">
+            <span class="nav-icon">👤</span>Profile
+        </div>
+        <div class="nav-tab" onclick="switchMenu('upload')">
+            <span class="nav-icon">➕</span>Upload
+        </div>
+        <div class="nav-tab" onclick="switchMenu('mycourses')">
+            <span class="nav-icon">📁</span>My Courses
+        </div>
+    </div>
+
 </div>
 
 <script>
-    // Apni Supabase API yahan daalein
-    const SUPABASE_URL = 'YOUR_SUPABASE_URL';
-    const SUPABASE_KEY = 'YOUR_SUPABASE_ANON_KEY';
+    // Supabase Setup
+    const SUPABASE_URL = 'https://goqmkifenqeussjcgdub.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdvcW1raWZlbnFldXNzamNnZHViIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUxNTIyNDMsImV4cCI6MjEwMDcyODI0M30.7lp9uJuJTfO5Wf0V59kGv4GGqdyk0FBtelOUu6UD7ic'; 
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+    // Menu Switching Logic
+    function switchMenu(menuId) {
+        document.querySelectorAll('.content-section').forEach(c => c.classList.remove('active'));
+        document.querySelectorAll('.menu-item').forEach(i => i.classList.remove('active'));
+        document.querySelectorAll('.nav-tab').forEach(i => i.classList.remove('active'));
+        
+        document.getElementById('content-' + menuId).classList.add('active');
+        
+        document.querySelectorAll('.menu-item, .nav-tab').forEach(el => {
+            if(el.innerHTML.toLowerCase().includes(menuId) || el.innerHTML.toLowerCase().includes(menuId.substring(0,6))) {
+                el.classList.add('active');
+            }
+        });
+
+        if(menuId === 'mycourses') {
+            loadMyCourses();
+        }
+    }
+
+    // Toggle Price Input for Upload Form
     function toggleAcPrice() {
         const type = document.getElementById('acType').value;
         document.getElementById('acPriceDiv').style.display = type === 'Paid' ? 'block' : 'none';
         if(type === 'Free') document.getElementById('acPrice').value = 0;
     }
 
+    // 1. Save Academy Profile to Supabase
     async function saveProfile(e) {
         e.preventDefault();
         const btn = document.getElementById('profBtn');
-        btn.innerText = "Saving...";
+        btn.innerText = "⏳ Saving...";
 
         const profileData = {
             academy_name: document.getElementById('aName').value,
@@ -92,35 +193,76 @@
 
         const { error } = await supabase.from('academy_profiles').insert([profileData]);
         
-        if(error) alert("Error saving profile: " + error.message);
-        else alert("Profile details securely saved!");
-        
-        btn.innerText = "Save Profile Settings";
+        if(error) {
+            alert("❌ Error saving profile: " + error.message);
+        } else {
+            alert("✅ Profile details securely saved!");
+        }
+        btn.innerText = "💾 Save Profile Settings";
     }
 
+    // 2. Submit Course to Supabase (Pending Status)
     async function submitCourse(e) {
         e.preventDefault();
         const btn = document.getElementById('crsBtn');
-        btn.innerText = "Submitting...";
+        btn.innerText = "⏳ Submitting...";
 
         const courseData = {
             title: document.getElementById('acTitle').value,
             video_url: document.getElementById('acVideo').value,
             type: document.getElementById('acType').value,
             price: document.getElementById('acPrice').value,
-            status: 'Pending' // Admin Supabase dashboard se isko 'Approved' karega
+            status: 'Pending' // Requires Admin Approval
         };
 
         const { error } = await supabase.from('courses').insert([courseData]);
         
-        if(error) alert("Error: " + error.message);
-        else {
-            alert("Course successfully sent to Admin for approval!");
+        if(error) {
+            alert("❌ Error: " + error.message);
+        } else {
+            alert("✅ Course successfully sent to Admin for approval!");
             document.getElementById('courseForm').reset();
             toggleAcPrice();
         }
-        
-        btn.innerText = "Submit to Admin for Review";
+        btn.innerText = "🚀 Submit for Admin Approval";
+    }
+
+    // 3. Load Uploaded Courses Status
+    async function loadMyCourses() {
+        const list = document.getElementById('my-course-list');
+        list.innerHTML = '<p>Loading your courses...</p>';
+
+        // Note: For a fully strict multi-tenant system, we should filter by academy ID. 
+        // For now, this fetches all to show functionality.
+        const { data: courses, error } = await supabase
+            .from('courses')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+        if (error) { 
+            list.innerHTML = '<p style="color:red;">Error loading: ' + error.message + '</p>'; 
+            return; 
+        }
+
+        if (!courses || courses.length === 0) { 
+            list.innerHTML = '<p>You have not uploaded any courses yet.</p>'; 
+            return; 
+        }
+
+        list.innerHTML = '';
+        courses.forEach(course => {
+            let badge = course.status === 'Approved' 
+                ? '<span class="badge badge-approved">Approved</span>' 
+                : '<span class="badge badge-pending">Pending Review</span>';
+
+            list.innerHTML += `
+                <div class="course-card">
+                    <h4>${course.title}</h4>
+                    <p style="margin:5px 0; font-size:14px; color:#555;">Type: <strong>${course.type}</strong> | Price: <strong>₹${course.price}</strong></p>
+                    <p style="margin:5px 0; font-size:14px;">Status: ${badge}</p>
+                </div>
+            `;
+        });
     }
 </script>
 </body>
