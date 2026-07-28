@@ -95,7 +95,7 @@
             <div class="sidebar-header">Academy Studio</div>
             <div class="menu-item active" onclick="switchMenu('dashboard')">📊 Dashboard</div>
             <div class="menu-item" onclick="switchMenu('mycourses')">📂 Manage Courses</div>
-            <div class="menu-item" onclick="switchMenu('history')">💰 Sales History</div>
+            <div class="menu-item" onclick="switchMenu('history')">💰 Sales Analytics</div>
             <div class="menu-item" onclick="switchMenu('profile')">⚙️ Profile Settings</div>
         </div>
 
@@ -234,12 +234,14 @@
         if (session) { currentUserEmail = session.user.email; showDashboard(); } 
         else { document.getElementById('auth-section').style.display = 'block'; }
     }
+    
     function toggleAuthMode() {
         isSignUpMode = !isSignUpMode;
         document.getElementById('auth-title').innerText = isSignUpMode ? "Register Academy" : "Academy Sign In";
         document.getElementById('auth-submit-btn').innerText = isSignUpMode ? "Create Studio Account" : "Login to Studio";
         document.getElementById('auth-toggle-text').innerText = isSignUpMode ? "Already registered? Login" : "New Academy? Register Here";
     }
+    
     async function handleAuth() {
         const email = document.getElementById('auth-email').value;
         const password = document.getElementById('auth-password').value;
@@ -251,14 +253,18 @@
             location.reload();
         } catch(err) { alert(err.message); }
     }
+    
     async function logoutUser() { await supabaseClient.auth.signOut(); location.reload(); }
 
     // --- DASHBOARD UI ---
     function showDashboard() {
         document.getElementById('auth-section').style.display = 'none';
         document.getElementById('dashboard-section').style.display = 'block';
-        loadProfile(); loadCourses(); loadSalesHistory();
+        loadProfile(); 
+        loadCourses(); 
+        loadSalesHistory();
     }
+    
     function switchMenu(menuId) {
         document.querySelectorAll('.content-section').forEach(c => c.classList.remove('active'));
         document.querySelectorAll('.menu-item, .nav-tab').forEach(i => i.classList.remove('active'));
@@ -278,28 +284,36 @@
             document.getElementById('aPayment').value = data.payment_details || "";
         }
     }
+    
     async function saveProfile(e) {
         e.preventDefault();
         const profileData = {
-            email: currentUserEmail, academy_name: document.getElementById('aName').value,
-            teacher_name: document.getElementById('aTeacher').value, mobile: document.getElementById('aMobile').value,
-            location: document.getElementById('aAddress').value, payment_details: document.getElementById('aPayment').value
+            email: currentUserEmail, 
+            academy_name: document.getElementById('aName').value,
+            teacher_name: document.getElementById('aTeacher').value, 
+            mobile: document.getElementById('aMobile').value,
+            location: document.getElementById('aAddress').value, 
+            payment_details: document.getElementById('aPayment').value
         };
-        await supabaseClient.from('academy_profiles').upsert([profileData], { onConflict: 'email' });
-        alert("Profile Setup Complete!");
+        const { error } = await supabaseClient.from('academy_profiles').upsert([profileData], { onConflict: 'email' });
+        if(error) alert("Error saving profile: " + error.message);
+        else alert("Profile Setup Complete!");
     }
 
     // --- COURSE MANAGEMENT ---
     async function loadCourses() {
         const list = document.getElementById('course-list');
-        const { data: courses } = await supabaseClient.from('courses').select('*').eq('academy_email', currentUserEmail).order('created_at', { ascending: false });
+        list.innerHTML = 'Fetching courses...';
+        
+        const { data: courses, error } = await supabaseClient.from('courses').select('*').eq('academy_email', currentUserEmail).order('created_at', { ascending: false });
+        
+        if (error) { list.innerHTML = `<p style="color:red;">Error: ${error.message}</p>`; return; }
         
         document.getElementById('stat-courses').innerText = courses ? courses.length : 0;
         if(!courses || courses.length === 0) { list.innerHTML = '<p>No courses created yet.</p>'; return; }
         
         list.innerHTML = '';
         courses.forEach(c => {
-            // Status Color Logic
             let statusClass = 'status-pending';
             let statusText = c.status || 'Pending';
             if(statusText === 'Approved') statusClass = 'status-approved';
@@ -314,7 +328,7 @@
                     </div>
                     <div class="action-row">
                         <button class="btn btn-primary btn-small" onclick="openChapterManager(${c.id}, '${c.title}')" style="flex:1;">Chapters</button>
-                        <button class="btn btn-secondary btn-small" onclick="editCourse(${c.id}, '${c.title}', '${c.thumbnail_url}')">✎ Edit</button>
+                        <button class="btn btn-secondary btn-small" onclick="editCourse(${c.id}, '${c.title}', '${c.thumbnail_url}')">✎</button>
                         <button class="btn btn-danger btn-small" onclick="deleteCourse(${c.id})">🗑</button>
                     </div>
                 </div>
@@ -327,26 +341,50 @@
         document.getElementById('cModalTitle').innerText = "Create Main Course";
         document.getElementById('courseModal').style.display = 'flex';
     }
+    
     function editCourse(id, title, thumb) {
         document.getElementById('cId').value = id; document.getElementById('cTitle').value = title; document.getElementById('cThumb').value = thumb;
         document.getElementById('cModalTitle').innerText = "Edit Course";
         document.getElementById('courseModal').style.display = 'flex';
     }
+    
     async function saveCourse(e) {
         e.preventDefault();
+        const btn = document.getElementById('cSaveBtn');
+        const oldText = btn.innerText;
+        btn.innerText = "Saving...";
+
         const id = document.getElementById('cId').value;
-        const data = { title: document.getElementById('cTitle').value, thumbnail_url: document.getElementById('cThumb').value, academy_email: currentUserEmail, status: 'Pending' };
+        const data = { 
+            title: document.getElementById('cTitle').value, 
+            thumbnail_url: document.getElementById('cThumb').value, 
+            academy_email: currentUserEmail, 
+            status: 'Pending' 
+        };
         
-        if(id) await supabaseClient.from('courses').update(data).eq('id', id);
-        else await supabaseClient.from('courses').insert([data]);
+        let err = null;
+        if(id) {
+            const { error } = await supabaseClient.from('courses').update(data).eq('id', id);
+            err = error;
+        } else {
+            const { error } = await supabaseClient.from('courses').insert([data]);
+            err = error;
+        }
         
-        document.getElementById('courseModal').style.display = 'none';
-        loadCourses();
+        btn.innerText = oldText;
+
+        if (err) {
+            alert("❌ Save failed: " + err.message + "\n(Check RLS policies in Supabase)");
+        } else {
+            document.getElementById('courseModal').style.display = 'none';
+            await loadCourses(); // Instantly refresh the course list!
+        }
     }
+    
     async function deleteCourse(id) {
         if(confirm("Are you sure? This will delete the course and ALL its chapters.")) {
             await supabaseClient.from('courses').delete().eq('id', id);
-            loadCourses();
+            await loadCourses();
         }
     }
 
@@ -358,21 +396,25 @@
         document.getElementById('chapter-manager-view').style.display = 'block';
         loadChapters();
     }
+    
     function closeChapterManager() {
         currentActiveCourseId = null;
         document.getElementById('chapter-manager-view').style.display = 'none';
         document.getElementById('course-grid-view').style.display = 'block';
         loadCourses();
     }
+    
     function extractYTThumbnail(url) {
         let videoId = (url.includes('v=')) ? url.split('v=')[1].split('&')[0] : (url.includes('youtu.be/') ? url.split('youtu.be/')[1].split('?')[0] : null);
         return videoId ? `https://img.youtube.com/vi/${videoId}/hqdefault.jpg` : 'https://via.placeholder.com/150x100?text=Video';
     }
+    
     async function loadChapters() {
         const list = document.getElementById('chapter-list');
         list.innerHTML = 'Loading chapters...';
-        const { data: chapters } = await supabaseClient.from('chapters').select('*').eq('course_id', currentActiveCourseId).order('created_at', { ascending: true });
+        const { data: chapters, error } = await supabaseClient.from('chapters').select('*').eq('course_id', currentActiveCourseId).order('created_at', { ascending: true });
         
+        if(error) { list.innerHTML = `<p style="color:red;">Error: ${error.message}</p>`; return; }
         if(!chapters || chapters.length === 0) { list.innerHTML = '<p>No chapters added yet.</p>'; return; }
         
         list.innerHTML = '';
@@ -393,12 +435,14 @@
             `;
         });
     }
+    
     function openChapterModal() {
         document.getElementById('chId').value = ""; document.getElementById('chTitle').value = ""; document.getElementById('chVideo').value = ""; document.getElementById('chNotes').value = "";
         document.getElementById('chType').value = "Free"; document.getElementById('chPrice').value = "0"; document.getElementById('chPriceDiv').style.display = 'none';
         document.getElementById('chModalTitle').innerText = "Add New Chapter";
         document.getElementById('chapterModal').style.display = 'flex';
     }
+    
     function editChapter(id, title, url, notes, type, price) {
         document.getElementById('chId').value = id; document.getElementById('chTitle').value = title; document.getElementById('chVideo').value = url;
         document.getElementById('chNotes').value = notes !== 'null' ? notes : ''; document.getElementById('chType').value = type; document.getElementById('chPrice').value = price;
@@ -406,45 +450,66 @@
         document.getElementById('chModalTitle').innerText = "Edit Chapter";
         document.getElementById('chapterModal').style.display = 'flex';
     }
+    
     async function saveChapter(e) {
         e.preventDefault();
+        const btn = document.getElementById('chSaveBtn');
+        const oldText = btn.innerText;
+        btn.innerText = "Saving...";
+
         const id = document.getElementById('chId').value;
         const data = { 
-            course_id: currentActiveCourseId, chapter_title: document.getElementById('chTitle').value, 
-            video_url: document.getElementById('chVideo').value, notes: document.getElementById('chNotes').value,
-            type: document.getElementById('chType').value, price: document.getElementById('chPrice').value
+            course_id: currentActiveCourseId, 
+            chapter_title: document.getElementById('chTitle').value, 
+            video_url: document.getElementById('chVideo').value, 
+            notes: document.getElementById('chNotes').value,
+            type: document.getElementById('chType').value, 
+            price: document.getElementById('chPrice').value
         };
         
-        if(id) await supabaseClient.from('chapters').update(data).eq('id', id);
-        else await supabaseClient.from('chapters').insert([data]);
+        let err = null;
+        if(id) {
+            const { error } = await supabaseClient.from('chapters').update(data).eq('id', id);
+            err = error;
+        } else {
+            const { error } = await supabaseClient.from('chapters').insert([data]);
+            err = error;
+        }
         
-        document.getElementById('chapterModal').style.display = 'none';
-        loadChapters();
+        btn.innerText = oldText;
+
+        if(err) {
+            alert("❌ Error: " + err.message);
+        } else {
+            document.getElementById('chapterModal').style.display = 'none';
+            await loadChapters();
+        }
     }
+    
     async function deleteChapter(id) {
         if(confirm("Delete this chapter?")) {
             await supabaseClient.from('chapters').delete().eq('id', id);
-            loadChapters();
+            await loadChapters();
         }
     }
 
     // --- SALES & ANALYTICS ---
     async function loadSalesHistory() {
         const list = document.getElementById('sales-list');
+        list.innerHTML = 'Loading analytics...';
         
-        // Find courses uploaded by this academy
         const { data: myCourses } = await supabaseClient.from('courses').select('title').eq('academy_email', currentUserEmail);
+        
         if(!myCourses || myCourses.length === 0) {
-            list.innerHTML = '<p>No active courses found.</p>';
+            list.innerHTML = '<p>No active courses found to track sales.</p>';
             return;
         }
 
         const courseTitles = myCourses.map(c => c.title);
 
-        // Get enrollments matching those courses
         const { data: sales, error } = await supabaseClient.from('enrollments').select('*').in('course_title', courseTitles).order('created_at', { ascending: false });
         
-        if (error) { list.innerHTML = '<p>Error loading analytics.</p>'; return; }
+        if (error) { list.innerHTML = `<p style="color:red;">Error: ${error.message}</p>`; return; }
         
         document.getElementById('stat-sales').innerText = sales ? sales.length : 0;
 
