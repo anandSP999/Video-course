@@ -3,87 +3,499 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard</title>
-    <!-- Supabase CDN -->
+    <title>Master Admin Panel</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 15px; background: #e9ecef; }
-        .container { max-width: 600px; margin: auto; background: #fff; padding: 25px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        h2 { text-align: center; color: #333; margin-top: 0;}
-        label { display: block; font-weight: bold; margin-top: 15px; color: #444; }
-        input, select { width: 100%; padding: 12px; margin-top: 5px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 15px; }
-        .btn { margin-top: 25px; padding: 15px; background: #343a40; color: white; border: none; border-radius: 6px; cursor: pointer; width: 100%; font-size: 16px; font-weight: bold; }
-        .btn:hover { background: #23272b; }
+        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { margin: 0; padding: 0; background: #eef2f5; color: #333; }
+        
+        /* Auth Styles */
+        .auth-container { max-width: 350px; margin: 80px auto; background: #fff; padding: 30px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); border-top: 5px solid #343a40;}
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; color: #555; font-size: 14px;}
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 15px; }
+        .btn { padding: 12px; border: none; border-radius: 6px; cursor: pointer; width: 100%; font-weight: bold; font-size: 15px; margin-top: 10px; color: white;}
+        .btn-dark { background: #343a40; }
+        .btn-primary { background: #007bff; }
+        .btn-success { background: #28a745; }
+        .btn-danger { background: #dc3545; }
+        .btn-warning { background: #ffc107; color: black; }
+        .btn-small { padding: 6px 12px; font-size: 12px; width: auto; margin-top:0;}
+
+        /* Dashboard Layout */
+        #dashboard-section { display: none; height: 100vh; }
+        .dashboard-layout { display: flex; height: 100%; }
+        .sidebar { width: 250px; background: #212529; color: white; display: flex; flex-direction: column; }
+        .sidebar-header { padding: 20px; font-size: 20px; font-weight: bold; border-bottom: 1px solid #343a40; text-align: center; color: #00d2ff;}
+        .menu-item { padding: 15px 20px; font-size: 15px; cursor: pointer; border-bottom: 1px solid #343a40; display: flex; align-items: center;}
+        .menu-item:hover, .menu-item.active { background: #343a40; border-left: 4px solid #00d2ff; }
+        .main-content { flex: 1; padding: 25px; overflow-y: auto; padding-bottom: 90px;}
+        .content-section { display: none; }
+        .content-section.active { display: block; }
+        
+        /* Stats Grid */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 25px; }
+        .stat-card { background: #fff; padding: 20px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border-left: 4px solid #343a40;}
+        .stat-card h3 { margin: 0 0 5px; font-size: 24px; color: #343a40; }
+        .stat-card p { margin: 0; color: #666; font-size: 13px; font-weight: bold; text-transform: uppercase;}
+        
+        /* Revenue Grid */
+        .revenue-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
+        .rev-card { background: #e3f2fd; padding: 15px; border-radius: 8px; text-align: center; border: 1px solid #90caf9; }
+        .rev-card h4 { margin: 0; color: #0d47a1; font-size: 20px;}
+        .rev-card p { margin: 5px 0 0; font-size: 12px; color: #1565c0; font-weight: bold;}
+
+        /* Lists & Tables */
+        .list-card { background: #fff; border-radius: 10px; padding: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 15px; border-left: 4px solid #ccc; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap:10px;}
+        .list-info { flex: 1; min-width: 200px;}
+        .list-info h4 { margin: 0 0 5px; font-size: 16px; }
+        .list-info p { margin: 2px 0; font-size: 13px; color: #555; }
+        .list-actions { display: flex; gap: 8px; }
+
+        /* User Details Modal */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; justify-content: center; align-items: center; }
+        .modal-content { background: #fff; padding: 25px; border-radius: 12px; width: 90%; max-width: 500px; max-height: 90vh; overflow-y: auto;}
+        .detail-row { display: flex; border-bottom: 1px solid #eee; padding: 10px 0; }
+        .detail-row strong { width: 120px; color: #333; }
+        .detail-row span { flex: 1; color: #555; word-break: break-all; }
+
+        /* Mobile Nav */
+        .bottom-nav { display: none; }
+        @media (max-width: 768px) {
+            .dashboard-layout { flex-direction: column; }
+            .sidebar { display: none; }
+            .revenue-grid { grid-template-columns: 1fr; }
+            .bottom-nav { display: flex; position: fixed; bottom: 0; left: 0; width: 100%; background: #212529; z-index: 1000; overflow-x: auto;}
+            .nav-tab { flex: 1; min-width: 75px; text-align: center; padding: 12px 5px; font-size: 11px; font-weight: bold; color: #aaa; cursor: pointer; border-top: 3px solid transparent;}
+            .nav-tab.active { color: #00d2ff; border-top: 3px solid #00d2ff; background: #343a40; }
+        }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h2>Admin Portal</h2>
-    <p style="text-align:center; color:#666;">Add direct approved courses to the platform.</p>
-    
-    <form id="adminCourseForm" onsubmit="addCourse(event)">
-        <label>Course Title</label>
-        <input type="text" id="cTitle" placeholder="e.g. Master Video Editing" required>
+<!-- === LOGIN SECTION === -->
+<div id="auth-section" class="auth-container">
+    <h2 style="color:#343a40; text-align:center; margin-top:0;">Admin Secure Login</h2>
+    <div id="auth-error" style="color: #dc3545; text-align: center; margin-bottom: 15px; font-weight: bold; font-size:14px;"></div>
+    <div class="form-group"><label>Admin Email</label><input type="email" id="admin-email" placeholder="admin@eduportal.com" required></div>
+    <div class="form-group"><label>Master Password</label><input type="password" id="admin-password" placeholder="••••••••" required></div>
+    <button class="btn btn-dark" onclick="loginAdmin()">Authorize Access</button>
+</div>
 
-        <label>YouTube Video URL</label>
-        <input type="url" id="cVideo" required placeholder="https://youtube.com/watch?v=...">
-
-        <label>Thumbnail Image URL (Optional)</label>
-        <input type="url" id="cThumb" placeholder="https://image-url.com/...">
-
-        <label>Course Type</label>
-        <select id="cType" onchange="togglePrice()">
-            <option value="Free">Free</option>
-            <option value="Paid">Paid</option>
-        </select>
-
-        <div id="priceDiv" style="display:none;">
-            <label>Price (₹)</label>
-            <input type="number" id="cPrice" value="0">
+<!-- === DASHBOARD SECTION === -->
+<div id="dashboard-section">
+    <div class="dashboard-layout">
+        <div class="sidebar">
+            <div class="sidebar-header">Admin Control</div>
+            <div class="menu-item active" onclick="switchMenu('dashboard')">📊 Dashboard</div>
+            <div class="menu-item" onclick="switchMenu('approvals')">✅ Course Approvals</div>
+            <div class="menu-item" onclick="switchMenu('enrollments')">🛒 Enrollments</div>
+            <div class="menu-item" onclick="switchMenu('mycourses')">➕ My Courses</div>
+            <div class="menu-item" onclick="switchMenu('users')">👥 Manage Users</div>
+            <div class="menu-item" style="color:#dc3545; margin-top:auto;" onclick="logoutAdmin()">🚪 Logout</div>
         </div>
 
-        <button type="submit" class="btn" id="submitBtn">Publish Course Now</button>
-    </form>
+        <div class="main-content">
+            <!-- 1. Dashboard -->
+            <div id="content-dashboard" class="content-section active">
+                <h2 style="margin-top:0;">Platform Overview</h2>
+                
+                <div class="revenue-grid">
+                    <div class="rev-card">
+                        <h4 id="rev-today">₹0</h4>
+                        <p>Today's Revenue</p>
+                    </div>
+                    <div class="rev-card">
+                        <h4 id="rev-month">₹0</h4>
+                        <p>This Month</p>
+                    </div>
+                    <div class="rev-card">
+                        <h4 id="rev-year">₹0</h4>
+                        <p>Annual Revenue</p>
+                    </div>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card"><h3 id="stat-candidates">0</h3><p>Total Candidates</p></div>
+                    <div class="stat-card"><h3 id="stat-academies">0</h3><p>Registered Academies</p></div>
+                    <div class="stat-card"><h3 id="stat-courses">0</h3><p>Total Courses</p></div>
+                    <div class="stat-card"><h3 id="stat-pending">0</h3><p>Pending Approvals</p></div>
+                </div>
+            </div>
+
+            <!-- 2. Course Approvals -->
+            <div id="content-approvals" class="content-section">
+                <h2>Pending Academy Courses</h2>
+                <div id="approval-list">Loading pending courses...</div>
+            </div>
+
+            <!-- 3. Enrollments / Purchases -->
+            <div id="content-enrollments" class="content-section">
+                <h2>Candidate Enrollments & Access Control</h2>
+                <p style="font-size:13px; color:#666;">Grant time-based access to candidates who purchased courses.</p>
+                <div id="enrollment-list">Loading enrollments...</div>
+            </div>
+
+            <!-- 4. Admin's Own Courses -->
+            <div id="content-mycourses" class="content-section">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                    <h2>Admin Published Courses</h2>
+                    <button class="btn btn-dark btn-small" onclick="openCourseModal()" style="padding:10px 15px;">+ Create Course</button>
+                </div>
+                <div id="admin-course-list">Loading admin courses...</div>
+            </div>
+
+            <!-- 5. Users Management -->
+            <div id="content-users" class="content-section">
+                <h2>Manage Platform Users</h2>
+                <div style="display:flex; gap:10px; margin-bottom:15px;">
+                    <button class="btn btn-primary" onclick="loadUserList('candidates')">View Candidates</button>
+                    <button class="btn btn-warning" onclick="loadUserList('academies')">View Academies</button>
+                </div>
+                <div id="user-list">Select an option above.</div>
+            </div>
+        </div>
+
+        <!-- Mobile Bottom Nav -->
+        <div class="bottom-nav">
+            <div class="nav-tab active" onclick="switchMenu('dashboard')">📊 Dash</div>
+            <div class="nav-tab" onclick="switchMenu('approvals')">✅ Approve</div>
+            <div class="nav-tab" onclick="switchMenu('enrollments')">🛒 Sales</div>
+            <div class="nav-tab" onclick="switchMenu('mycourses')">➕ Post</div>
+            <div class="nav-tab" onclick="switchMenu('users')">👥 Users</div>
+            <div class="nav-tab" style="color:#dc3545;" onclick="logoutAdmin()">🚪 Exit</div>
+        </div>
+    </div>
+</div>
+
+<!-- === MODALS === -->
+<!-- Admin Course Create Modal -->
+<div id="courseModal" class="modal">
+    <div class="modal-content">
+        <h3>Create Admin Course</h3>
+        <form onsubmit="saveAdminCourse(event)">
+            <div class="form-group"><label>Course Title</label><input type="text" id="cTitle" required></div>
+            <div class="form-group"><label>Cover Thumbnail URL</label><input type="url" id="cThumb" required></div>
+            <div style="display:flex; gap:10px;">
+                <button type="button" class="btn btn-secondary" onclick="document.getElementById('courseModal').style.display='none'">Cancel</button>
+                <button type="submit" class="btn btn-success">Publish Course</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- User Details Modal -->
+<div id="userDetailsModal" class="modal">
+    <div class="modal-content">
+        <h3 id="ud-title">User Details</h3>
+        <div id="ud-content"></div>
+        <button class="btn btn-dark" style="margin-top:20px;" onclick="document.getElementById('userDetailsModal').style.display='none'">Close Window</button>
+    </div>
 </div>
 
 <script>
-    // Apni Supabase API yahan daalein
-    const SUPABASE_URL = 'YOUR_SUPABASE_URL';
-    const SUPABASE_KEY = 'YOUR_SUPABASE_ANON_KEY';
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    // --- SUPABASE CONFIG ---
+    const SUPABASE_URL = 'https://goqmkifenqeussjcgdub.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdvcW1raWZlbnFldXNzamNnZHViIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUxNTIyNDMsImV4cCI6MjEwMDcyODI0M30.7lp9uJuJTfO5Wf0V59kGv4GGqdyk0FBtelOUu6UD7ic'; 
+    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    function togglePrice() {
-        const type = document.getElementById('cType').value;
-        document.getElementById('priceDiv').style.display = type === 'Paid' ? 'block' : 'none';
-        if(type === 'Free') document.getElementById('cPrice').value = 0;
-    }
+    // --- HARDCODED ADMIN CREDENTIALS (SINGLE USER ONLY) ---
+    const ADMIN_EMAIL = "admin@eduportal.com";
+    const ADMIN_PASS = "Admin@123";
 
-    async function addCourse(e) {
-        e.preventDefault();
-        const btn = document.getElementById('submitBtn');
-        btn.innerText = "Publishing... Please wait";
-
-        const courseData = {
-            title: document.getElementById('cTitle').value,
-            video_url: document.getElementById('cVideo').value,
-            thumbnail_url: document.getElementById('cThumb').value || null,
-            type: document.getElementById('cType').value,
-            price: document.getElementById('cPrice').value,
-            status: 'Approved' // Admin ka data seedha active hota hai
-        };
-
-        const { data, error } = await supabase.from('courses').insert([courseData]);
-
-        if (error) {
-            alert("Error saving to database: " + error.message);
-        } else {
-            alert("Success! Course is now live on Candidate Portal.");
-            document.getElementById('adminCourseForm').reset();
-            togglePrice();
+    // --- AUTH LOGIC ---
+    function checkLogin() {
+        if(localStorage.getItem('admin_logged_in') === 'true') {
+            document.getElementById('auth-section').style.display = 'none';
+            document.getElementById('dashboard-section').style.display = 'block';
+            loadDashboardData();
         }
-        btn.innerText = "Publish Course Now";
     }
+
+    function loginAdmin() {
+        const e = document.getElementById('admin-email').value;
+        const p = document.getElementById('admin-password').value;
+        if(e === ADMIN_EMAIL && p === ADMIN_PASS) {
+            localStorage.setItem('admin_logged_in', 'true');
+            checkLogin();
+        } else {
+            document.getElementById('auth-error').innerText = "❌ Access Denied! Invalid Credentials.";
+        }
+    }
+
+    function logoutAdmin() {
+        localStorage.removeItem('admin_logged_in');
+        location.reload();
+    }
+
+    // --- NAVIGATION ---
+    function switchMenu(menuId) {
+        document.querySelectorAll('.content-section').forEach(c => c.classList.remove('active'));
+        document.querySelectorAll('.menu-item, .nav-tab').forEach(i => i.classList.remove('active'));
+        document.getElementById('content-' + menuId).classList.add('active');
+        document.querySelectorAll(`[onclick="switchMenu('${menuId}')"]`).forEach(el => el.classList.add('active'));
+        
+        if(menuId === 'approvals') loadApprovals();
+        if(menuId === 'enrollments') loadEnrollments();
+        if(menuId === 'mycourses') loadAdminCourses();
+    }
+
+    // --- DASHBOARD ANALYTICS ---
+    async function loadDashboardData() {
+        // Fetch Academies count
+        const { data: academies } = await supabaseClient.from('academy_profiles').select('id');
+        document.getElementById('stat-academies').innerText = academies ? academies.length : 0;
+
+        // Fetch Courses counts
+        const { data: courses } = await supabaseClient.from('courses').select('status');
+        let totalC = 0, pendingC = 0;
+        if(courses) {
+            totalC = courses.length;
+            pendingC = courses.filter(c => c.status === 'Pending').length;
+        }
+        document.getElementById('stat-courses').innerText = totalC;
+        document.getElementById('stat-pending').innerText = pendingC;
+
+        // Fetch Enrollments for Candidates Count & Revenue
+        const { data: enrollments } = await supabaseClient.from('enrollments').select('*');
+        if(enrollments) {
+            // Unique Candidates Count
+            const uniqueCandidates = [...new Set(enrollments.map(e => e.user_email))];
+            document.getElementById('stat-candidates').innerText = uniqueCandidates.length;
+
+            // Calculate Revenue
+            let daily = 0, monthly = 0, yearly = 0;
+            const now = new Date();
+            
+            enrollments.forEach(e => {
+                if(e.status === 'Active' && e.course_price !== 'Free') {
+                    let amt = parseInt(e.course_price) || 0;
+                    let date = new Date(e.created_at);
+                    
+                    if(date.getFullYear() === now.getFullYear()) {
+                        yearly += amt;
+                        if(date.getMonth() === now.getMonth()) {
+                            monthly += amt;
+                            if(date.getDate() === now.getDate()) daily += amt;
+                        }
+                    }
+                }
+            });
+
+            document.getElementById('rev-today').innerText = "₹" + daily;
+            document.getElementById('rev-month').innerText = "₹" + monthly;
+            document.getElementById('rev-year').innerText = "₹" + yearly;
+        }
+    }
+
+    // --- COURSE APPROVALS ---
+    async function loadApprovals() {
+        const list = document.getElementById('approval-list');
+        list.innerHTML = 'Loading...';
+        const { data, error } = await supabaseClient.from('courses').select('*').eq('status', 'Pending');
+        
+        if(!data || data.length === 0) { list.innerHTML = '<p>No pending courses right now.</p>'; return; }
+        
+        list.innerHTML = '';
+        data.forEach(c => {
+            list.innerHTML += `
+                <div class="list-card" style="border-left-color: #ffc107;">
+                    <div class="list-info">
+                        <h4>${c.title}</h4>
+                        <p><strong>Academy:</strong> ${c.academy_email}</p>
+                    </div>
+                    <div class="list-actions">
+                        <button class="btn btn-success btn-small" onclick="updateCourseStatus(${c.id}, 'Approved')">Approve</button>
+                        <button class="btn btn-danger btn-small" onclick="updateCourseStatus(${c.id}, 'Rejected')">Reject</button>
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    async function updateCourseStatus(id, status) {
+        await supabaseClient.from('courses').update({ status: status }).eq('id', id);
+        loadApprovals();
+        loadDashboardData();
+    }
+
+    // --- ENROLLMENTS & ACCESS GRANTS ---
+    async function loadEnrollments() {
+        const list = document.getElementById('enrollment-list');
+        list.innerHTML = 'Loading...';
+        const { data, error } = await supabaseClient.from('enrollments').select('*').order('created_at', {ascending: false});
+        
+        if(!data || data.length === 0) { list.innerHTML = '<p>No purchases found.</p>'; return; }
+        
+        list.innerHTML = '';
+        data.forEach(e => {
+            let isExpired = e.access_until && new Date(e.access_until) < new Date();
+            let statusBadge = e.status === 'Pending' ? '<span style="color:orange;">Pending Payment</span>' : 
+                              (isExpired ? '<span style="color:red;">Expired (Needs Renewal)</span>' : '<span style="color:green;">Active Access</span>');
+
+            list.innerHTML += `
+                <div class="list-card">
+                    <div class="list-info">
+                        <h4>${e.course_title}</h4>
+                        <p><strong>Candidate:</strong> <a href="#" onclick="viewCandidate('${e.user_email}')">${e.user_email}</a></p>
+                        <p><strong>Price:</strong> ${e.course_price === 'Free' ? 'Free' : '₹'+e.course_price} | <strong>Status:</strong> ${statusBadge}</p>
+                        ${e.access_until ? `<p style="font-size:11px;">Access valid till: ${new Date(e.access_until).toLocaleDateString()}</p>` : ''}
+                    </div>
+                    <div class="list-actions" style="flex-direction:column;">
+                        <button class="btn btn-success btn-small" onclick="grantAccess(${e.id}, 3)">Grant 3 Months</button>
+                        <button class="btn btn-primary btn-small" onclick="grantAccess(${e.id}, 12)">Grant 1 Year</button>
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    async function grantAccess(id, months) {
+        let futureDate = new Date();
+        futureDate.setMonth(futureDate.getMonth() + months);
+        
+        await supabaseClient.from('enrollments').update({ 
+            status: 'Active', 
+            access_until: futureDate.toISOString() 
+        }).eq('id', id);
+        
+        alert(`Access granted for ${months} months!`);
+        loadEnrollments();
+        loadDashboardData(); // Update revenue if status changed to active
+    }
+
+    // --- ADMIN'S OWN COURSES ---
+    async function loadAdminCourses() {
+        const list = document.getElementById('admin-course-list');
+        list.innerHTML = 'Loading...';
+        const { data } = await supabaseClient.from('courses').select('*').eq('academy_email', ADMIN_EMAIL);
+        
+        if(!data || data.length === 0) { list.innerHTML = '<p>You haven\'t posted any courses.</p>'; return; }
+        
+        list.innerHTML = '';
+        data.forEach(c => {
+            list.innerHTML += `
+                <div class="list-card" style="border-left-color: #00d2ff;">
+                    <div class="list-info">
+                        <h4>${c.title}</h4>
+                        <p>Published directly by Admin</p>
+                    </div>
+                    <div class="list-actions">
+                        <button class="btn btn-danger btn-small" onclick="deleteAdminCourse(${c.id})">Delete</button>
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    function openCourseModal() { document.getElementById('courseModal').style.display = 'flex'; }
+    
+    async function saveAdminCourse(e) {
+        e.preventDefault();
+        const data = {
+            title: document.getElementById('cTitle').value,
+            thumbnail_url: document.getElementById('cThumb').value,
+            academy_email: ADMIN_EMAIL,
+            status: 'Approved' // Admin ka data seedha active
+        };
+        await supabaseClient.from('courses').insert([data]);
+        document.getElementById('courseModal').style.display = 'none';
+        document.getElementById('cTitle').value = '';
+        document.getElementById('cThumb').value = '';
+        loadAdminCourses();
+    }
+
+    async function deleteAdminCourse(id) {
+        if(confirm("Delete this admin course?")) {
+            await supabaseClient.from('courses').delete().eq('id', id);
+            loadAdminCourses();
+        }
+    }
+
+    // --- USERS MANAGEMENT ---
+    async function loadUserList(type) {
+        const list = document.getElementById('user-list');
+        list.innerHTML = 'Fetching users...';
+
+        if(type === 'academies') {
+            const { data } = await supabaseClient.from('academy_profiles').select('*');
+            if(!data || data.length === 0) { list.innerHTML = '<p>No academies registered.</p>'; return; }
+            
+            list.innerHTML = '';
+            data.forEach(a => {
+                list.innerHTML += `
+                    <div class="list-card">
+                        <div class="list-info">
+                            <h4 style="color:#ffc107; cursor:pointer;" onclick="viewAcademyDetail('${a.email}')">${a.academy_name}</h4>
+                            <p>${a.email} | Contact: ${a.mobile}</p>
+                        </div>
+                    </div>
+                `;
+            });
+        } 
+        else if (type === 'candidates') {
+            // Fetch unique emails from enrollments as candidate list
+            const { data } = await supabaseClient.from('enrollments').select('user_email');
+            if(!data || data.length === 0) { list.innerHTML = '<p>No candidates found in purchase history.</p>'; return; }
+            
+            const uniqueEmails = [...new Set(data.map(e => e.user_email))];
+            list.innerHTML = '';
+            uniqueEmails.forEach(email => {
+                list.innerHTML += `
+                    <div class="list-card">
+                        <div class="list-info">
+                            <h4 style="color:#007bff; cursor:pointer;" onclick="viewCandidate('${email}')">${email}</h4>
+                            <p>Registered Candidate</p>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+    }
+
+    // --- VIEW DETAILS MODAL ---
+    async function viewAcademyDetail(email) {
+        const { data } = await supabaseClient.from('academy_profiles').select('*').eq('email', email).single();
+        const content = document.getElementById('ud-content');
+        document.getElementById('ud-title').innerText = "Academy Info";
+        
+        if(data) {
+            content.innerHTML = `
+                <div class="detail-row"><strong>Name:</strong> <span>${data.academy_name}</span></div>
+                <div class="detail-row"><strong>Instructor:</strong> <span>${data.teacher_name}</span></div>
+                <div class="detail-row"><strong>Email:</strong> <span>${data.email}</span></div>
+                <div class="detail-row"><strong>Phone:</strong> <span>${data.mobile}</span></div>
+                <div class="detail-row"><strong>Location:</strong> <span>${data.location || 'N/A'}</span></div>
+                <div class="detail-row"><strong>Bank/UPI:</strong> <span>${data.payment_details || 'N/A'}</span></div>
+            `;
+        } else {
+            content.innerHTML = '<p>Details not found.</p>';
+        }
+        document.getElementById('userDetailsModal').style.display = 'flex';
+    }
+
+    async function viewCandidate(email) {
+        // Find total purchases by this candidate
+        const { data } = await supabaseClient.from('enrollments').select('course_title, status').eq('user_email', email);
+        const content = document.getElementById('ud-content');
+        document.getElementById('ud-title').innerText = "Candidate Info";
+        
+        let purchasesHTML = '';
+        if(data && data.length > 0) {
+            purchasesHTML = data.map(d => `<li>${d.course_title} (${d.status})</li>`).join('');
+        } else {
+            purchasesHTML = '<li>No purchases yet</li>';
+        }
+
+        content.innerHTML = `
+            <div class="detail-row"><strong>Email ID:</strong> <span>${email}</span></div>
+            <div class="detail-row"><strong>Courses Owned:</strong> <span><ul>${purchasesHTML}</ul></span></div>
+        `;
+        document.getElementById('userDetailsModal').style.display = 'flex';
+    }
+
+    // Initialize
+    window.onload = checkLogin;
 </script>
 </body>
 </html>
