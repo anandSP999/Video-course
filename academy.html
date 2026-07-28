@@ -19,7 +19,8 @@
         .btn-danger { background: #dc3545; }
         .btn-secondary { background: #6c757d; }
         .btn-success { background: #28a745; }
-        .btn-small { padding: 6px 12px; font-size: 13px; width: auto; margin-top:0;}
+        .btn-warning { background: #ffc107; color: #000; }
+        .btn-small { padding: 6px 10px; font-size: 12px; width: auto; margin-top:0;}
         .toggle-link { text-align: center; margin-top: 15px; color: #6f42c1; cursor: pointer; font-size: 15px; font-weight: bold; text-decoration: underline;}
 
         /* Dashboard Layout */
@@ -48,8 +49,7 @@
         .status-badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; color: white;}
         .status-pending { background: #ffc107; color: black; }
         .status-approved { background: #28a745; }
-        .status-rejected { background: #dc3545; }
-        .action-row { display: flex; gap: 10px; padding: 10px 15px; background: #f9f9f9; border-top: 1px solid #eee;}
+        .action-row { display: flex; gap: 8px; padding: 10px 15px; background: #f9f9f9; border-top: 1px solid #eee; flex-wrap: wrap;}
 
         /* Chapter List & Sales List UI */
         .chapter-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #eee;}
@@ -62,7 +62,7 @@
         .chapter-actions { display: flex; gap: 5px; flex-direction: column; }
 
         /* Modal Overlay */
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; justify-content: center; align-items: center; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; justify-content: center; align-items: center; }
         .modal-content { background: #fff; padding: 25px; border-radius: 12px; width: 90%; max-width: 450px; max-height: 90vh; overflow-y: auto;}
 
         /* Mobile Nav */
@@ -133,7 +133,7 @@
                             <button class="btn btn-secondary btn-small" onclick="closeChapterManager()">⬅ Back to Courses</button>
                             <h3 id="manager-course-title" style="margin:10px 0 0 0;">Course Title</h3>
                         </div>
-                        <button class="btn btn-success btn-small" onclick="openChapterModal()" style="padding:10px 15px;">+ Add Chapter / Video</button>
+                        <button class="btn btn-success btn-small" onclick="openChapterModal()" style="padding:10px 15px;">+ Add Video</button>
                     </div>
                     <div class="scrolling-list" id="chapter-list">
                         <!-- Chapters Load Here -->
@@ -200,7 +200,7 @@
             <input type="hidden" id="chId">
             <div class="form-group"><label>Chapter Title</label><input type="text" id="chTitle" required></div>
             <div class="form-group"><label>YouTube Video URL</label><input type="url" id="chVideo" required></div>
-            <div class="form-group"><label>Study Notes (Optional)</label><textarea id="chNotes" rows="2"></textarea></div>
+            <div class="form-group"><label>Study Notes URL (Optional)</label><textarea id="chNotes" rows="2" placeholder="Google Drive Link etc..."></textarea></div>
             <div class="form-group">
                 <label>Type</label>
                 <select id="chType" onchange="document.getElementById('chPriceDiv').style.display = this.value === 'Paid' ? 'block' : 'none'">
@@ -213,6 +213,42 @@
             <div style="display:flex; gap:10px;">
                 <button type="button" class="btn btn-secondary" onclick="document.getElementById('chapterModal').style.display='none'">Cancel</button>
                 <button type="submit" class="btn btn-success" id="chSaveBtn">Save Chapter</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- 3. Quiz Management Modal (NEW) -->
+<div id="quizModal" class="modal">
+    <div class="modal-content">
+        <h3 id="quizModalTitle">Manage Chapter Quiz</h3>
+        <p style="font-size:13px; color:#666; margin-top:0;">Students must pass this to get a certificate.</p>
+        <form onsubmit="saveQuiz(event)">
+            <input type="hidden" id="qId">
+            <input type="hidden" id="qChId">
+            <div class="form-group">
+                <label>Quiz Question</label>
+                <textarea id="qQuestion" rows="2" placeholder="What is the main topic...?" required></textarea>
+            </div>
+            <div class="form-group">
+                <label>Options</label>
+                <input type="text" id="qOpt0" placeholder="Option A" required style="margin-bottom:5px;">
+                <input type="text" id="qOpt1" placeholder="Option B" required style="margin-bottom:5px;">
+                <input type="text" id="qOpt2" placeholder="Option C" required style="margin-bottom:5px;">
+                <input type="text" id="qOpt3" placeholder="Option D" required>
+            </div>
+            <div class="form-group">
+                <label>Which option is correct?</label>
+                <select id="qCorrect">
+                    <option value="0">Option A</option>
+                    <option value="1">Option B</option>
+                    <option value="2">Option C</option>
+                    <option value="3">Option D</option>
+                </select>
+            </div>
+            <div style="display:flex; gap:10px;">
+                <button type="button" class="btn btn-secondary" onclick="document.getElementById('quizModal').style.display='none'">Cancel</button>
+                <button type="submit" class="btn btn-primary" id="qSaveBtn">Save Quiz</button>
             </div>
         </form>
     </div>
@@ -317,8 +353,7 @@
             let statusClass = 'status-pending';
             let statusText = c.status || 'Pending';
             if(statusText === 'Approved') statusClass = 'status-approved';
-            else if(statusText === 'Rejected') statusClass = 'status-rejected';
-
+            
             list.innerHTML += `
                 <div class="course-card">
                     <img src="${c.thumbnail_url || 'https://via.placeholder.com/400x200?text=No+Thumbnail'}" alt="Cover">
@@ -327,8 +362,8 @@
                         <p style="margin:0;"><span class="status-badge ${statusClass}">${statusText}</span></p>
                     </div>
                     <div class="action-row">
-                        <button class="btn btn-primary btn-small" onclick="openChapterManager(${c.id}, '${c.title}')" style="flex:1;">Chapters</button>
-                        <button class="btn btn-secondary btn-small" onclick="editCourse(${c.id}, '${c.title}', '${c.thumbnail_url}')">✎</button>
+                        <button class="btn btn-primary btn-small" onclick="openChapterManager(${c.id}, '${c.title.replace(/'/g, "\\'")}')" style="flex:1;">Chapters</button>
+                        <button class="btn btn-secondary btn-small" onclick="editCourse(${c.id}, '${c.title.replace(/'/g, "\\'")}', '${c.thumbnail_url}')">✎ Edit</button>
                         <button class="btn btn-danger btn-small" onclick="deleteCourse(${c.id})">🗑</button>
                     </div>
                 </div>
@@ -372,12 +407,10 @@
         }
         
         btn.innerText = oldText;
-
-        if (err) {
-            alert("❌ Save failed: " + err.message + "\n(Check RLS policies in Supabase)");
-        } else {
+        if (err) alert("❌ Save failed: " + err.message);
+        else {
             document.getElementById('courseModal').style.display = 'none';
-            await loadCourses(); // Instantly refresh the course list!
+            await loadCourses(); 
         }
     }
     
@@ -426,10 +459,14 @@
                     <div class="chapter-details">
                         <h5>Ep ${index + 1}: ${ch.chapter_title}</h5>
                         <p style="margin:0; font-size:12px; color:#666;">${ch.type} | ₹${ch.price}</p>
+                        
+                        <!-- QUIZ MANAGER BUTTON ADDED HERE -->
+                        <button class="btn btn-warning btn-small" style="margin-top:5px;" onclick="openQuizModal(${ch.id}, 'Ep ${index+1}')">📝 Manage Quiz</button>
+                    
                     </div>
                     <div class="chapter-actions">
-                        <button class="btn btn-secondary btn-small" onclick="editChapter(${ch.id}, '${ch.chapter_title}', '${ch.video_url}', '${ch.notes}', '${ch.type}', ${ch.price})">✎</button>
-                        <button class="btn btn-danger btn-small" onclick="deleteChapter(${ch.id})">🗑</button>
+                        <button class="btn btn-secondary btn-small" onclick="editChapter(${ch.id}, '${ch.chapter_title.replace(/'/g, "\\'")}', '${ch.video_url}', '${ch.notes}', '${ch.type}', ${ch.price})">✎ Edit</button>
+                        <button class="btn btn-danger btn-small" onclick="deleteChapter(${ch.id})">🗑 Delete</button>
                     </div>
                 </div>
             `;
@@ -477,10 +514,8 @@
         }
         
         btn.innerText = oldText;
-
-        if(err) {
-            alert("❌ Error: " + err.message);
-        } else {
+        if(err) alert("❌ Error: " + err.message);
+        else {
             document.getElementById('chapterModal').style.display = 'none';
             await loadChapters();
         }
@@ -491,6 +526,64 @@
             await supabaseClient.from('chapters').delete().eq('id', id);
             await loadChapters();
         }
+    }
+
+    // --- QUIZ MANAGEMENT (NEW FEATURE FOR ACADEMY) ---
+    async function openQuizModal(chapterId, epName) {
+        document.getElementById('qChId').value = chapterId;
+        document.getElementById('quizModalTitle').innerText = `Set Quiz for ${epName}`;
+        
+        // Reset Form
+        document.getElementById('qId').value = "";
+        document.getElementById('qQuestion').value = "";
+        document.getElementById('qOpt0').value = "";
+        document.getElementById('qOpt1').value = "";
+        document.getElementById('qOpt2').value = "";
+        document.getElementById('qOpt3').value = "";
+        document.getElementById('qCorrect').value = "0";
+
+        // Check if quiz already exists for this chapter
+        const { data } = await supabaseClient.from('quizzes').select('*').eq('chapter_id', chapterId).single();
+        if(data) {
+            document.getElementById('qId').value = data.id;
+            document.getElementById('qQuestion').value = data.question;
+            document.getElementById('qOpt0').value = data.options[0] || "";
+            document.getElementById('qOpt1').value = data.options[1] || "";
+            document.getElementById('qOpt2').value = data.options[2] || "";
+            document.getElementById('qOpt3').value = data.options[3] || "";
+            document.getElementById('qCorrect').value = data.correct_option;
+        }
+
+        document.getElementById('quizModal').style.display = 'flex';
+    }
+
+    async function saveQuiz(e) {
+        e.preventDefault();
+        const btn = document.getElementById('qSaveBtn');
+        btn.innerText = "Saving...";
+
+        const qId = document.getElementById('qId').value;
+        const payload = {
+            chapter_id: document.getElementById('qChId').value,
+            question: document.getElementById('qQuestion').value,
+            options: [
+                document.getElementById('qOpt0').value,
+                document.getElementById('qOpt1').value,
+                document.getElementById('qOpt2').value,
+                document.getElementById('qOpt3').value
+            ],
+            correct_option: parseInt(document.getElementById('qCorrect').value)
+        };
+
+        if(qId) {
+            await supabaseClient.from('quizzes').update(payload).eq('id', qId);
+        } else {
+            await supabaseClient.from('quizzes').insert([payload]);
+        }
+
+        btn.innerText = "Save Quiz";
+        document.getElementById('quizModal').style.display = 'none';
+        alert("✅ Quiz added successfully! Students can now take this assessment.");
     }
 
     // --- SALES & ANALYTICS ---
