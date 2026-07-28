@@ -1,86 +1,5 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Candidate Portal - Login</title>
-    <!-- Supabase CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 15px; background: #f4f7f6; }
-        .container { max-width: 600px; margin: auto; background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
-        h2 { text-align: center; color: #333; }
-        
-        /* Auth Styles */
-        .auth-container { max-width: 400px; margin: 50px auto; background: #fff; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        .form-group { margin-bottom: 15px; }
-        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; color: #555; }
-        .form-group input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
-        .auth-btn { width: 100%; padding: 12px; background: #007bff; color: white; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; }
-        .toggle-link { text-align: center; margin-top: 15px; color: #007bff; cursor: pointer; font-size: 14px; text-decoration: underline; }
-        
-        /* Dashboard Styles */
-        .tabs { display: flex; margin-bottom: 20px; border-bottom: 2px solid #eee; }
-        .tab { padding: 12px 20px; cursor: pointer; flex: 1; text-align: center; color: #666; font-weight: bold; }
-        .tab.active { border-bottom: 3px solid #007bff; color: #007bff; }
-        .content { display: none; }
-        .content.active { display: block; }
-        .course-card { border: 1px solid #eee; padding: 15px; margin-bottom: 15px; border-radius: 10px; background: #fafafa; }
-        .course-card h4 { margin-top: 0; color: #222; }
-        iframe { width: 100%; height: 220px; border: none; border-radius: 8px; margin-top: 10px; }
-        .btn { padding: 12px; background: #28a745; color: white; border: none; border-radius: 6px; cursor: pointer; width: 100%; font-weight: bold; font-size: 16px; margin-top: 10px; }
-        .btn-pay { background: #007bff; }
-        .btn-logout { background: #dc3545; margin-top: 20px; }
-    </style>
-</head>
-<body>
-
-<!-- === AUTHENTICATION SECTION === -->
-<div id="auth-section" class="auth-container">
-    <h2 id="auth-title">Sign In</h2>
-    <div id="auth-error" style="color: red; text-align: center; margin-bottom: 10px; font-size: 14px;"></div>
-    
-    <div class="form-group">
-        <label>Email Address</label>
-        <input type="email" id="auth-email" placeholder="Enter your email" required>
-    </div>
-    <div class="form-group">
-        <label>Password</label>
-        <input type="password" id="auth-password" placeholder="Enter password (min 6 chars)" required>
-    </div>
-    <button class="auth-btn" id="auth-submit-btn" onclick="handleAuth()">Login</button>
-    
-    <div class="toggle-link" onclick="toggleAuthMode()" id="auth-toggle-text">Don't have an account? Sign Up</div>
-</div>
-
-<!-- === MAIN DASHBOARD SECTION (Hidden initially) === -->
-<div id="dashboard-section" class="container" style="display: none;">
-    <h2>Student Portal</h2>
-    <div class="tabs">
-        <div class="tab active" onclick="switchTab('courses')">All Courses</div>
-        <div class="tab" onclick="switchTab('profile')">My Profile</div>
-    </div>
-
-    <!-- Courses Section -->
-    <div id="courses" class="content active">
-        <div id="course-list">Loading courses... Please wait.</div>
-    </div>
-
-    <!-- Profile Section -->
-    <div id="profile" class="content">
-        <h3>My Profile</h3>
-        <p><strong>Email:</strong> <span id="user-email-display">Loading...</span></p>
-        <p><strong>Mobile:</strong> Update pending</p>
-        <hr>
-        <h3>My Subscriptions</h3>
-        <p>No active subscriptions yet.</p>
-        <hr>
-        <button class="btn btn-logout" onclick="logoutUser()">Logout Account</button>
-    </div>
-</div>
-
 <script>
-    // Supabase Configuration
+    // Supabase Configuration (Aapki nayi aur sahi details ke sath)
     const SUPABASE_URL = 'https://goqmkifenqeussjcgdub.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdvcW1raWZlbnFldXNzamNnZHViIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUxNTIyNDMsImV4cCI6MjEwMDcyODI0M30.7lp9uJuJTfO5Wf0V59kGv4GGqdyk0FBtelOUu6UD7ic'; 
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -91,12 +10,19 @@
 
     // Check if user is already logged in
     async function checkSession() {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session) {
-            showDashboard(session.user.email);
-        } else {
+        try {
+            const { data: { session }, error } = await supabase.auth.getSession();
+            if (error) throw error;
+            
+            if (session) {
+                showDashboard(session.user.email);
+            } else {
+                document.getElementById('auth-section').style.display = 'block';
+                document.getElementById('dashboard-section').style.display = 'none';
+            }
+        } catch (err) {
+            console.error("Session check error:", err);
             document.getElementById('auth-section').style.display = 'block';
-            document.getElementById('dashboard-section').style.display = 'none';
         }
     }
 
@@ -115,40 +41,56 @@
         }
     }
 
-    // Handle Login or Sign Up
+    // Handle Login or Sign Up (With Mobile Alerts)
     async function handleAuth() {
         const email = document.getElementById('auth-email').value;
         const password = document.getElementById('auth-password').value;
         const errorDiv = document.getElementById('auth-error');
         const btn = document.getElementById('auth-submit-btn');
         
+        // Validation check
         if(!email || !password) {
-            errorDiv.innerText = "Please fill both fields.";
+            alert("⚠️ Error: Email aur Password dono daalna zaroori hai!");
+            return;
+        }
+        if(password.length < 6) {
+            alert("⚠️ Error: Password kam se kam 6 characters ka hona chahiye!");
             return;
         }
 
         btn.innerText = "Please wait...";
         errorDiv.innerText = "";
 
-        if (isSignUpMode) {
-            // Sign Up User
-            const { data, error } = await supabase.auth.signUp({ email, password });
-            if (error) {
-                errorDiv.innerText = error.message;
-                btn.innerText = "Sign Up";
+        try {
+            if (isSignUpMode) {
+                // Sign Up User
+                const { data, error } = await supabase.auth.signUp({ email: email, password: password });
+                
+                if (error) {
+                    alert("❌ Sign Up Fail: " + error.message);
+                    errorDiv.innerText = error.message;
+                } else {
+                    alert("✅ ID Ban Gayi Hai! Ab aap Login kar sakte hain.");
+                    toggleAuthMode(); // Wapas login page par bhej do
+                    document.getElementById('auth-password').value = ''; // Password field clear kar do
+                }
             } else {
-                alert("Account created successfully! You can now log in.");
-                toggleAuthMode(); // Switch back to login
+                // Log In User
+                const { data, error } = await supabase.auth.signInWithPassword({ email: email, password: password });
+                
+                if (error) {
+                    alert("❌ Login Fail: " + error.message);
+                    errorDiv.innerText = error.message;
+                } else {
+                    alert("✅ Login Success!");
+                    showDashboard(data.user.email);
+                }
             }
-        } else {
-            // Log In User
-            const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-            if (error) {
-                errorDiv.innerText = error.message;
-                btn.innerText = "Login";
-            } else {
-                showDashboard(data.user.email);
-            }
+        } catch (err) {
+            alert("⚠️ System Error: " + err.message);
+        } finally {
+            // Button ka text wapas normal kar do
+            btn.innerText = isSignUpMode ? "Sign Up" : "Login";
         }
     }
 
@@ -160,6 +102,7 @@
         document.getElementById('auth-submit-btn').innerText = "Login";
         document.getElementById('auth-section').style.display = 'block';
         document.getElementById('dashboard-section').style.display = 'none';
+        alert("Aap successfully logout ho gaye hain.");
     }
 
     // Show Dashboard after successful login
@@ -167,7 +110,7 @@
         document.getElementById('auth-section').style.display = 'none';
         document.getElementById('dashboard-section').style.display = 'block';
         document.getElementById('user-email-display').innerText = userEmail;
-        loadCourses(); // Load data from DB
+        loadCourses(); // Database se courses load karein
     }
 
 
@@ -183,7 +126,6 @@
     async function loadCourses() {
         const courseList = document.getElementById('course-list');
         
-        // Supabase se 'Approved' courses fetch karna
         const { data: courses, error } = await supabase
             .from('courses')
             .select('*')
@@ -200,7 +142,7 @@
             return;
         }
 
-        courseList.innerHTML = ''; // Clear loading text
+        courseList.innerHTML = ''; 
 
         courses.forEach(course => {
             let videoId = "";
@@ -231,5 +173,3 @@
     // Initialize checking session on page load
     window.onload = checkSession;
 </script>
-</body>
-</html>
