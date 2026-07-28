@@ -3,443 +3,121 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Academy Partner Portal</title>
-    <!-- Supabase CDN -->
+    <title>Academy Studio</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        body { margin: 0; padding: 0; background: #f8f9fa; color: #333; }
-        
-        /* Auth Styles */
-        .auth-container { max-width: 400px; margin: 50px auto; background: #fff; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        body { margin: 0; padding: 0; background: #f8f9fa; }
+        .container { max-width: 600px; margin: auto; padding: 20px; }
         .form-group { margin-bottom: 15px; }
-        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; color: #555; font-size: 14px;}
-        .form-group input, .form-group textarea, .form-group select { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 15px; }
-        .auth-btn { width: 100%; padding: 14px; background: #6f42c1; color: white; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; }
-        .toggle-link { text-align: center; margin-top: 15px; color: #6f42c1; cursor: pointer; font-size: 15px; font-weight: bold; text-decoration: underline;}
-
-        /* --- Dynamic Dashboard Layout (PC) --- */
-        #dashboard-section { display: none; height: 100vh; }
-        .dashboard-layout { display: flex; height: 100%; }
-        
-        /* Sidebar (PC) */
-        .sidebar { width: 260px; background: #fff; box-shadow: 2px 0 10px rgba(0,0,0,0.05); display: flex; flex-direction: column; }
-        .sidebar-header { padding: 20px; font-size: 22px; font-weight: bold; color: #6f42c1; border-bottom: 1px solid #eee; text-align: center; background: #fdfbfe;}
-        .menu-item { padding: 18px 20px; font-size: 15px; font-weight: bold; color: #555; cursor: pointer; border-bottom: 1px solid #f9f9f9; display: flex; align-items: center; gap: 10px;}
-        .menu-item:hover, .menu-item.active { background: #f3eaff; color: #6f42c1; border-left: 4px solid #6f42c1; }
-        
-        /* Main Content */
-        .main-content { flex: 1; padding: 25px; overflow-y: auto; }
-        .content-section { display: none; }
-        .content-section.active { display: block; }
-        
-        /* Dashboard Stats Grid */
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 20px; }
-        .stat-card { background: #fff; padding: 20px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); text-align: center; border-bottom: 4px solid #6f42c1;}
-        .stat-card h3 { margin: 0; font-size: 28px; color: #6f42c1; }
-        .stat-card p { margin: 5px 0 0; color: #666; font-weight: bold; font-size: 14px;}
-
-        /* Lists & Tables */
-        .list-card { background: #fff; border-radius: 10px; padding: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 15px; border-left: 4px solid #ccc; }
-        .list-card.approved { border-left-color: #28a745; }
-        .list-card.pending { border-left-color: #ffc107; }
-        
-        /* Buttons */
-        .btn { padding: 12px; border: none; border-radius: 6px; cursor: pointer; width: 100%; font-weight: bold; font-size: 16px; margin-top: 10px; color: white;}
-        .btn-primary { background: #6f42c1; }
-        .btn-success { background: #28a745; width: auto; padding: 10px 20px; }
-        .btn-logout { background: #dc3545; width: auto; padding: 10px 20px; margin-top: 20px;}
-
-        /* --- Mobile Layout (Bottom Nav) --- */
-        .bottom-nav { display: none; }
-        
-        @media (max-width: 768px) {
-            .dashboard-layout { flex-direction: column; }
-            .sidebar { display: none; }
-            .main-content { padding: 15px; padding-bottom: 80px; }
-            
-            .bottom-nav { display: flex; position: fixed; bottom: 0; left: 0; width: 100%; background: #fff; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); z-index: 1000; overflow-x: auto;}
-            .nav-tab { flex: 1; min-width: 70px; text-align: center; padding: 10px 5px; font-size: 12px; font-weight: bold; color: #666; cursor: pointer; border-top: 3px solid transparent;}
-            .nav-tab.active { color: #6f42c1; border-top: 3px solid #6f42c1; background: #f3eaff; }
-            .nav-icon { font-size: 20px; display: block; margin-bottom: 3px;}
-        }
+        label { font-weight: bold; font-size: 14px; display: block; margin-bottom: 5px;}
+        input, select, textarea { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; }
+        .btn { width: 100%; padding: 14px; background: #6f42c1; color: white; border: none; border-radius: 6px; font-weight: bold; margin-top: 10px; cursor: pointer;}
+        .card { background: #fff; padding: 20px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .tabs { display: flex; margin-bottom: 20px; overflow-x: auto; background:#fff; border-radius:8px;}
+        .tab { padding: 15px; flex: 1; text-align: center; font-weight: bold; cursor: pointer; min-width: 120px; border-bottom: 3px solid transparent;}
+        .tab.active { color: #6f42c1; border-bottom: 3px solid #6f42c1; }
+        .content { display: none; }
+        .content.active { display: block; }
     </style>
 </head>
 <body>
 
-<!-- === AUTHENTICATION SECTION === -->
-<div id="auth-section" class="auth-container">
-    <h2 id="auth-title" style="color:#6f42c1; text-align:center;">Academy Sign In</h2>
-    <div id="auth-error" style="color: #dc3545; text-align: center; margin-bottom: 15px; font-weight: bold;"></div>
-    
-    <div class="form-group">
-        <label>Email Address</label>
-        <input type="email" id="auth-email" placeholder="academy@example.com" required>
+<div id="auth-section" class="container" style="margin-top:50px;">
+    <div class="card">
+        <h2 style="text-align:center; color:#6f42c1;">Academy Login</h2>
+        <input type="email" id="email" placeholder="Email" style="margin-bottom:10px;">
+        <input type="password" id="password" placeholder="Password (Min 6 chars)">
+        <button class="btn" onclick="login()">Login / Create Account</button>
     </div>
-    <div class="form-group">
-        <label>Password</label>
-        <input type="password" id="auth-password" placeholder="Min 6 characters" required>
-    </div>
-    <button class="auth-btn" id="auth-submit-btn" onclick="handleAuth()">Login to Studio</button>
-    <div class="toggle-link" onclick="toggleAuthMode()" id="auth-toggle-text">New Academy? Register Here</div>
 </div>
 
-<!-- === MAIN DASHBOARD SECTION === -->
-<div id="dashboard-section">
-    <div class="dashboard-layout">
-        
-        <!-- PC Sidebar -->
-        <div class="sidebar">
-            <div class="sidebar-header">Academy Studio</div>
-            <div class="menu-item active" onclick="switchMenu('dashboard')">📊 Dashboard</div>
-            <div class="menu-item" onclick="switchMenu('create')">➕ Create Episode</div>
-            <div class="menu-item" onclick="switchMenu('mycourses')">📂 My Uploads</div>
-            <div class="menu-item" onclick="switchMenu('history')">💰 Sales History</div>
-            <div class="menu-item" onclick="switchMenu('profile')">⚙️ Profile Settings</div>
-        </div>
+<div id="app-section" class="container" style="display:none;">
+    <h2 style="color:#6f42c1;">Academy Studio</h2>
+    
+    <div class="tabs">
+        <div class="tab active" onclick="switchTab('create-course')">1. Create Course</div>
+        <div class="tab" onclick="switchTab('add-chapter')">2. Add Chapters</div>
+    </div>
 
-        <!-- Main Content Area -->
-        <div class="main-content">
-            
-            <!-- 1. Dashboard Tab -->
-            <div id="content-dashboard" class="content-section active">
-                <h2>Welcome back!</h2>
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <h3 id="stat-courses">0</h3>
-                        <p>Total Episodes Uploaded</p>
-                    </div>
-                    <div class="stat-card">
-                        <h3 id="stat-sales">0</h3>
-                        <p>Total Enrollments/Sales</p>
-                    </div>
-                </div>
-                <div style="background:#fff; padding:20px; border-radius:10px; margin-top:20px;">
-                    <p><strong>Note:</strong> Uploaded episodes need Admin approval to show on the Candidate portal.</p>
-                </div>
-            </div>
+    <!-- Create Main Course -->
+    <div id="create-course" class="content active card">
+        <h3>Create Main Course / Playlist</h3>
+        <input type="text" id="cTitle" placeholder="Course Title (e.g., Freelancing 101)" class="form-group">
+        <input type="url" id="cThumb" placeholder="Thumbnail Image URL" class="form-group">
+        <select id="cType" class="form-group" onchange="document.getElementById('cPrice').style.display = this.value==='Paid' ? 'block' : 'none'">
+            <option value="Free">Free Course</option>
+            <option value="Paid">Paid Course</option>
+        </select>
+        <input type="number" id="cPrice" placeholder="Price (₹)" class="form-group" style="display:none;">
+        <button class="btn" onclick="createCourse()">Create Main Course</button>
+    </div>
 
-            <!-- 2. Create Course (Episode/Playlist Style) -->
-            <div id="content-create" class="content-section">
-                <h2>Create New Episode / Course</h2>
-                <div style="background:#fff; padding:20px; border-radius:10px; box-shadow:0 2px 8px rgba(0,0,0,0.05);">
-                    <form onsubmit="submitCourse(event)">
-                        <div class="form-group">
-                            <label>Course Name / Playlist Title</label>
-                            <input type="text" id="cTitle" placeholder="e.g., Video Editing Masterclass - Ep 1" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Video URL (YouTube/Vimeo)</label>
-                            <input type="url" id="cVideo" placeholder="https://youtube.com/watch?v=..." required>
-                        </div>
-                        <div class="form-group">
-                            <label>Study Notes / Material Link (Optional)</label>
-                            <textarea id="cNotes" rows="2" placeholder="Paste Google Drive link or write text notes here..."></textarea>
-                        </div>
-                        <div class="form-group">
-                            <label>Episode Type</label>
-                            <select id="cType" onchange="togglePrice()">
-                                <option value="Free">Free Chapter</option>
-                                <option value="Paid">Paid Chapter</option>
-                            </select>
-                        </div>
-                        <div class="form-group" id="priceDiv" style="display:none;">
-                            <label>Price (₹)</label>
-                            <input type="number" id="cPrice" value="0">
-                        </div>
-                        <button type="submit" class="btn btn-primary" id="crsBtn">Upload & Request Approval</button>
-                    </form>
-                </div>
-            </div>
-
-            <!-- 3. My Courses -->
-            <div id="content-mycourses" class="content-section">
-                <h2>My Uploaded Episodes</h2>
-                <div id="my-course-list">Loading your uploads...</div>
-            </div>
-
-            <!-- 4. Sales / Purchase History -->
-            <div id="content-history" class="content-section">
-                <h2>Enrollment & Sales History</h2>
-                <p style="color:#666; font-size:14px;">Candidates who purchased or enrolled in your courses.</p>
-                <div id="sales-list">Loading history...</div>
-            </div>
-
-            <!-- 5. Profile Tab -->
-            <div id="content-profile" class="content-section">
-                <h2>Academy Profile</h2>
-                <div style="background:#fff; padding:20px; border-radius:10px; box-shadow:0 2px 8px rgba(0,0,0,0.05);">
-                    <p><strong>Login Email:</strong> <span id="user-email-display" style="color:#6f42c1;">Loading...</span></p>
-                    <hr style="border: 0; border-top: 1px solid #eee; margin:20px 0;">
-                    
-                    <form onsubmit="saveProfile(event)">
-                        <div class="form-group">
-                            <label>Academy / Channel Name</label>
-                            <input type="text" id="aName" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Instructor Name</label>
-                            <input type="text" id="aTeacher" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Mobile Number</label>
-                            <input type="tel" id="aMobile" required>
-                        </div>
-                        <div class="form-group">
-                            <label>UPI ID / Payment Details (For settlements)</label>
-                            <input type="text" id="aPayment" required>
-                        </div>
-                        <button type="submit" class="btn btn-success" id="profBtn">💾 Update Profile Details</button>
-                    </form>
-
-                    <hr style="margin: 30px 0; border:1px solid #eee;">
-                    <button class="btn btn-logout" onclick="logoutUser()">🚪 Logout Studio</button>
-                </div>
-            </div>
-
-        </div>
-
-        <!-- Mobile Bottom Navigation -->
-        <div class="bottom-nav">
-            <div class="nav-tab active" onclick="switchMenu('dashboard')">
-                <span class="nav-icon">📊</span> Dash
-            </div>
-            <div class="nav-tab" onclick="switchMenu('create')">
-                <span class="nav-icon">➕</span> Upload
-            </div>
-            <div class="nav-tab" onclick="switchMenu('mycourses')">
-                <span class="nav-icon">📂</span> Courses
-            </div>
-            <div class="nav-tab" onclick="switchMenu('history')">
-                <span class="nav-icon">💰</span> Sales
-            </div>
-            <div class="nav-tab" onclick="switchMenu('profile')">
-                <span class="nav-icon">⚙️</span> Profile
-            </div>
-        </div>
-
+    <!-- Add Chapters to Course -->
+    <div id="add-chapter" class="content card">
+        <h3>Add Video Chapters</h3>
+        <select id="select-course" class="form-group"><option>Loading your courses...</option></select>
+        <input type="text" id="chTitle" placeholder="Chapter Title (e.g., Ep 1: Introduction)" class="form-group">
+        <input type="url" id="chVideo" placeholder="YouTube Video URL" class="form-group">
+        <textarea id="chNotes" placeholder="Notes or Drive Link (Optional)" class="form-group"></textarea>
+        <button class="btn" style="background:#28a745;" onclick="addChapter()">+ Add Chapter</button>
     </div>
 </div>
 
 <script>
-    // Supabase Setup
-    const SUPABASE_URL = 'https://goqmkifenqeussjcgdub.supabase.co';
-    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdvcW1raWZlbnFldXNzamNnZHViIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUxNTIyNDMsImV4cCI6MjEwMDcyODI0M30.7lp9uJuJTfO5Wf0V59kGv4GGqdyk0FBtelOUu6UD7ic'; 
-    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const supabase = window.supabase.createClient('https://goqmkifenqeussjcgdub.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdvcW1raWZlbnFldXNzamNnZHViIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUxNTIyNDMsImV4cCI6MjEwMDcyODI0M30.7lp9uJuJTfO5Wf0V59kGv4GGqdyk0FBtelOUu6UD7ic');
+    let userEmail = "";
 
-    let currentUserEmail = "";
-    let isSignUpMode = false;
-
-    // --- AUTHENTICATION ---
-    async function checkSession() {
-        const { data: { session } } = await supabaseClient.auth.getSession();
-        if (session) {
-            currentUserEmail = session.user.email;
-            showDashboard();
-        } else {
-            document.getElementById('auth-section').style.display = 'block';
-            document.getElementById('dashboard-section').style.display = 'none';
+    async function login() {
+        const e = document.getElementById('email').value, p = document.getElementById('password').value;
+        let { data, error } = await supabase.auth.signInWithPassword({ email: e, password: p });
+        if(error) { 
+            let res = await supabase.auth.signUp({ email: e, password: p });
+            if(!res.error) data = res.data; else return alert(res.error.message);
         }
-    }
-
-    function toggleAuthMode() {
-        isSignUpMode = !isSignUpMode;
-        document.getElementById('auth-error').innerText = '';
-        document.getElementById('auth-title').innerText = isSignUpMode ? "Register Academy" : "Academy Sign In";
-        document.getElementById('auth-submit-btn').innerText = isSignUpMode ? "Create Studio Account" : "Login to Studio";
-        document.getElementById('auth-toggle-text').innerText = isSignUpMode ? "Already registered? Login" : "New Academy? Register Here";
-    }
-
-    async function handleAuth() {
-        const email = document.getElementById('auth-email').value;
-        const password = document.getElementById('auth-password').value;
-        const errorDiv = document.getElementById('auth-error');
-        const btn = document.getElementById('auth-submit-btn');
-        
-        if(!email || password.length < 6) { errorDiv.innerText = "Valid email & 6 char password required."; return; }
-        
-        btn.innerText = "Processing..."; errorDiv.innerText = "";
-
-        try {
-            if (isSignUpMode) {
-                const { data, error } = await supabaseClient.auth.signUp({ email, password });
-                if (error) throw error;
-                currentUserEmail = data.user.email;
-                showDashboard();
-            } else {
-                const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-                if (error) throw error;
-                currentUserEmail = data.user.email;
-                showDashboard();
-            }
-        } catch (err) {
-            errorDiv.innerText = "Error: " + err.message;
-            btn.innerText = isSignUpMode ? "Create Studio Account" : "Login to Studio";
-        }
-    }
-
-    async function logoutUser() {
-        await supabaseClient.auth.signOut();
-        location.reload();
-    }
-
-    // --- DASHBOARD UI ---
-    function showDashboard() {
+        userEmail = data.user.email;
         document.getElementById('auth-section').style.display = 'none';
-        document.getElementById('dashboard-section').style.display = 'block';
-        document.getElementById('user-email-display').innerText = currentUserEmail;
-        
-        loadProfile();
+        document.getElementById('app-section').style.display = 'block';
         loadMyCourses();
-        loadSalesHistory();
     }
 
-    function switchMenu(menuId) {
-        document.querySelectorAll('.content-section').forEach(c => c.classList.remove('active'));
-        document.querySelectorAll('.menu-item').forEach(i => i.classList.remove('active'));
-        document.querySelectorAll('.nav-tab').forEach(i => i.classList.remove('active'));
-        
-        document.getElementById('content-' + menuId).classList.add('active');
-        
-        document.querySelectorAll('.menu-item, .nav-tab').forEach(el => {
-            if(el.innerHTML.toLowerCase().includes(menuId)) el.classList.add('active');
-        });
+    function switchTab(id) {
+        document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        event.target.classList.add('active');
+        if(id === 'add-chapter') loadMyCourses();
     }
 
-    function togglePrice() {
-        const type = document.getElementById('cType').value;
-        document.getElementById('priceDiv').style.display = type === 'Paid' ? 'block' : 'none';
-        if(type === 'Free') document.getElementById('cPrice').value = 0;
-    }
-
-    // --- FUNCTIONALITY ---
-
-    // 1. Save / Update Profile
-    async function loadProfile() {
-        const { data, error } = await supabaseClient.from('academy_profiles').select('*').eq('email', currentUserEmail).single();
-        if(data) {
-            document.getElementById('aName').value = data.academy_name || "";
-            document.getElementById('aTeacher').value = data.teacher_name || "";
-            document.getElementById('aMobile').value = data.mobile || "";
-            document.getElementById('aPayment').value = data.payment_details || "";
-        }
-    }
-
-    async function saveProfile(e) {
-        e.preventDefault();
-        const btn = document.getElementById('profBtn');
-        btn.innerText = "Saving...";
-
-        const profileData = {
-            email: currentUserEmail,
-            academy_name: document.getElementById('aName').value,
-            teacher_name: document.getElementById('aTeacher').value,
-            mobile: document.getElementById('aMobile').value,
-            payment_details: document.getElementById('aPayment').value
-        };
-
-        // Upsert (Insert or Update if exists)
-        const { error } = await supabaseClient.from('academy_profiles').upsert([profileData], { onConflict: 'email' });
-        
-        if(error) alert("Error: " + error.message);
-        else alert("Profile Updated Successfully!");
-        btn.innerText = "💾 Update Profile Details";
-    }
-
-    // 2. Upload Course (Episode Style)
-    async function submitCourse(e) {
-        e.preventDefault();
-        const btn = document.getElementById('crsBtn');
-        btn.innerText = "Uploading...";
-
-        const courseData = {
-            academy_email: currentUserEmail,
+    async function createCourse() {
+        const data = {
+            academy_email: userEmail,
             title: document.getElementById('cTitle').value,
-            video_url: document.getElementById('cVideo').value,
-            notes: document.getElementById('cNotes').value,
+            thumbnail_url: document.getElementById('cThumb').value,
             type: document.getElementById('cType').value,
-            price: document.getElementById('cPrice').value,
-            status: 'Pending' // Admin has to approve
+            price: document.getElementById('cPrice').value || 0,
+            status: 'Pending'
         };
-
-        const { error } = await supabaseClient.from('courses').insert([courseData]);
-        
-        if(error) {
-            alert("Error: " + error.message);
-        } else {
-            alert("Episode uploaded successfully! Sent to admin for approval.");
-            e.target.reset();
-            togglePrice();
-            loadMyCourses(); // Refresh list
-        }
-        btn.innerText = "Upload & Request Approval";
+        const { error } = await supabase.from('courses').insert([data]);
+        if(error) alert(error.message); else { alert('Course Created! Now add chapters.'); document.getElementById('cTitle').value=''; }
     }
 
-    // 3. Load Uploaded Courses & Dashboard Stats
     async function loadMyCourses() {
-        const list = document.getElementById('my-course-list');
-        const { data: courses, error } = await supabaseClient.from('courses').select('*').eq('academy_email', currentUserEmail).order('created_at', { ascending: false });
-
-        if (error) { list.innerHTML = '<p>Error loading.</p>'; return; }
-        
-        document.getElementById('stat-courses').innerText = courses ? courses.length : 0;
-
-        if (!courses || courses.length === 0) { list.innerHTML = '<p>No episodes uploaded yet.</p>'; return; }
-
-        list.innerHTML = '';
-        courses.forEach(course => {
-            let statusClass = course.status === 'Approved' ? 'approved' : 'pending';
-            
-            list.innerHTML += `
-                <div class="list-card ${statusClass}">
-                    <h4 style="margin:0 0 5px;">${course.title}</h4>
-                    <p style="margin:5px 0; font-size:14px; color:#555;">
-                        <strong>Type:</strong> ${course.type} | 
-                        <strong>Price:</strong> ₹${course.price} | 
-                        <strong>Status:</strong> <span style="color:${course.status === 'Approved' ? 'green' : '#d39e00'}; font-weight:bold;">${course.status}</span>
-                    </p>
-                    ${course.notes ? `<p style="margin:5px 0; font-size:13px; color:#007bff;">Notes attached ✅</p>` : ''}
-                </div>
-            `;
-        });
+        const select = document.getElementById('select-course');
+        const { data } = await supabase.from('courses').select('id, title').eq('academy_email', userEmail);
+        select.innerHTML = data ? data.map(c => `<option value="${c.id}">${c.title}</option>`).join('') : '<option>No courses found</option>';
     }
 
-    // 4. Load Sales / Enrollments History
-    async function loadSalesHistory() {
-        const list = document.getElementById('sales-list');
-        
-        // Step 1: Get all titles uploaded by this academy
-        const { data: myCourses } = await supabaseClient.from('courses').select('title').eq('academy_email', currentUserEmail);
-        if(!myCourses || myCourses.length === 0) {
-            list.innerHTML = '<p>No courses available to sell.</p>';
-            return;
-        }
-
-        const courseTitles = myCourses.map(c => c.title);
-
-        // Step 2: Fetch enrollments for these titles
-        const { data: sales, error } = await supabaseClient.from('enrollments').select('*').in('course_title', courseTitles).order('created_at', { ascending: false });
-
-        if (error) { list.innerHTML = '<p>Error loading history.</p>'; return; }
-        
-        document.getElementById('stat-sales').innerText = sales ? sales.length : 0;
-
-        if (!sales || sales.length === 0) { list.innerHTML = '<p>No sales or enrollments yet.</p>'; return; }
-
-        list.innerHTML = '';
-        sales.forEach(sale => {
-            list.innerHTML += `
-                <div class="list-card" style="border-left-color: #6f42c1;">
-                    <h4 style="margin:0 0 5px; font-size:16px;">${sale.course_title}</h4>
-                    <p style="margin:3px 0; font-size:14px;"><strong>Candidate:</strong> ${sale.user_email}</p>
-                    <p style="margin:3px 0; font-size:14px;"><strong>Amount:</strong> ${sale.course_price === 'Free' ? 'Free Access' : '₹' + sale.course_price}</p>
-                    <p style="margin:3px 0; font-size:12px; color:#888;">${new Date(sale.created_at).toLocaleString()}</p>
-                </div>
-            `;
-        });
+    async function addChapter() {
+        const data = {
+            course_id: document.getElementById('select-course').value,
+            chapter_title: document.getElementById('chTitle').value,
+            video_url: document.getElementById('chVideo').value,
+            notes: document.getElementById('chNotes').value
+        };
+        const { error } = await supabase.from('chapters').insert([data]);
+        if(error) alert(error.message); else { alert('Chapter Added!'); document.getElementById('chTitle').value=''; document.getElementById('chVideo').value=''; }
     }
-
-    window.onload = checkSession;
 </script>
 </body>
 </html>
