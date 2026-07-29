@@ -85,6 +85,9 @@
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.7); z-index: 2000; justify-content: center; align-items: center; backdrop-filter: blur(4px);}
         .modal-content { background: var(--white); padding: 35px; border-radius: 20px; width: 90%; max-width: 550px; max-height: 90vh; overflow-y: auto; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);}
         .modal-content h3 { margin-top: 0; font-size: 24px; color: var(--dark); margin-bottom: 25px;}
+        .detail-row { display: flex; border-bottom: 1px solid #eee; padding: 12px 0; font-size:15px; }
+        .detail-row strong { width: 140px; color: var(--dark); font-weight: 700;}
+        .detail-row span { flex: 1; color: var(--text-muted); word-break: break-all; }
 
         /* === MOBILE RESPONSIVENESS (App-like Nav) === */
         .bottom-nav { display: none; }
@@ -95,7 +98,6 @@
             .revenue-grid { grid-template-columns: 1fr; }
             .stats-grid { grid-template-columns: 1fr 1fr; }
             
-            /* Floating App-like Bottom Nav */
             .bottom-nav { display: flex; position: fixed; bottom: 0; left: 0; width: 100%; background: var(--white); box-shadow: 0 -4px 20px rgba(0,0,0,0.08); z-index: 1000; padding-bottom: env(safe-area-inset-bottom); overflow-x: auto; white-space: nowrap; scrollbar-width: none;}
             .bottom-nav::-webkit-scrollbar { display: none; }
             .nav-tab { display:inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 12px 15px; font-size: 11px; font-weight: 600; color: var(--text-muted); cursor: pointer; min-width: 75px;}
@@ -161,7 +163,7 @@
                 <div id="enrollment-list">Loading enrollments...</div>
             </div>
 
-            <!-- 4. Promo Codes Engine (NEW & ADVANCED) -->
+            <!-- 4. Promo Codes Engine -->
             <div id="content-coupons" class="content-section">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:25px; flex-wrap:wrap; gap:10px;">
                     <h2 style="margin:0;">Promo Code Engine</h2>
@@ -245,7 +247,7 @@
                 <span style="font-size:12px; color:var(--text-muted);">Select if this discount is for a specific course only.</span>
             </div>
             <div style="display:flex; gap:15px; margin-top:30px;">
-                <button type="button" class="btn btn-outline" style="width:100%; border-color:var(--text-muted); color:var(--text-muted);" onclick="document.getElementById('couponModal').style.display='none'">Cancel</button>
+                <button type="button" class="btn btn-outline" style="width:100%;" onclick="document.getElementById('couponModal').style.display='none'">Cancel</button>
                 <button type="submit" class="btn btn-success">Publish Coupon</button>
             </div>
         </form>
@@ -266,7 +268,7 @@
                 <img id="bPreviewImg" src="" alt="preview">
             </div>
             <div style="display:flex; gap:15px; margin-top:30px;">
-                <button type="button" class="btn btn-outline" style="width:100%; border-color:var(--text-muted); color:var(--text-muted);" onclick="document.getElementById('bannerModal').style.display='none'">Cancel</button>
+                <button type="button" class="btn btn-outline" style="width:100%;" onclick="document.getElementById('bannerModal').style.display='none'">Cancel</button>
                 <button type="submit" class="btn btn-primary">Publish Banner</button>
             </div>
         </form>
@@ -281,10 +283,19 @@
             <div class="form-group"><label>Course Title</label><input type="text" id="cTitle" required></div>
             <div class="form-group"><label>Cover Thumbnail URL</label><input type="url" id="cThumb" required></div>
             <div style="display:flex; gap:15px; margin-top:30px;">
-                <button type="button" class="btn btn-outline" style="width:100%; border-color:var(--text-muted); color:var(--text-muted);" onclick="document.getElementById('courseModal').style.display='none'">Cancel</button>
+                <button type="button" class="btn btn-outline" style="width:100%;" onclick="document.getElementById('courseModal').style.display='none'">Cancel</button>
                 <button type="submit" class="btn btn-success">Publish Course</button>
             </div>
         </form>
+    </div>
+</div>
+
+<!-- User Details Modal -->
+<div id="userDetailsModal" class="modal">
+    <div class="modal-content">
+        <h3 id="ud-title">User Details</h3>
+        <div id="ud-content"></div>
+        <button class="btn btn-dark" style="margin-top:20px;" onclick="document.getElementById('userDetailsModal').style.display='none'">Close Window</button>
     </div>
 </div>
 
@@ -372,7 +383,12 @@
     }
 
     async function updateStatus(table, id, status) {
-        await supabaseClient.from(table).update({ status: status }).eq('id', id);
+        // If approving a coupon, also set active to true
+        let payload = { status: status };
+        if(table === 'coupons' && status === 'Approved') payload.active = true;
+
+        await supabaseClient.from(table).update(payload).eq('id', id);
+        
         if(table === 'courses') { loadApprovals(); loadDashboardData(); }
         if(table === 'coupons') loadCoupons();
     }
@@ -401,7 +417,7 @@
                     ${watermark}
                     <div class="list-info">
                         <h4>${e.course_title}</h4>
-                        <p><strong>Candidate:</strong> <span style="color:var(--primary); font-weight:600;">${e.user_email}</span></p>
+                        <p><strong>Candidate:</strong> <a href="#" style="color:var(--primary); font-weight:600;" onclick="viewCandidate('${e.user_email}')">${e.user_email}</a></p>
                         <p><strong>Paid:</strong> ${e.course_price === 'Free' ? 'Free' : '₹'+e.course_price} &nbsp;|&nbsp; ${statusBadge}</p>
                         ${e.access_until ? `<p style="font-size:12px; font-weight:600;">Valid till: ${new Date(e.access_until).toLocaleDateString()}</p>` : ''}
                     </div>
@@ -439,7 +455,7 @@
         }
     }
 
-    // --- PROMO CODES ENGINE (ADVANCED) ---
+    // --- PROMO CODES ENGINE ---
     async function populateCourseDropdown() {
         const select = document.getElementById('cpTargetCourse');
         const { data } = await supabaseClient.from('courses').select('title').eq('status', 'Approved');
@@ -455,8 +471,13 @@
         
         pendingList.innerHTML = 'Loading...'; activeList.innerHTML = 'Loading...';
 
-        const { data } = await supabaseClient.from('coupons').select('*').order('created_at', {ascending:false});
-        if(!data) { pendingList.innerHTML = '<p>No data.</p>'; activeList.innerHTML = ''; return; }
+        // ORDER BY ID FIX (In case created_at is missing from earlier table structure)
+        const { data, error } = await supabaseClient.from('coupons').select('*').order('id', {ascending:false});
+        if(error || !data) { 
+            pendingList.innerHTML = '<p style="color:var(--text-muted);">No data available.</p>'; 
+            activeList.innerHTML = ''; 
+            return; 
+        }
 
         let pendHTML = '', actHTML = '';
         data.forEach(cp => {
@@ -608,7 +629,7 @@
         document.getElementById('cTitle').value = ''; document.getElementById('cThumb').value = ''; loadAdminCourses();
     }
 
-    // --- USERS MANAGEMENT ---
+    // --- USERS MANAGEMENT (Showing Details & Phone) ---
     async function loadUserList(type) {
         const list = document.getElementById('user-list'); list.innerHTML = 'Fetching records...';
         if(type === 'academies') {
@@ -630,7 +651,7 @@
             uniqueEmails.forEach(email => {
                 list.innerHTML += `
                     <div class="list-card">
-                        <div class="list-info"><h4 style="color:var(--primary); cursor:pointer;" onclick="viewCandidate('${email}')">${email}</h4><p>Platform Candidate</p></div>
+                        <div class="list-info"><h4 style="color:var(--primary); cursor:pointer;" onclick="viewCandidate('${email}')">${email}</h4><p>Click to View Contact Info</p></div>
                     </div>`;
             });
         }
@@ -647,6 +668,7 @@
                 <div class="detail-row"><strong>Instructor:</strong> <span>${data.teacher_name}</span></div>
                 <div class="detail-row"><strong>Email:</strong> <span>${data.email}</span></div>
                 <div class="detail-row"><strong>Phone:</strong> <span>${data.mobile}</span></div>
+                <div class="detail-row"><strong>Location:</strong> <span>${data.location || 'N/A'}</span></div>
             `;
         }
         document.getElementById('userDetailsModal').style.display = 'flex';
@@ -659,8 +681,20 @@
         
         let purchasesHTML = (data && data.length > 0) ? data.map(d => `<li>${d.course_title} <span style="font-size:12px; font-weight:bold; color:${d.status==='Active'?'var(--success)':'var(--warning)'};">(${d.status})</span></li>`).join('') : '<li>No courses enrolled</li>';
 
+        // Try to fetch Candidate Name & Mobile if they updated it in profile
+        let candidateName = "Not Updated Yet";
+        let candidateMobile = "Not Updated Yet";
+        const { data: profile } = await supabaseClient.from('candidate_profiles').select('*').eq('email', email).single();
+        if(profile) {
+            if(profile.full_name) candidateName = profile.full_name;
+            if(profile.mobile) candidateMobile = profile.mobile;
+        }
+
         content.innerHTML = `
+            <div class="detail-row"><strong>Name:</strong> <span style="color:var(--dark); font-weight:bold;">${candidateName}</span></div>
             <div class="detail-row"><strong>Email ID:</strong> <span>${email}</span></div>
+            <div class="detail-row"><strong>Mobile No:</strong> <span style="color:var(--primary); font-weight:bold;">${candidateMobile}</span></div>
+            
             <div class="detail-row" style="flex-direction:column; border:none; padding-top:20px;">
                 <strong style="width:100%; margin-bottom:10px; font-size:16px;">Courses Owned/Enrolled:</strong> 
                 <div style="background:#f1f5f9; padding:15px; border-radius:10px; border:1px solid #e2e8f0;">
