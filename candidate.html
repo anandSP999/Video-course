@@ -90,6 +90,39 @@
         .btn-warning { background: #ffc107; color: black; }
         .btn-outline { background: transparent; border: 2px solid #007bff; color: #007bff; width: auto;}
 
+        /* Invoice Details */
+        .invoice-box { text-align: left; background: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px dashed #ccc; margin-bottom: 15px; font-size: 13px;}
+        .helpdesk-box { background: #fff3cd; border: 1px solid #ffeeba; padding: 15px; border-radius: 10px; margin-top: 20px; text-align: left;}
+        
+        /* Professional Certificate Design (Hidden until print) */
+        #certificate-container { display: none; }
+        
+        /* Intelligent Print Media Queries */
+        @media print {
+            body * { visibility: hidden; }
+            
+            /* If Certificate Print */
+            body.print-cert #certificate-container, body.print-cert #certificate-container * { visibility: visible; }
+            body.print-cert #certificate-container { 
+                display: flex !important; position: absolute; left: 0; top: 0; width: 1123px; height: 794px; 
+                background: url('https://www.transparenttextures.com/patterns/cream-paper.png'), linear-gradient(135deg, #ffffff, #f3f3f3); 
+                border: 20px solid #2c3e50; padding: 50px; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: #2c3e50; font-family: 'Times New Roman', serif;
+            }
+            body.print-cert .cert-header { font-size: 65px; font-weight: bold; text-transform: uppercase; letter-spacing: 5px; color: #c0392b; margin-bottom: 20px;}
+            body.print-cert .cert-sub { font-size: 25px; font-style: italic; margin-bottom: 40px; }
+            body.print-cert .cert-name { font-size: 55px; font-weight: bold; text-decoration: underline; margin-bottom: 30px; font-family: 'Arial', sans-serif;}
+            body.print-cert .cert-desc { font-size: 22px; max-width: 800px; line-height: 1.6; margin-bottom: 50px; }
+            body.print-cert .cert-footer { display: flex; justify-content: space-between; width: 80%; margin-top: auto; padding-top: 30px; border-top: 2px solid #2c3e50;}
+            body.print-cert .cert-footer div { text-align: center; font-size: 18px; font-weight: bold;}
+            body.print-cert .cert-stamp { width: 120px; height: 120px; background: gold; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: bold; text-align: center; border: 4px dashed #c0392b; position: absolute; bottom: 80px; right: 100px; color:#c0392b;}
+            
+            /* If Invoice Print */
+            body.print-inv #invoiceModal, body.print-inv #invoiceModal * { visibility: visible; }
+            body.print-inv #invoiceModal { position: absolute; left: 0; top: 0; width: 100%; background: white; padding: 20px;}
+            
+            .btn, .close-btn, .card-actions { display: none !important; }
+        }
+
         /* Mobile Nav */
         .bottom-nav { display: none; }
         @media (max-width: 768px) {
@@ -105,7 +138,6 @@
         /* ========================================= */
         #pdf-generator-container { position: absolute; left: -9999px; top: 0; width: 0; height: 0; overflow: hidden; }
         
-        /* 1. High Quality Invoice Template */
         .pdf-invoice { width: 800px; padding: 40px; background: #fff; font-family: 'Arial', sans-serif; color: #333; display: none; }
         .pdf-invoice-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #007bff; padding-bottom: 20px; margin-bottom: 30px;}
         .pdf-invoice-header h1 { margin: 0; color: #007bff; font-size: 36px; text-transform: uppercase;}
@@ -126,7 +158,6 @@
         .pdf-footer h4 { margin: 0 0 5px; color: #333;}
         .pdf-footer p { margin: 2px 0; font-size: 12px; color: #666;}
 
-        /* 2. High Quality Certificate Template */
         .pdf-certificate { width: 1056px; height: 816px; padding: 40px; background: #fff; position: relative; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; font-family: 'Times New Roman', serif; }
         .cert-border-outer { position: absolute; top: 20px; left: 20px; right: 20px; bottom: 20px; border: 10px solid #2c3e50; }
         .cert-border-inner { position: absolute; top: 35px; left: 35px; right: 35px; bottom: 35px; border: 2px solid #c0392b; }
@@ -134,22 +165,18 @@
         .pdf-certificate .cert-logo { font-size: 30px; font-weight: bold; color: #007bff; margin-bottom: 20px; font-family: 'Arial', sans-serif;}
         .pdf-certificate h1 { font-size: 60px; font-weight: bold; text-transform: uppercase; letter-spacing: 6px; color: #2c3e50; margin: 0 0 10px;}
         .pdf-certificate h3 { font-size: 24px; font-style: italic; color: #555; margin: 0 0 40px;}
-        
         .cert-name-display { font-size: 55px; font-weight: bold; color: #c0392b; border-bottom: 2px solid #2c3e50; padding: 0 40px 10px; margin-bottom: 30px; font-family: 'Arial', sans-serif;}
-        
         .cert-text { font-size: 22px; max-width: 800px; line-height: 1.6; color: #444; margin-bottom: 50px;}
         
         .cert-bottom-grid { display: flex; justify-content: space-between; width: 85%; margin-top: 30px; align-items: flex-end;}
         .cert-sig-box { text-align: center; }
         .cert-sig-line { width: 250px; border-bottom: 2px solid #333; margin-bottom: 10px; height: 40px; display: flex; align-items: flex-end; justify-content: center; font-family: 'Brush Script MT', cursive; font-size: 32px; color: #2c3e50;}
         .cert-sig-text { font-size: 16px; font-weight: bold; font-family: 'Arial', sans-serif;}
-        
         .cert-badge { width: 140px; height: 140px; background: radial-gradient(circle, #f1c40f, #f39c12); border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; text-align: center; border: 4px dashed #fff; box-shadow: 0 0 0 4px #c0392b; color:#fff; font-family: 'Arial', sans-serif; position: relative; z-index: 10;}
     </style>
 </head>
 <body>
 
-<!-- === AUTH SECTION === -->
 <div id="auth-section" class="auth-container">
     <h2 id="auth-title" style="color:#007bff; text-align:center; font-size:26px; margin-top:0;">Student Login</h2>
     <div id="auth-error" style="color: #dc3545; text-align: center; margin-bottom: 15px; font-weight: bold; font-size:13px;"></div>
@@ -159,7 +186,6 @@
     <div class="toggle-link" onclick="toggleAuthMode()" id="auth-toggle-text">New Student? Create Account</div>
 </div>
 
-<!-- === DASHBOARD SECTION === -->
 <div id="dashboard-section">
     <div class="dashboard-layout">
         <div class="sidebar">
@@ -171,7 +197,7 @@
         </div>
 
         <div class="main-content">
-            <!-- 1. Explore Tab -->
+            
             <div id="content-courses" class="content-section active">
                 <div id="course-grid-view">
                     <div class="banner-container" id="banner-slider"></div>
@@ -191,7 +217,6 @@
                         <iframe id="main-player" src="" allowfullscreen></iframe>
                     </div>
 
-                    <!-- Academy Info Box -->
                     <div id="cv-academy-info" class="academy-info-box">
                         <h3 style="color:#007bff; margin:0 0 5px;">About the Author</h3>
                         <p><strong>Provider:</strong> <span id="cv-academy-name">Loading...</span></p>
@@ -201,13 +226,11 @@
                         </div>
                     </div>
 
-                    <!-- Progress & Assessment Box -->
                     <div id="progress-action-box" style="display:none; text-align:center; margin-bottom:15px;">
                         <button id="mark-complete-btn" class="btn btn-success" style="max-width:250px;" onclick="markChapterComplete()">✅ Mark Chapter as Completed</button>
                         <button id="take-quiz-btn" class="btn btn-warning" style="max-width:250px;" onclick="loadQuizForChapter()">📝 Take Chapter Quiz</button>
                     </div>
 
-                    <!-- Quiz Area -->
                     <div id="quiz-area" class="quiz-box">
                         <h3 style="margin-top:0; color:#007bff;">Skill Assessment</h3>
                         <p id="quiz-question" style="font-size:16px; font-weight:bold;"></p>
@@ -216,17 +239,17 @@
                         <p id="quiz-result" style="font-weight:bold; margin-top:10px;"></p>
                     </div>
 
-                    <!-- Course Completion Certificate Gen -->
                     <div id="certificate-box" style="display:none; background:#d4edda; padding:20px; border-radius:12px; text-align:center; border:2px dashed #28a745; margin-bottom:20px;">
                         <h2 style="color:#155724; margin:0 0 10px;">🎉 Course Completed!</h2>
                         <p style="color:#155724; margin-bottom:15px;">Congratulations on finishing all chapters and assessments.</p>
                         <button class="btn btn-success" style="max-width:300px; font-size:18px;" onclick="promptCertificate()">🏆 Download Verified Certificate</button>
                     </div>
 
-                    <!-- Payment Prompt -->
-                    <div id="payment-box" style="display:none; background:#fff3cd; padding:15px; border-radius:10px; text-align:center; margin-bottom:20px;">
-                        <h3 style="margin:0 0 10px; color:#856404;">Unlock Premium Access</h3>
-                        <button class="btn btn-success" onclick="openPaymentModal()">Pay ₹<span id="pay-amt"></span> via UPI</button>
+                    <!-- Payment Prompt For Whole Course -->
+                    <div id="payment-box" style="display:none; background:#fff3cd; padding:20px; border-radius:10px; text-align:center; margin-bottom:20px; border:1px solid #ffeeba;">
+                        <h3 style="margin:0 0 10px; color:#856404;">Unlock Full Course Access</h3>
+                        <p style="font-size:14px; color:#666; margin-bottom:15px;">Pay once to unlock <strong>all premium videos, quizzes, and the certificate</strong> for this entire course.</p>
+                        <button class="btn btn-success" style="font-size:16px; max-width:300px;" onclick="openPaymentModal()">Pay ₹<span id="pay-amt"></span> to Unlock All</button>
                     </div>
 
                     <h3 style="margin-top:20px;">Course Curriculum</h3>
@@ -234,38 +257,44 @@
                 </div>
             </div>
 
-            <!-- 2. Favorites Tab -->
             <div id="content-favorites" class="content-section">
                 <h2 style="margin-top:0;">Favorites</h2>
                 <div id="favorites-list" class="grid-cards"></div>
             </div>
 
-            <!-- 3. Subscriptions (My Learning) Tab -->
             <div id="content-subscriptions" class="content-section">
                 <h2 style="margin-top:0;">My Learning History</h2>
                 <p style="font-size:13px; color:#666;">Click on any active course to download its PDF Invoice.</p>
                 <div id="my-subs-list" class="grid-cards"></div>
             </div>
 
-            <!-- 4. Profile Tab -->
             <div id="content-profile" class="content-section">
                 <h2 style="margin-top:0;">My Profile</h2>
+                <p style="font-size:13px; color:#666; margin-top:0;">Keep your details updated so Admins can reach out easily.</p>
+                
                 <div style="background:#fff; padding:20px; border-radius:12px; box-shadow:0 4px 10px rgba(0,0,0,0.05);">
                     <p style="font-size:15px;"><strong>Email ID:</strong> <span id="user-email-display" style="color:#007bff;"></span></p>
+                    
+                    <div class="form-group" style="margin-top:15px; max-width:300px;">
+                        <label>Full Name</label>
+                        <input type="text" id="user-fullname" placeholder="E.g. Ganesh Sharma">
+                    </div>
+                    
                     <div class="form-group" style="margin-top:15px; max-width:300px;">
                         <label>Mobile Number</label>
                         <input type="tel" id="user-mobile" placeholder="+91 XXXXX XXXXX">
                     </div>
-                    <button class="btn btn-primary" onclick="updateMobile()" style="max-width:300px;">💾 Save Changes</button>
                     
-                    <div style="background: #fff3cd; border: 1px solid #ffeeba; padding: 15px; border-radius: 10px; margin-top: 20px;">
+                    <button class="btn btn-primary" onclick="updateProfile()" style="max-width:300px;">💾 Save Details</button>
+                    
+                    <div style="background: #fff3cd; border: 1px solid #ffeeba; padding: 15px; border-radius: 10px; margin-top: 30px;">
                         <h3 style="margin-top:0; color:#856404;">📞 24/7 Platform Customer Support</h3>
                         <p style="margin:5px 0; color:#856404;">Need help with access or payments? Contact Admin.</p>
                         <p style="margin:5px 0; color:#856404;">Helpline: <strong>+91 98765 43210</strong></p>
                         <p style="margin:5px 0; color:#856404;">Email: <strong>support@eduportal.com</strong></p>
                     </div>
 
-                    <button class="btn" style="background:#dc3545; color:white; margin-top:30px; max-width:300px;" onclick="logoutUser()">🚪 Logout</button>
+                    <button class="btn" style="background:#dc3545; color:white; margin-top:20px; max-width:300px;" onclick="logoutUser()">🚪 Logout</button>
                 </div>
             </div>
 
@@ -284,7 +313,8 @@
 <div id="paymentModal" class="modal">
     <div class="modal-content">
         <h3 style="margin-top:0;">Secure Payment</h3>
-        <p>Total Amount: ₹<span id="modal-pay-amt"></span></p>
+        <p style="margin-bottom:5px;">Total Amount: ₹<span id="modal-pay-amt"></span></p>
+        <p style="font-size:12px; color:#666; margin-top:0;">Unlocks the entire course permanently.</p>
         
         <div class="coupon-box">
             <input type="text" id="promo-code" placeholder="ENTER PROMO CODE">
@@ -314,7 +344,6 @@
 <!-- ========================================================= -->
 <div id="pdf-generator-container">
     
-    <!-- INVOICE TEMPLATE -->
     <div id="pdf-invoice" class="pdf-invoice">
         <div class="pdf-invoice-header">
             <h1>TAX INVOICE</h1>
@@ -325,10 +354,10 @@
                 <p>www.genzgravity.com</p>
             </div>
         </div>
-        
         <div class="pdf-inv-row">
             <div class="pdf-inv-box">
                 <h3>Billed To (Student)</h3>
+                <p><strong>Name:</strong> <span id="pdf-inv-name"></span></p>
                 <p><strong>Email:</strong> <span id="pdf-inv-email"></span></p>
                 <p><strong>Phone:</strong> <span id="pdf-inv-phone"></span></p>
                 <p><strong>Date:</strong> <span id="pdf-inv-date"></span></p>
@@ -341,11 +370,10 @@
                 <p><strong>Access Expiry:</strong> <span id="pdf-inv-expiry"></span></p>
             </div>
         </div>
-        
         <table class="pdf-table">
             <thead>
                 <tr>
-                    <th>Description (Course Name)</th>
+                    <th>Description (Full Course Access)</th>
                     <th>Status</th>
                     <th style="text-align:right;">Amount (INR)</th>
                 </tr>
@@ -358,48 +386,39 @@
                 </tr>
             </tbody>
         </table>
-        
         <div class="pdf-footer">
             <h4>Thank you for choosing Gen-Z Gravity!</h4>
             <p>This is a computer-generated invoice and requires no physical signature.</p>
         </div>
     </div>
 
-    <!-- CERTIFICATE TEMPLATE -->
     <div id="pdf-certificate" class="pdf-certificate">
         <div class="cert-border-outer"></div>
         <div class="cert-border-inner"></div>
-        
         <div class="cert-logo">Gen-Z Gravity Education</div>
         <h1>CERTIFICATE OF COMPLETION</h1>
         <h3>THIS IS PROUDLY PRESENTED TO</h3>
-        
         <div class="cert-name-display" id="pdf-cert-name">[Student Name]</div>
-        
         <div class="cert-text">
             For successfully completing the comprehensive learning program, assessments, and practical assignments for the course:<br><br>
             <strong><span id="pdf-cert-course">[Course Name]</span></strong><br><br>
             Demonstrating exceptional dedication, skill acquisition, and technical proficiency required to meet professional industry standards.
         </div>
-        
         <div class="cert-bottom-grid">
             <div class="cert-sig-box">
                 <div class="cert-sig-line" id="pdf-cert-date">[Date]</div>
                 <div class="cert-sig-text">Date of Issue</div>
             </div>
-            
             <div class="cert-badge">
                 <span>VERIFIED</span>
                 <span style="font-size:10px;">ID: <span id="pdf-cert-uid"></span></span>
                 <span>ACHIEVER</span>
             </div>
-            
             <div class="cert-sig-box">
                 <div class="cert-sig-line">Gen-Z Gravity Admin</div>
                 <div class="cert-sig-text">Authorized Signature</div>
             </div>
         </div>
-        
         <div style="position:absolute; bottom:15px; width:100%; text-align:center; font-family:Arial; font-size:12px; color:#666;">
             Verify certificate authenticity by contacting support@eduportal.com | +91 98765 43210
         </div>
@@ -422,6 +441,7 @@
 
     let currentUserEmail = "";
     let currentUserMobile = "N/A";
+    let currentUserName = "Student";
     let isSignUpMode = false;
     let activeCourseData = null; 
     let activeChapterId = null;
@@ -477,11 +497,13 @@
         document.getElementById('dashboard-section').style.display = 'block';
         document.getElementById('user-email-display').innerText = currentUserEmail;
         
+        // Fetch User Contact Details from Auth and Database
         const { data } = await supabaseClient.auth.getUser();
-        if(data?.user?.user_metadata?.mobile) {
-            currentUserMobile = data.user.user_metadata.mobile;
-            document.getElementById('user-mobile').value = currentUserMobile;
-        }
+        if(data?.user?.user_metadata?.mobile) currentUserMobile = data.user.user_metadata.mobile;
+        if(data?.user?.user_metadata?.full_name) currentUserName = data.user.user_metadata.full_name;
+        
+        document.getElementById('user-mobile').value = currentUserMobile !== "N/A" ? currentUserMobile : "";
+        document.getElementById('user-fullname').value = currentUserName !== "Student" ? currentUserName : "";
 
         loadBanners(); await loadCourses(); loadSubscriptions(); renderFavorites();
     }
@@ -598,6 +620,8 @@
         completedChaptersList = progData ? progData.completed_chapters : [];
 
         const { data: chapters } = await supabaseClient.from('chapters').select('*').eq('course_id', courseId).order('created_at', { ascending: true });
+        
+        // Exact Unlock Logic
         const hasAccess = userOwnedCourses.includes(courseData.title);
         
         let totalCoursePrice = 0;
@@ -640,10 +664,11 @@
         document.getElementById('chapter-view').style.display = 'none';
         document.getElementById('course-grid-view').style.display = 'block';
         document.getElementById('main-player').src = ""; 
+        window.history.replaceState({}, document.title, window.location.pathname);
     }
 
     function playVideo(chapterId, url, notes, isLocked) {
-        if(isLocked) return alert("🔒 Chapter is locked. Purchase the course to access.");
+        if(isLocked) return alert("🔒 This video is locked. Purchase the full course to unlock all videos and materials.");
         
         activeChapterId = chapterId;
         document.getElementById('main-player-box').style.display = 'block';
@@ -719,24 +744,21 @@
     }
 
     // --- HTML2PDF: PDF GENERATION ENGINE ---
-    
-    // 1. Generate & Download Certificate PDF
     async function promptCertificate() {
-        const name = prompt("Enter your FULL NAME for the Verified Certificate:", "Ganesh");
-        if(!name) return;
+        let nameToPrint = currentUserName !== "Student" ? currentUserName : prompt("Enter your FULL NAME for the Verified Certificate:", "");
+        if(!nameToPrint || nameToPrint === "Student") return alert("Name is required to generate the certificate.");
 
-        // Populate Hidden Template
-        document.getElementById('pdf-cert-name').innerText = name;
+        document.getElementById('pdf-cert-name').innerText = nameToPrint;
         document.getElementById('pdf-cert-course').innerText = activeCourseData.title;
         document.getElementById('pdf-cert-date').innerText = new Date().toLocaleDateString();
         document.getElementById('pdf-cert-uid').innerText = "GZG-" + Math.floor(Math.random() * 900000 + 100000);
         
         const certElement = document.getElementById('pdf-certificate');
-        certElement.style.display = 'flex'; // Show it temporarily for rendering
+        certElement.style.display = 'flex'; 
 
         const opt = {
             margin:       0,
-            filename:     `${name.replace(/\s+/g, '_')}_Certificate.pdf`,
+            filename:     `${nameToPrint.replace(/\s+/g, '_')}_Certificate.pdf`,
             image:        { type: 'jpeg', quality: 1 },
             html2canvas:  { scale: 2, useCORS: true },
             jsPDF:        { unit: 'px', format: [1056, 816], orientation: 'landscape' }
@@ -745,10 +767,9 @@
         alert("⏳ Generating your High-Quality Certificate PDF. Please wait...");
         await html2pdf().set(opt).from(certElement).save();
         
-        certElement.style.display = 'none'; // Hide it back
+        certElement.style.display = 'none'; 
     }
 
-    // 2. Generate & Download Invoice PDF
     async function downloadInvoicePDF() {
         const invElement = document.getElementById('pdf-invoice');
         invElement.style.display = 'block';
@@ -805,11 +826,20 @@
 
     async function confirmPaymentSent() {
         document.getElementById('paymentModal').style.display = 'none';
-        alert("⏳ Request Sent! Admin will verify payment and grant access.");
+        alert("⏳ Request Sent! Admin will verify payment and grant full course access.");
+        
         await supabaseClient.from('enrollments').insert([{ 
             user_email: currentUserEmail, course_title: activeCourseData.title, 
             course_price: discountedPrice.toString(), status: 'Pending' 
         }]);
+
+        // Auto Save candidate details so Admin receives it properly
+        let tempName = document.getElementById('user-fullname').value || currentUserName;
+        let tempMobile = document.getElementById('user-mobile').value || currentUserMobile;
+        await supabaseClient.from('candidate_profiles').upsert({
+            email: currentUserEmail, full_name: tempName, mobile: tempMobile
+        });
+
         loadSubscriptions();
     }
 
@@ -843,6 +873,7 @@
         if(!enData) return;
 
         // Populate hidden PDF Invoice elements
+        document.getElementById('pdf-inv-name').innerText = currentUserName !== "Student" ? currentUserName : "Registered Student";
         document.getElementById('pdf-inv-email').innerText = enData.user_email;
         document.getElementById('pdf-inv-phone').innerText = currentUserMobile;
         document.getElementById('pdf-inv-course').innerText = enData.course_title;
@@ -881,13 +912,26 @@
         document.getElementById('invoiceModal').style.display = 'flex';
     }
 
-    async function updateMobile() {
+    // PROFILE CONTACT SYNC FOR ADMIN
+    async function updateProfile() {
         const mobile = document.getElementById('user-mobile').value;
-        if(!mobile) return alert("Enter valid number");
-        const { error } = await supabaseClient.auth.updateUser({ data: { mobile: mobile } });
+        const fullName = document.getElementById('user-fullname').value;
+        if(!mobile || !fullName) return alert("Enter valid name and number");
+
+        // Update Auth
+        await supabaseClient.auth.updateUser({ data: { mobile: mobile, full_name: fullName } });
+
+        // Force Update Database for Admin View
+        const { error } = await supabaseClient.from('candidate_profiles').upsert({
+            email: currentUserEmail,
+            full_name: fullName,
+            mobile: mobile
+        });
+
         if(error) alert("Failed: " + error.message);
         else {
             currentUserMobile = mobile;
+            currentUserName = fullName;
             alert("Profile Updated Successfully!");
         }
     }
