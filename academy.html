@@ -51,9 +51,9 @@
         .status-approved { background: #28a745; }
         .action-row { display: flex; gap: 8px; padding: 10px 15px; background: #f9f9f9; border-top: 1px solid #eee; flex-wrap: wrap;}
 
-        /* Chapter List & Sales List UI */
+        /* Chapter List & General Lists UI */
         .chapter-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #eee;}
-        .list-card { background: #fff; border-radius: 10px; padding: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 15px; border-left: 4px solid #6f42c1; }
+        .list-card { background: #fff; border-radius: 10px; padding: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 15px; border-left: 4px solid #6f42c1; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap;}
         .scrolling-list { max-height: 60vh; overflow-y: auto; padding-right: 5px;}
         .chapter-item { display: flex; align-items: center; background: #fff; margin-bottom: 10px; border-radius: 8px; padding: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         .chapter-img { width: 110px; height: 65px; border-radius: 6px; object-fit: cover; background: #000; margin-right: 15px; }
@@ -70,8 +70,8 @@
         @media (max-width: 768px) {
             .dashboard-layout { flex-direction: column; }
             .sidebar { display: none; }
-            .bottom-nav { display: flex; position: fixed; bottom: 0; left: 0; width: 100%; background: #fff; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); z-index: 1000; }
-            .nav-tab { flex: 1; text-align: center; padding: 12px 0; font-size: 12px; font-weight: bold; color: #666; cursor: pointer; border-top: 3px solid transparent;}
+            .bottom-nav { display: flex; position: fixed; bottom: 0; left: 0; width: 100%; background: #fff; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); z-index: 1000; overflow-x:auto;}
+            .nav-tab { flex: 1; min-width:65px; text-align: center; padding: 12px 2px; font-size: 11px; font-weight: bold; color: #666; cursor: pointer; border-top: 3px solid transparent;}
             .nav-tab.active { color: #6f42c1; border-top: 3px solid #6f42c1; background: #f3eaff; }
         }
     </style>
@@ -95,6 +95,7 @@
             <div class="sidebar-header">Academy Studio</div>
             <div class="menu-item active" onclick="switchMenu('dashboard')">📊 Dashboard</div>
             <div class="menu-item" onclick="switchMenu('mycourses')">📂 Manage Courses</div>
+            <div class="menu-item" onclick="switchMenu('coupons')">🎟️ Promo Codes</div>
             <div class="menu-item" onclick="switchMenu('history')">💰 Sales Analytics</div>
             <div class="menu-item" onclick="switchMenu('profile')">⚙️ Profile Settings</div>
         </div>
@@ -141,14 +142,24 @@
                 </div>
             </div>
 
-            <!-- 3. Sales History Tab -->
+            <!-- 3. Promo Codes / Coupons (NEW) -->
+            <div id="content-coupons" class="content-section">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                    <h2>Manage Promo Codes</h2>
+                    <button class="btn btn-primary btn-small" onclick="openCouponModal()" style="padding:10px 15px;">+ Add Promo Code</button>
+                </div>
+                <p style="color:#666; font-size:14px; margin-top:0;">Provide discounts to students applying these codes.</p>
+                <div id="coupon-list">Loading coupons...</div>
+            </div>
+
+            <!-- 4. Sales History Tab -->
             <div id="content-history" class="content-section">
                 <h2>Enrollment & Sales Analytics</h2>
                 <p style="color:#666; font-size:14px;">See how many students purchased your courses.</p>
                 <div id="sales-list">Loading history...</div>
             </div>
 
-            <!-- 4. Profile -->
+            <!-- 5. Profile -->
             <div id="content-profile" class="content-section">
                 <h2>Academy Profile Details</h2>
                 <div style="background:#fff; padding:20px; border-radius:10px;">
@@ -169,6 +180,7 @@
         <div class="bottom-nav">
             <div class="nav-tab active" onclick="switchMenu('dashboard')">📊<br>Dash</div>
             <div class="nav-tab" onclick="switchMenu('mycourses')">📂<br>Courses</div>
+            <div class="nav-tab" onclick="switchMenu('coupons')">🎟️<br>Coupons</div>
             <div class="nav-tab" onclick="switchMenu('history')">💰<br>Sales</div>
             <div class="nav-tab" onclick="switchMenu('profile')">⚙️<br>Profile</div>
         </div>
@@ -218,7 +230,7 @@
     </div>
 </div>
 
-<!-- 3. Quiz Management Modal (NEW) -->
+<!-- 3. Quiz Management Modal -->
 <div id="quizModal" class="modal">
     <div class="modal-content">
         <h3 id="quizModalTitle">Manage Chapter Quiz</h3>
@@ -249,6 +261,34 @@
             <div style="display:flex; gap:10px;">
                 <button type="button" class="btn btn-secondary" onclick="document.getElementById('quizModal').style.display='none'">Cancel</button>
                 <button type="submit" class="btn btn-primary" id="qSaveBtn">Save Quiz</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- 4. Promo Code / Coupon Modal (NEW) -->
+<div id="couponModal" class="modal">
+    <div class="modal-content">
+        <h3>Create Promo Code</h3>
+        <form onsubmit="saveCoupon(event)">
+            <div class="form-group">
+                <label>Coupon Code Name</label>
+                <input type="text" id="cpCode" placeholder="e.g. DIWALI50" style="text-transform:uppercase;" required>
+            </div>
+            <div class="form-group">
+                <label>Discount Percentage (%)</label>
+                <input type="number" id="cpDiscount" min="1" max="100" placeholder="e.g. 50" required>
+            </div>
+            <div class="form-group">
+                <label>Status</label>
+                <select id="cpActive">
+                    <option value="true">Active (Usable)</option>
+                    <option value="false">Inactive (Hidden)</option>
+                </select>
+            </div>
+            <div style="display:flex; gap:10px;">
+                <button type="button" class="btn btn-secondary" onclick="document.getElementById('couponModal').style.display='none'">Cancel</button>
+                <button type="submit" class="btn btn-success" id="cpSaveBtn">Save Coupon</button>
             </div>
         </form>
     </div>
@@ -299,6 +339,7 @@
         loadProfile(); 
         loadCourses(); 
         loadSalesHistory();
+        loadCoupons();
     }
     
     function switchMenu(menuId) {
@@ -334,6 +375,69 @@
         const { error } = await supabaseClient.from('academy_profiles').upsert([profileData], { onConflict: 'email' });
         if(error) alert("Error saving profile: " + error.message);
         else alert("Profile Setup Complete!");
+    }
+
+    // --- COUPONS MANAGEMENT (NEW FEATURE) ---
+    async function loadCoupons() {
+        const list = document.getElementById('coupon-list');
+        list.innerHTML = 'Loading promo codes...';
+        const { data, error } = await supabaseClient.from('coupons').select('*').order('id', {ascending: false});
+        
+        if (error || !data || data.length === 0) { list.innerHTML = '<p>No coupons found.</p>'; return; }
+        
+        list.innerHTML = '';
+        data.forEach(cp => {
+            let statusColor = cp.active ? '#28a745' : '#dc3545';
+            list.innerHTML += `
+                <div class="list-card" style="border-left-color: ${statusColor};">
+                    <div style="flex:1;">
+                        <h4 style="margin:0 0 5px; font-size:18px;">🎟️ ${cp.code}</h4>
+                        <p style="margin:0; font-size:14px; color:#555;">Discount: <strong>${cp.discount_percent}%</strong> | Status: <span style="color:${statusColor}; font-weight:bold;">${cp.active ? 'Active' : 'Inactive'}</span></p>
+                    </div>
+                    <div style="display:flex; gap:10px;">
+                        <button class="btn btn-danger btn-small" onclick="deleteCoupon(${cp.id})">🗑 Delete</button>
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    function openCouponModal() {
+        document.getElementById('cpCode').value = '';
+        document.getElementById('cpDiscount').value = '';
+        document.getElementById('cpActive').value = 'true';
+        document.getElementById('couponModal').style.display = 'flex';
+    }
+
+    async function saveCoupon(e) {
+        e.preventDefault();
+        const btn = document.getElementById('cpSaveBtn');
+        btn.innerText = "Saving...";
+
+        const payload = {
+            code: document.getElementById('cpCode').value.trim().toUpperCase(),
+            discount_percent: parseInt(document.getElementById('cpDiscount').value),
+            active: document.getElementById('cpActive').value === 'true'
+        };
+
+        const { error } = await supabaseClient.from('coupons').insert([payload]);
+        btn.innerText = "Save Coupon";
+        
+        if(error) {
+            if(error.code === '23505') alert("❌ This coupon code already exists!");
+            else alert("❌ Error: " + error.message);
+        } else {
+            document.getElementById('couponModal').style.display = 'none';
+            loadCoupons();
+            alert("✅ Promo Code successfully added!");
+        }
+    }
+
+    async function deleteCoupon(id) {
+        if(confirm("Are you sure you want to delete this promo code?")) {
+            await supabaseClient.from('coupons').delete().eq('id', id);
+            loadCoupons();
+        }
     }
 
     // --- COURSE MANAGEMENT ---
@@ -386,7 +490,6 @@
     async function saveCourse(e) {
         e.preventDefault();
         const btn = document.getElementById('cSaveBtn');
-        const oldText = btn.innerText;
         btn.innerText = "Saving...";
 
         const id = document.getElementById('cId').value;
@@ -406,7 +509,7 @@
             err = error;
         }
         
-        btn.innerText = oldText;
+        btn.innerText = "Save Course";
         if (err) alert("❌ Save failed: " + err.message);
         else {
             document.getElementById('courseModal').style.display = 'none';
@@ -459,10 +562,7 @@
                     <div class="chapter-details">
                         <h5>Ep ${index + 1}: ${ch.chapter_title}</h5>
                         <p style="margin:0; font-size:12px; color:#666;">${ch.type} | ₹${ch.price}</p>
-                        
-                        <!-- QUIZ MANAGER BUTTON ADDED HERE -->
                         <button class="btn btn-warning btn-small" style="margin-top:5px;" onclick="openQuizModal(${ch.id}, 'Ep ${index+1}')">📝 Manage Quiz</button>
-                    
                     </div>
                     <div class="chapter-actions">
                         <button class="btn btn-secondary btn-small" onclick="editChapter(${ch.id}, '${ch.chapter_title.replace(/'/g, "\\'")}', '${ch.video_url}', '${ch.notes}', '${ch.type}', ${ch.price})">✎ Edit</button>
@@ -491,7 +591,6 @@
     async function saveChapter(e) {
         e.preventDefault();
         const btn = document.getElementById('chSaveBtn');
-        const oldText = btn.innerText;
         btn.innerText = "Saving...";
 
         const id = document.getElementById('chId').value;
@@ -513,7 +612,7 @@
             err = error;
         }
         
-        btn.innerText = oldText;
+        btn.innerText = "Save Chapter";
         if(err) alert("❌ Error: " + err.message);
         else {
             document.getElementById('chapterModal').style.display = 'none';
@@ -528,21 +627,17 @@
         }
     }
 
-    // --- QUIZ MANAGEMENT (NEW FEATURE FOR ACADEMY) ---
+    // --- QUIZ MANAGEMENT ---
     async function openQuizModal(chapterId, epName) {
         document.getElementById('qChId').value = chapterId;
         document.getElementById('quizModalTitle').innerText = `Set Quiz for ${epName}`;
         
         // Reset Form
-        document.getElementById('qId').value = "";
-        document.getElementById('qQuestion').value = "";
-        document.getElementById('qOpt0').value = "";
-        document.getElementById('qOpt1').value = "";
-        document.getElementById('qOpt2').value = "";
-        document.getElementById('qOpt3').value = "";
+        document.getElementById('qId').value = ""; document.getElementById('qQuestion').value = "";
+        document.getElementById('qOpt0').value = ""; document.getElementById('qOpt1').value = "";
+        document.getElementById('qOpt2').value = ""; document.getElementById('qOpt3').value = "";
         document.getElementById('qCorrect').value = "0";
 
-        // Check if quiz already exists for this chapter
         const { data } = await supabaseClient.from('quizzes').select('*').eq('chapter_id', chapterId).single();
         if(data) {
             document.getElementById('qId').value = data.id;
@@ -553,7 +648,6 @@
             document.getElementById('qOpt3').value = data.options[3] || "";
             document.getElementById('qCorrect').value = data.correct_option;
         }
-
         document.getElementById('quizModal').style.display = 'flex';
     }
 
@@ -567,23 +661,18 @@
             chapter_id: document.getElementById('qChId').value,
             question: document.getElementById('qQuestion').value,
             options: [
-                document.getElementById('qOpt0').value,
-                document.getElementById('qOpt1').value,
-                document.getElementById('qOpt2').value,
-                document.getElementById('qOpt3').value
+                document.getElementById('qOpt0').value, document.getElementById('qOpt1').value,
+                document.getElementById('qOpt2').value, document.getElementById('qOpt3').value
             ],
             correct_option: parseInt(document.getElementById('qCorrect').value)
         };
 
-        if(qId) {
-            await supabaseClient.from('quizzes').update(payload).eq('id', qId);
-        } else {
-            await supabaseClient.from('quizzes').insert([payload]);
-        }
+        if(qId) await supabaseClient.from('quizzes').update(payload).eq('id', qId);
+        else await supabaseClient.from('quizzes').insert([payload]);
 
         btn.innerText = "Save Quiz";
         document.getElementById('quizModal').style.display = 'none';
-        alert("✅ Quiz added successfully! Students can now take this assessment.");
+        alert("✅ Quiz added successfully!");
     }
 
     // --- SALES & ANALYTICS ---
@@ -594,28 +683,27 @@
         const { data: myCourses } = await supabaseClient.from('courses').select('title').eq('academy_email', currentUserEmail);
         
         if(!myCourses || myCourses.length === 0) {
-            list.innerHTML = '<p>No active courses found to track sales.</p>';
-            return;
+            list.innerHTML = '<p>No active courses found to track sales.</p>'; return;
         }
 
         const courseTitles = myCourses.map(c => c.title);
-
         const { data: sales, error } = await supabaseClient.from('enrollments').select('*').in('course_title', courseTitles).order('created_at', { ascending: false });
         
         if (error) { list.innerHTML = `<p style="color:red;">Error: ${error.message}</p>`; return; }
         
         document.getElementById('stat-sales').innerText = sales ? sales.length : 0;
-
         if (!sales || sales.length === 0) { list.innerHTML = '<p>No enrollments or sales yet.</p>'; return; }
 
         list.innerHTML = '';
         sales.forEach(sale => {
             list.innerHTML += `
                 <div class="list-card">
-                    <h4 style="margin:0 0 5px; font-size:16px;">${sale.course_title}</h4>
-                    <p style="margin:3px 0; font-size:14px;"><strong>Student Email:</strong> ${sale.user_email}</p>
-                    <p style="margin:3px 0; font-size:14px;"><strong>Amount:</strong> ${sale.course_price === 'Free' ? 'Free Enrollment' : '₹' + sale.course_price}</p>
-                    <p style="margin:3px 0; font-size:12px; color:#888;">Date: ${new Date(sale.created_at).toLocaleString()}</p>
+                    <div style="flex:1;">
+                        <h4 style="margin:0 0 5px; font-size:16px;">${sale.course_title}</h4>
+                        <p style="margin:3px 0; font-size:14px;"><strong>Student Email:</strong> ${sale.user_email}</p>
+                        <p style="margin:3px 0; font-size:14px;"><strong>Amount:</strong> ${sale.course_price === 'Free' ? 'Free Enrollment' : '₹' + sale.course_price}</p>
+                        <p style="margin:3px 0; font-size:12px; color:#888;">Date: ${new Date(sale.created_at).toLocaleString()}</p>
+                    </div>
                 </div>
             `;
         });
