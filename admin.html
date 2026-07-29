@@ -125,7 +125,7 @@
             <div class="sidebar-header">Gen-Z <span>Gravity</span></div>
             <div class="menu-item active" onclick="switchMenu('dashboard')">📊 Dashboard</div>
             <div class="menu-item" onclick="switchMenu('approvals')">✅ Approvals</div>
-            <div class="menu-item" onclick="switchMenu('enrollments')">🛒 Access & Revoke</div>
+            <div class="menu-item" onclick="switchMenu('enrollments')">🛒 Sales & Access</div>
             <div class="menu-item" onclick="switchMenu('coupons')">🎟️ Promo Engine</div>
             <div class="menu-item" onclick="switchMenu('banners')">📢 Ads Manager</div>
             <div class="menu-item" onclick="switchMenu('mycourses')">➕ Admin Post</div>
@@ -156,10 +156,10 @@
                 <div id="approval-list">Loading pending courses...</div>
             </div>
 
-            <!-- 3. Enrollments, Custom Access & Revoke -->
+            <!-- 3. Enrollments, Custom Access, Revoke & History Deletion -->
             <div id="content-enrollments" class="content-section">
-                <h2>Sales & Custom Access Control</h2>
-                <p style="font-size:14px; color:var(--text-muted); margin-bottom:20px;">Grant custom duration or instantly Revoke/Deactivate a student's access.</p>
+                <h2>Sales & Precise Access Control</h2>
+                <p style="font-size:14px; color:var(--text-muted); margin-bottom:20px;">Review exact purchases, grant custom validity, revoke access, or delete records from history.</p>
                 <div id="enrollment-list">Loading enrollments...</div>
             </div>
 
@@ -170,11 +170,9 @@
                     <button class="btn btn-primary btn-small" onclick="openCouponModal()">+ Create Admin Coupon</button>
                 </div>
                 
-                <!-- Academy Pending Requests -->
                 <h3 style="margin-top:0; border-bottom:2px solid #e2e8f0; padding-bottom:8px; font-size:18px; color:var(--warning);">Academy Pending Requests</h3>
                 <div id="pending-coupon-list" style="margin-bottom:40px;">Loading pending coupons...</div>
 
-                <!-- Active Platform Coupons -->
                 <h3 style="margin-top:0; border-bottom:2px solid #e2e8f0; padding-bottom:8px; font-size:18px; color:var(--success);">Active Platform Coupons</h3>
                 <div id="active-coupon-list">Loading active coupons...</div>
             </div>
@@ -242,7 +240,6 @@
                 <label>Applicable Course</label>
                 <select id="cpTargetCourse" required>
                     <option value="All">All Courses on Platform</option>
-                    <!-- Options loaded dynamically -->
                 </select>
                 <span style="font-size:12px; color:var(--text-muted);">Select if this discount is for a specific course only.</span>
             </div>
@@ -383,7 +380,6 @@
     }
 
     async function updateStatus(table, id, status) {
-        // If approving a coupon, also set active to true
         let payload = { status: status };
         if(table === 'coupons' && status === 'Approved') payload.active = true;
 
@@ -393,7 +389,7 @@
         if(table === 'coupons') loadCoupons();
     }
 
-    // --- ENROLLMENTS, CUSTOM ACCESS & REVOKE ---
+    // --- ENROLLMENTS, EXACT ACCESS, REVOKE & HISTORY DELETION ---
     async function loadEnrollments() {
         const list = document.getElementById('enrollment-list'); list.innerHTML = 'Loading data...';
         const { data } = await supabaseClient.from('enrollments').select('*').order('created_at', {ascending: false});
@@ -416,10 +412,10 @@
                 <div class="list-card" style="border-left-color: ${borderColor};">
                     ${watermark}
                     <div class="list-info">
-                        <h4>${e.course_title}</h4>
-                        <p><strong>Candidate:</strong> <a href="#" style="color:var(--primary); font-weight:600;" onclick="viewCandidate('${e.user_email}')">${e.user_email}</a></p>
-                        <p><strong>Paid:</strong> ${e.course_price === 'Free' ? 'Free' : '₹'+e.course_price} &nbsp;|&nbsp; ${statusBadge}</p>
-                        ${e.access_until ? `<p style="font-size:12px; font-weight:600;">Valid till: ${new Date(e.access_until).toLocaleDateString()}</p>` : ''}
+                        <h4>🛒 Purchased Course: <span style="color:var(--primary);">${e.course_title}</span></h4>
+                        <p><strong>Candidate Email:</strong> <a href="#" style="color:var(--dark); font-weight:600;" onclick="viewCandidate('${e.user_email}')">${e.user_email}</a></p>
+                        <p><strong>Price Paid:</strong> ${e.course_price === 'Free' ? 'Free' : '₹'+e.course_price} &nbsp;|&nbsp; ${statusBadge}</p>
+                        ${e.access_until ? `<p style="font-size:12px; font-weight:600;">Access Valid till: ${new Date(e.access_until).toLocaleDateString()}</p>` : ''}
                     </div>
                     
                     <div class="list-actions" style="background: var(--light); padding:10px; border-radius:12px; border:1px solid #e2e8f0; max-width:300px;">
@@ -431,7 +427,10 @@
                             <input type="number" id="customM-${e.id}" placeholder="Mths" style="width:70px; padding:6px; font-size:13px; border-radius:6px; border:1px solid #cbd5e1;">
                             <button class="btn btn-success btn-small" style="flex:1;" onclick="grantCustomAccess(${e.id})">Custom Grant</button>
                         </div>
-                        ${isGranted ? `<button class="btn btn-danger btn-small" style="width:100%; margin-top:8px;" onclick="revokeAccess(${e.id})">🚫 Revoke Instantly</button>` : ''}
+                        ${isGranted ? `<button class="btn btn-warning btn-small" style="width:100%; margin-top:8px; background:#f59e0b; color:white;" onclick="revokeAccess(${e.id})">🚫 Revoke Access</button>` : ''}
+                        
+                        <!-- DELETE RECORD BUTTON FROM HISTORY -->
+                        <button class="btn btn-danger btn-small" style="width:100%; margin-top:8px;" onclick="deleteEnrollmentRecord(${e.id})">🗑️ Delete from History</button>
                     </div>
                 </div>
             `;
@@ -449,9 +448,16 @@
         grantAccess(id, parseInt(val));
     }
     async function revokeAccess(id) {
-        if(confirm("Are you sure you want to deactivate this student's access instantly?")) {
+        if(confirm("Are you sure you want to deactivate this student's exact course access?")) {
             await supabaseClient.from('enrollments').update({ status: 'Revoked', access_until: new Date().toISOString() }).eq('id', id);
             loadEnrollments();
+        }
+    }
+    async function deleteEnrollmentRecord(id) {
+        if(confirm("Are you sure you want to permanently delete this purchase/enrollment entry from the history?")) {
+            await supabaseClient.from('enrollments').delete().eq('id', id);
+            loadEnrollments();
+            loadDashboardData();
         }
     }
 
@@ -471,7 +477,6 @@
         
         pendingList.innerHTML = 'Loading...'; activeList.innerHTML = 'Loading...';
 
-        // ORDER BY ID FIX (In case created_at is missing from earlier table structure)
         const { data, error } = await supabaseClient.from('coupons').select('*').order('id', {ascending:false});
         if(error || !data) { 
             pendingList.innerHTML = '<p style="color:var(--text-muted);">No data available.</p>'; 
@@ -490,18 +495,18 @@
                 <div class="list-card" style="border-left-color: var(--warning);">
                     <div class="list-info">
                         <h4>🎟️ ${cp.code} <span style="color:var(--danger);">${cp.discount_percent}% OFF</span></h4>
-                        <p><strong>Requested By:</strong> ${cp.academy_email}</p>
+                        <p><strong>Requested By Academy:</strong> ${cp.academy_email}</p>
                         <p style="margin-top:8px;"><strong>Applicable on:</strong> ${courseTag}</p>
                     </div>
                     <div class="list-actions">
                         <button class="btn btn-success btn-small" onclick="updateStatus('coupons', ${cp.id}, 'Approved')">✅ Approve</button>
-                        <button class="btn btn-danger btn-small" onclick="deleteRecord('coupons', ${cp.id})">❌ Reject/Delete</button>
+                        <button class="btn btn-danger btn-small" onclick="deleteRecord('coupons', ${cp.id})">❌ Reject</button>
                     </div>
                 </div>`;
             } else if(cp.status === 'Approved') {
                 let statusColor = cp.active ? 'var(--success)' : 'var(--text-muted)';
                 let toggleAction = cp.active ? `toggleCouponActive(${cp.id}, false)` : `toggleCouponActive(${cp.id}, true)`;
-                let toggleBtnText = cp.active ? '⏸ Pause Code' : '▶ Reactivate';
+                let toggleBtnText = cp.active ? '⏸ Pause' : '▶ Activate';
                 let toggleBtnClass = cp.active ? 'btn-warning' : 'btn-success';
 
                 actHTML += `
@@ -629,7 +634,7 @@
         document.getElementById('cTitle').value = ''; document.getElementById('cThumb').value = ''; loadAdminCourses();
     }
 
-    // --- USERS MANAGEMENT (Showing Details & Phone) ---
+    // --- USERS MANAGEMENT ---
     async function loadUserList(type) {
         const list = document.getElementById('user-list'); list.innerHTML = 'Fetching records...';
         if(type === 'academies') {
@@ -681,7 +686,6 @@
         
         let purchasesHTML = (data && data.length > 0) ? data.map(d => `<li>${d.course_title} <span style="font-size:12px; font-weight:bold; color:${d.status==='Active'?'var(--success)':'var(--warning)'};">(${d.status})</span></li>`).join('') : '<li>No courses enrolled</li>';
 
-        // Try to fetch Candidate Name & Mobile if they updated it in profile
         let candidateName = "Not Updated Yet";
         let candidateMobile = "Not Updated Yet";
         const { data: profile } = await supabaseClient.from('candidate_profiles').select('*').eq('email', email).single();
