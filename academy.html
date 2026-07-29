@@ -26,7 +26,7 @@
         /* Dashboard Layout */
         #dashboard-section { display: none; height: 100vh; }
         .dashboard-layout { display: flex; height: 100%; }
-        .sidebar { width: 260px; background: #fff; box-shadow: 2px 0 10px rgba(0,0,0,0.05); display: flex; flex-direction: column; }
+        .sidebar { width: 260px; background: #fff; box-shadow: 2px 0 10px rgba(0,0,0,0.05); display: flex; flex-direction: column; z-index:10;}
         .sidebar-header { padding: 20px; font-size: 22px; font-weight: bold; color: #6f42c1; border-bottom: 1px solid #eee; text-align: center; }
         .menu-item { padding: 18px 20px; font-size: 15px; font-weight: bold; color: #555; cursor: pointer; border-bottom: 1px solid #f9f9f9; }
         .menu-item.active { background: #f3eaff; color: #6f42c1; border-left: 4px solid #6f42c1; }
@@ -51,7 +51,7 @@
         .status-approved { background: #28a745; }
         .action-row { display: flex; gap: 8px; padding: 10px 15px; background: #f9f9f9; border-top: 1px solid #eee; flex-wrap: wrap;}
 
-        /* Chapter List & General Lists UI */
+        /* Lists UI */
         .chapter-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #eee;}
         .list-card { background: #fff; border-radius: 10px; padding: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 15px; border-left: 4px solid #6f42c1; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap;}
         .scrolling-list { max-height: 60vh; overflow-y: auto; padding-right: 5px;}
@@ -62,7 +62,7 @@
         .chapter-actions { display: flex; gap: 5px; flex-direction: column; }
 
         /* Modal Overlay */
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; justify-content: center; align-items: center; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; justify-content: center; align-items: center; backdrop-filter:blur(3px);}
         .modal-content { background: #fff; padding: 25px; border-radius: 12px; width: 90%; max-width: 450px; max-height: 90vh; overflow-y: auto;}
 
         /* Mobile Nav */
@@ -105,14 +105,8 @@
             <div id="content-dashboard" class="content-section active">
                 <h2>Welcome Academy</h2>
                 <div class="stats-grid">
-                    <div class="stat-card">
-                        <h3 id="stat-courses">0</h3>
-                        <p>Total Courses</p>
-                    </div>
-                    <div class="stat-card">
-                        <h3 id="stat-sales">0</h3>
-                        <p>Total Enrollments</p>
-                    </div>
+                    <div class="stat-card"><h3 id="stat-courses">0</h3><p>Total Courses</p></div>
+                    <div class="stat-card"><h3 id="stat-sales">0</h3><p>Total Enrollments</p></div>
                 </div>
             </div>
 
@@ -142,13 +136,13 @@
                 </div>
             </div>
 
-            <!-- 3. Promo Codes / Coupons (NEW) -->
+            <!-- 3. Promo Codes / Coupons (ADMIN APPROVAL UPDATE) -->
             <div id="content-coupons" class="content-section">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
                     <h2>Manage Promo Codes</h2>
                     <button class="btn btn-primary btn-small" onclick="openCouponModal()" style="padding:10px 15px;">+ Add Promo Code</button>
                 </div>
-                <p style="color:#666; font-size:14px; margin-top:0;">Provide discounts to students applying these codes.</p>
+                <p style="color:#666; font-size:14px; margin-top:0;">Request Admin to approve discount codes for your students.</p>
                 <div id="coupon-list">Loading coupons...</div>
             </div>
 
@@ -266,10 +260,11 @@
     </div>
 </div>
 
-<!-- 4. Promo Code / Coupon Modal (NEW) -->
+<!-- 4. Promo Code / Coupon Modal (Admin Approval Upgrade) -->
 <div id="couponModal" class="modal">
     <div class="modal-content">
-        <h3>Create Promo Code</h3>
+        <h3 style="margin-bottom:5px;">Create Promo Code</h3>
+        <p style="font-size:12px; color:#dc3545; margin-top:0; font-weight:bold;">Note: New codes require Admin approval to become active.</p>
         <form onsubmit="saveCoupon(event)">
             <div class="form-group">
                 <label>Coupon Code Name</label>
@@ -280,15 +275,16 @@
                 <input type="number" id="cpDiscount" min="1" max="100" placeholder="e.g. 50" required>
             </div>
             <div class="form-group">
-                <label>Status</label>
-                <select id="cpActive">
-                    <option value="true">Active (Usable)</option>
-                    <option value="false">Inactive (Hidden)</option>
+                <label>Applicable Course</label>
+                <select id="cpTargetCourse" required>
+                    <option value="All">All My Courses</option>
+                    <!-- Options loaded dynamically -->
                 </select>
+                <span style="font-size:11px; color:#888;">Select a specific course, or choose 'All' for a global academy discount.</span>
             </div>
-            <div style="display:flex; gap:10px;">
+            <div style="display:flex; gap:10px; margin-top:20px;">
                 <button type="button" class="btn btn-secondary" onclick="document.getElementById('couponModal').style.display='none'">Cancel</button>
-                <button type="submit" class="btn btn-success" id="cpSaveBtn">Save Coupon</button>
+                <button type="submit" class="btn btn-success" id="cpSaveBtn">Request Approval</button>
             </div>
         </form>
     </div>
@@ -377,22 +373,35 @@
         else alert("Profile Setup Complete!");
     }
 
-    // --- COUPONS MANAGEMENT (NEW FEATURE) ---
+    // --- COUPONS MANAGEMENT (ADMIN APPROVAL SYSTEM) ---
+    async function populateCouponCourses() {
+        const select = document.getElementById('cpTargetCourse');
+        const { data } = await supabaseClient.from('courses').select('title').eq('academy_email', currentUserEmail);
+        select.innerHTML = '<option value="All">All My Courses</option>';
+        if(data) {
+            data.forEach(c => { select.innerHTML += `<option value="${c.title}">${c.title}</option>`; });
+        }
+    }
+
     async function loadCoupons() {
         const list = document.getElementById('coupon-list');
         list.innerHTML = 'Loading promo codes...';
-        const { data, error } = await supabaseClient.from('coupons').select('*').order('id', {ascending: false});
+        // Fetch only coupons created by this academy
+        const { data, error } = await supabaseClient.from('coupons').select('*').eq('academy_email', currentUserEmail).order('id', {ascending: false});
         
-        if (error || !data || data.length === 0) { list.innerHTML = '<p>No coupons found.</p>'; return; }
+        if (error || !data || data.length === 0) { list.innerHTML = '<p>No coupons requested or created yet.</p>'; return; }
         
         list.innerHTML = '';
         data.forEach(cp => {
-            let statusColor = cp.active ? '#28a745' : '#dc3545';
+            let statusColor = cp.status === 'Approved' ? '#28a745' : (cp.status === 'Pending' ? '#ffc107' : '#dc3545');
+            let targetCourseText = cp.target_course === 'All' ? 'All My Courses' : cp.target_course;
+
             list.innerHTML += `
                 <div class="list-card" style="border-left-color: ${statusColor};">
                     <div style="flex:1;">
                         <h4 style="margin:0 0 5px; font-size:18px;">🎟️ ${cp.code}</h4>
-                        <p style="margin:0; font-size:14px; color:#555;">Discount: <strong>${cp.discount_percent}%</strong> | Status: <span style="color:${statusColor}; font-weight:bold;">${cp.active ? 'Active' : 'Inactive'}</span></p>
+                        <p style="margin:0; font-size:14px; color:#555;">Discount: <strong>${cp.discount_percent}%</strong> | Applicable on: <strong>${targetCourseText}</strong></p>
+                        <p style="margin:5px 0 0; font-size:13px;">Status: <span style="color:${statusColor}; font-weight:bold;">${cp.status}</span> | Used: <strong>${cp.usage_count || 0} times</strong></p>
                     </div>
                     <div style="display:flex; gap:10px;">
                         <button class="btn btn-danger btn-small" onclick="deleteCoupon(${cp.id})">🗑 Delete</button>
@@ -402,34 +411,37 @@
         });
     }
 
-    function openCouponModal() {
+    async function openCouponModal() {
         document.getElementById('cpCode').value = '';
         document.getElementById('cpDiscount').value = '';
-        document.getElementById('cpActive').value = 'true';
+        await populateCouponCourses();
         document.getElementById('couponModal').style.display = 'flex';
     }
 
     async function saveCoupon(e) {
         e.preventDefault();
         const btn = document.getElementById('cpSaveBtn');
-        btn.innerText = "Saving...";
+        btn.innerText = "Requesting...";
 
         const payload = {
             code: document.getElementById('cpCode').value.trim().toUpperCase(),
             discount_percent: parseInt(document.getElementById('cpDiscount').value),
-            active: document.getElementById('cpActive').value === 'true'
+            target_course: document.getElementById('cpTargetCourse').value,
+            status: 'Pending', // Sent to admin for approval
+            active: false,
+            academy_email: currentUserEmail
         };
 
         const { error } = await supabaseClient.from('coupons').insert([payload]);
-        btn.innerText = "Save Coupon";
+        btn.innerText = "Request Approval";
         
         if(error) {
-            if(error.code === '23505') alert("❌ This coupon code already exists!");
+            if(error.code === '23505') alert("❌ This promo code already exists!");
             else alert("❌ Error: " + error.message);
         } else {
             document.getElementById('couponModal').style.display = 'none';
             loadCoupons();
-            alert("✅ Promo Code successfully added!");
+            alert("✅ Promo Code sent to Admin for approval!");
         }
     }
 
@@ -490,6 +502,7 @@
     async function saveCourse(e) {
         e.preventDefault();
         const btn = document.getElementById('cSaveBtn');
+        const oldText = btn.innerText;
         btn.innerText = "Saving...";
 
         const id = document.getElementById('cId').value;
@@ -509,7 +522,7 @@
             err = error;
         }
         
-        btn.innerText = "Save Course";
+        btn.innerText = oldText;
         if (err) alert("❌ Save failed: " + err.message);
         else {
             document.getElementById('courseModal').style.display = 'none';
