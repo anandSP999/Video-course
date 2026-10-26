@@ -1,0 +1,1364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Academy Studio Pro</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<style>
+    * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    body { margin: 0; padding: 0; background: #f5f6fa; color: #333; }
+
+    /* ---------- AUTH ---------- */
+    .auth-container { max-width: 420px; margin: 60px auto; background: #fff; padding: 32px; border-radius: 16px; box-shadow: 0 12px 40px rgba(111,66,193,.12); }
+    .auth-container h2 { text-align: center; color: #6f42c1; margin-top: 0; }
+    .form-group { margin-bottom: 15px; }
+    .form-group label { display: block; margin-bottom: 6px; font-weight: 600; color: #555; font-size: 13px; }
+    .form-group input, .form-group textarea, .form-group select {
+        width: 100%; padding: 12px; border: 1px solid #d8dbe3; border-radius: 8px; font-size: 15px;
+        transition: border-color .15s, box-shadow .15s; background:#fff;
+    }
+    .form-group input:focus, .form-group textarea:focus, .form-group select:focus {
+        outline: none; border-color: #6f42c1; box-shadow: 0 0 0 3px rgba(111,66,193,.15);
+    }
+    .btn { padding: 12px; border: none; border-radius: 8px; cursor: pointer; width: 100%; font-weight: 700; font-size: 15px; color: #fff; transition: transform .08s, filter .15s; }
+    .btn:hover { filter: brightness(1.06); }
+    .btn:active { transform: scale(.98); }
+    .btn:disabled { opacity: .6; cursor: not-allowed; }
+    .btn-primary { background: linear-gradient(135deg,#7c4dff,#6f42c1); }
+    .btn-danger  { background: #dc3545; }
+    .btn-secondary { background: #6c757d; }
+    .btn-success { background: linear-gradient(135deg,#28a745,#20c997); }
+    .btn-warning { background: #ffc107; color: #000; }
+    .btn-dark { background: #343a40; }
+    .btn-small { padding: 7px 11px; font-size: 12px; width: auto; margin-top: 0; border-radius: 7px; }
+    .toggle-link { text-align: center; margin-top: 16px; color: #6f42c1; cursor: pointer; font-size: 14px; font-weight: 700; text-decoration: underline; }
+
+    /* ---------- LAYOUT ---------- */
+    #dashboard-section { display: none; height: 100vh; }
+    .dashboard-layout { display: flex; height: 100%; }
+    .sidebar { width: 260px; background: #fff; box-shadow: 2px 0 12px rgba(0,0,0,.05); display: flex; flex-direction: column; z-index: 10; }
+    .sidebar-header { padding: 22px; font-size: 21px; font-weight: 800; color: #6f42c1; border-bottom: 1px solid #eee; text-align: center; letter-spacing: .3px; }
+    .menu-item { padding: 17px 22px; font-size: 15px; font-weight: 600; color: #555; cursor: pointer; border-bottom: 1px solid #f9f9f9; transition: background .15s, color .15s; }
+    .menu-item:hover { background: #faf7ff; color: #6f42c1; }
+    .menu-item.active { background: #f3eaff; color: #6f42c1; border-left: 4px solid #6f42c1; }
+
+    .main-content { flex: 1; padding: 25px; overflow-y: auto; padding-bottom: 90px; }
+    .content-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 22px; gap: 15px; flex-wrap: wrap; }
+    .wallet-btn { background: linear-gradient(135deg,#28a745,#20c997); color: #fff; padding: 11px 22px; border-radius: 30px; font-weight: 800; font-size: 15px; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; box-shadow: 0 6px 16px rgba(40,167,69,.3); border: none; transition: transform .12s; }
+    .wallet-btn:hover { transform: translateY(-2px); }
+
+    .content-section { display: none; animation: fadeIn .25s ease; }
+    .content-section.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+    /* ---------- STATS ---------- */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 20px; }
+    .stat-card { background: #fff; padding: 20px; border-radius: 14px; box-shadow: 0 4px 16px rgba(0,0,0,.05); text-align: center; border-bottom: 4px solid #6f42c1; transition: transform .15s; }
+    .stat-card:hover { transform: translateY(-3px); }
+    .stat-card h3 { margin: 0; font-size: 30px; color: #6f42c1; }
+    .stat-card p { margin: 6px 0 0; color: #666; font-weight: 700; font-size: 13px; }
+
+    /* ---------- AI BOX ---------- */
+    .ai-box { background: linear-gradient(145deg,#eef2ff,#e0e7ff); border: 1px solid #c7d2fe; padding: 20px; border-radius: 14px; margin-bottom: 22px; }
+    .ai-box h3 { margin: 0 0 10px; color: #4338ca; display: flex; align-items: center; gap: 8px; font-size: 17px; }
+    .ai-box p { margin: 0; color: #475569; font-size: 14px; line-height: 1.55; }
+
+    /* ---------- CARDS ---------- */
+    .grid-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+    .course-card { background: #fff; border-radius: 14px; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,.07); display: flex; flex-direction: column; border-top: 4px solid #6f42c1; transition: transform .15s, box-shadow .15s; }
+    .course-card:hover { transform: translateY(-3px); box-shadow: 0 10px 26px rgba(0,0,0,.1); }
+    .thumb-wrap { position: relative; }
+    .course-card img { width: 100%; height: 150px; object-fit: cover; background: #eceff5; display: block; }
+    .price-tag { position: absolute; top: 10px; right: 10px; padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 800; color: #fff; letter-spacing: .3px; box-shadow: 0 3px 10px rgba(0,0,0,.25); }
+    .price-tag.free { background: linear-gradient(135deg,#28a745,#20c997); }
+    .price-tag.paid { background: linear-gradient(135deg,#7c4dff,#6f42c1); }
+    .course-card-content { padding: 14px 15px; flex: 1; }
+    .course-card h4 { margin: 0 0 8px; font-size: 17px; line-height: 1.3; }
+    .status-badge { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 800; color: #fff; letter-spacing: .3px; }
+    .status-pending  { background: #ffc107; color: #000; }
+    .status-approved { background: #28a745; }
+    .status-rejected { background: #dc3545; }
+    .action-row { display: flex; gap: 8px; padding: 10px 14px; background: #fafbfd; border-top: 1px solid #eef1f6; flex-wrap: wrap; }
+
+    /* ---------- CHIPS ---------- */
+    .chip { display: inline-block; padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 800; letter-spacing: .3px; }
+    .chip-free  { background: #e6f7ec; color: #1a7f37; }
+    .chip-paid  { background: #fff3cd; color: #8a5a00; }
+    .chip-muted { background: #eef1f6; color: #667085; text-decoration: none; }
+
+    /* ---------- LISTS ---------- */
+    .chapter-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 2px solid #eee; gap: 12px; flex-wrap: wrap; }
+    .list-card { background: #fff; border-radius: 12px; padding: 15px; box-shadow: 0 3px 12px rgba(0,0,0,.05); margin-bottom: 14px; border-left: 4px solid #6f42c1; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+    .scrolling-list { max-height: 60vh; overflow-y: auto; padding-right: 4px; }
+    .chapter-item { display: flex; align-items: center; background: #fff; margin-bottom: 12px; border-radius: 12px; padding: 12px; box-shadow: 0 3px 10px rgba(0,0,0,.05); gap: 14px; flex-wrap: wrap; }
+    .chapter-img { width: 110px; height: 65px; border-radius: 8px; object-fit: cover; background: #000; flex-shrink: 0; }
+    .chapter-details { flex: 1; min-width: 160px; }
+    .chapter-details h5 { margin: 0 0 6px; font-size: 15px; color: #222; line-height: 1.3; }
+    .chapter-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+
+    /* ---------- MODALS ---------- */
+    .modal { display: none; position: fixed; inset: 0; background: rgba(15,18,30,.65); z-index: 2000; justify-content: center; align-items: center; backdrop-filter: blur(4px); padding: 15px; }
+    .modal-content { background: #fff; padding: 26px; border-radius: 16px; width: 100%; max-width: 460px; max-height: 90vh; overflow-y: auto; box-shadow: 0 24px 60px rgba(0,0,0,.3); }
+    .modal-content h3 { margin-top: 0; }
+
+    /* ---------- PDF ---------- */
+    #pdf-statement-container { position: absolute; left: -9999px; top: 0; }
+    .statement-box { width: 800px; padding: 40px; background: #fff; font-family: Arial, sans-serif; color: #333; }
+    .statement-header { border-bottom: 3px solid #6f42c1; padding-bottom: 20px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: flex-end; }
+    .statement-header h1 { margin: 0; color: #6f42c1; font-size: 30px; text-transform: uppercase; }
+    .statement-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    .statement-table th, .statement-table td { padding: 10px; border: 1px solid #ddd; text-align: left; }
+    .statement-table th { background: #f4f4f4; }
+
+    /* ---------- MOBILE ---------- */
+    .bottom-nav { display: none; }
+    @media (max-width: 768px) {
+        .dashboard-layout { flex-direction: column; }
+        .sidebar { display: none; }
+        .content-header { flex-direction: column; align-items: stretch; }
+        .wallet-btn { justify-content: center; }
+        .bottom-nav { display: flex; position: fixed; bottom: 0; left: 0; width: 100%; background: #fff; box-shadow: 0 -3px 14px rgba(0,0,0,.1); z-index: 1000; overflow-x: auto; }
+        .nav-tab { flex: 1; min-width: 66px; text-align: center; padding: 11px 2px; font-size: 11px; font-weight: 700; color: #666; cursor: pointer; border-top: 3px solid transparent; }
+        .nav-tab.active { color: #6f42c1; border-top: 3px solid #6f42c1; background: #f3eaff; }
+        .chapter-img { width: 84px; height: 52px; }
+    }
+</style>
+</head>
+<body>
+
+<!-- ===== AUTH ===== -->
+<div id="auth-section" class="auth-container">
+    <h2 id="auth-title">Academy Sign In</h2>
+    <div id="auth-error" style="color:#dc3545; text-align:center; margin-bottom:14px; font-weight:700; font-size:14px;"></div>
+    <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="auth-email" autocomplete="email" required>
+    </div>
+    <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="auth-password" autocomplete="current-password" required>
+    </div>
+    <button class="btn btn-primary" id="auth-submit-btn" onclick="handleAuth()">Login to Studio</button>
+    <div class="toggle-link" onclick="toggleAuthMode()">New Academy? Register Here</div>
+</div>
+
+<!-- ===== DASHBOARD ===== -->
+<div id="dashboard-section">
+    <div class="dashboard-layout">
+        <div class="sidebar">
+            <div class="sidebar-header">Academy Studio</div>
+            <div class="menu-item active" onclick="switchMenu('dashboard')">📊 Dashboard</div>
+            <div class="menu-item" onclick="switchMenu('mycourses')">📂 Manage Courses</div>
+            <div class="menu-item" onclick="switchMenu('coupons')">🎟️ Promo Codes</div>
+            <div class="menu-item" onclick="switchMenu('history')">💰 Sales Analytics</div>
+            <div class="menu-item" onclick="switchMenu('profile')">⚙️ Profile Settings</div>
+        </div>
+
+        <div class="main-content">
+            <div class="content-header">
+                <h2 style="margin:0;" id="page-title-header">Welcome Academy</h2>
+                <button class="wallet-btn" onclick="openWalletModal()">
+                    💰 Wallet: ₹<span id="top-wallet-bal">0</span>
+                </button>
+            </div>
+
+            <!-- Dashboard -->
+            <div id="content-dashboard" class="content-section active">
+                <div class="stats-grid">
+                    <div class="stat-card"><h3 id="stat-courses">0</h3><p>Total Courses</p></div>
+                    <div class="stat-card"><h3 id="stat-sales">0</h3><p>Total Enrollments</p></div>
+                </div>
+                <div class="ai-box">
+                    <h3>🤖 AI Studio Analysis</h3>
+                    <div id="ai-suggestion-text">Loading intelligent insights…</div>
+                </div>
+            </div>
+
+            <!-- Manage Courses -->
+            <div id="content-mycourses" class="content-section">
+                <div id="course-grid-view">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; gap:12px; flex-wrap:wrap;">
+                        <h2 style="margin:0;">My Courses</h2>
+                        <button class="btn btn-primary btn-small" onclick="openCourseModal()" style="padding:10px 16px;">+ Create New Course</button>
+                    </div>
+                    <div id="course-list" class="grid-cards">Loading…</div>
+                </div>
+
+                <div id="chapter-manager-view" style="display:none;">
+                    <div class="chapter-header">
+                        <div>
+                            <button class="btn btn-secondary btn-small" onclick="closeChapterManager()">⬅ Back to Courses</button>
+                            <h3 id="manager-course-title" style="margin:10px 0 0;">Course Title</h3>
+                            <div id="manager-course-sub" style="font-size:13px; color:#666; margin-top:4px;"></div>
+                        </div>
+                        <button class="btn btn-success btn-small" onclick="openChapterModal()" style="padding:10px 16px;">+ Add Video</button>
+                    </div>
+                    <div class="scrolling-list" id="chapter-list"></div>
+                </div>
+            </div>
+
+            <!-- Promo Codes -->
+            <div id="content-coupons" class="content-section">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; gap:12px; flex-wrap:wrap;">
+                    <h2 style="margin:0;">Manage Promo Codes</h2>
+                    <button class="btn btn-primary btn-small" onclick="openCouponModal()" style="padding:10px 16px;">+ Add Promo Code</button>
+                </div>
+                <p style="color:#666; font-size:13px; margin-top:0;">New codes require Admin approval before they become active.</p>
+                <div id="coupon-list">Loading coupons…</div>
+            </div>
+
+            <!-- Sales -->
+            <div id="content-history" class="content-section">
+                <h2 style="margin:0 0 8px;">Enrollment &amp; Sales Analytics</h2>
+                <p style="color:#666; font-size:13px; margin-top:0;">Only <b>Active</b> enrollments count toward your earnings.</p>
+                <div id="sales-list">Loading history…</div>
+            </div>
+
+            <!-- Profile -->
+            <div id="content-profile" class="content-section">
+                <h2 style="margin:0 0 15px;">Academy Profile Details</h2>
+                <div style="background:#fff; padding:22px; border-radius:14px; box-shadow:0 4px 16px rgba(0,0,0,.05);">
+                    <form onsubmit="saveProfile(event)">
+                        <div class="form-group"><label>Academy / Channel Name</label><input type="text" id="aName" required maxlength="80"></div>
+                        <div class="form-group"><label>Instructor Name</label><input type="text" id="aTeacher" required maxlength="80"></div>
+                        <div class="form-group"><label>Mobile Number</label><input type="tel" id="aMobile" required maxlength="20"></div>
+                        <div class="form-group"><label>Full Address / Location</label><textarea id="aAddress" rows="2" required maxlength="300"></textarea></div>
+                        <div class="form-group"><label>Bank Details / UPI ID</label><textarea id="aPayment" rows="2" required maxlength="300"></textarea></div>
+                        <button type="submit" class="btn btn-success">💾 Save &amp; Update Profile</button>
+                    </form>
+
+                    <details style="margin-top:22px; background:#f8f9ff; border:1px solid #e0e4f5; border-radius:10px; padding:12px 16px;">
+                        <summary style="cursor:pointer; font-weight:700; color:#4338ca;">🔒 Security checklist (important)</summary>
+                        <p style="font-size:13px; color:#475569; line-height:1.6; margin-bottom:0;">
+                            Front-end code can never fully protect data. Real protection happens in Supabase.
+                            Enable <b>Row Level Security (RLS)</b> on every table and use policies such as
+                            <code>auth.email() = academy_email</code> for <i>select / insert / update / delete</i>.
+                            Never put your <b>service_role</b> key in this file — only the public anon key.
+                        </p>
+                    </details>
+
+                    <button class="btn btn-danger" onclick="logoutUser()" style="margin-top:26px;">🚪 Logout Account</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="bottom-nav">
+            <div class="nav-tab active" onclick="switchMenu('dashboard')">📊<br>Dash</div>
+            <div class="nav-tab" onclick="switchMenu('mycourses')">📂<br>Courses</div>
+            <div class="nav-tab" onclick="switchMenu('coupons')">🎟️<br>Coupons</div>
+            <div class="nav-tab" onclick="switchMenu('history')">💰<br>Sales</div>
+            <div class="nav-tab" onclick="switchMenu('profile')">⚙️<br>Profile</div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== MODALS ===== -->
+
+<!-- Wallet -->
+<div id="walletModal" class="modal">
+    <div class="modal-content" style="max-width:500px;">
+        <h3 style="color:#28a745;">💰 Academy Wallet</h3>
+        <div style="background:#f4f7f6; padding:16px; border-radius:10px; margin-bottom:15px; border:1px solid #e1e5eb;">
+            <p style="margin:0 0 6px; font-size:13px; color:#666;">Current Withdrawable Balance</p>
+            <h2 style="margin:0; font-size:32px; color:#333;">₹<span id="modal-wallet-bal">0</span></h2>
+        </div>
+        <div style="background:#fff3cd; border:1px solid #ffeeba; padding:12px; border-radius:8px; margin-bottom:15px;">
+            <p style="margin:0; font-size:12px; color:#856404; font-weight:700;">
+                ⚠️ Gen-Z Gravity Admin deducts the standard platform fee from every withdrawal request.
+            </p>
+        </div>
+        <div class="form-group">
+            <label>Enter Withdrawal Amount (₹)</label>
+            <input type="number" id="withdrawAmount" min="1" placeholder="e.g. 5000">
+        </div>
+        <button class="btn btn-success" onclick="requestWithdrawal()">💸 Request Withdrawal</button>
+        <hr style="margin:20px 0; border:0; border-top:1px solid #eee;">
+        <h4 style="margin:0 0 10px;">Recent Requests</h4>
+        <div id="withdrawal-history" style="max-height:150px; overflow-y:auto; font-size:13px; margin-bottom:15px;">Loading…</div>
+        <button class="btn btn-dark" onclick="downloadFinancialStatement()">📥 Download Full Statement</button>
+        <button class="btn btn-secondary" style="margin-top:10px;" onclick="document.getElementById('walletModal').style.display='none'">Close</button>
+    </div>
+</div>
+
+<!-- Course -->
+<div id="courseModal" class="modal">
+    <div class="modal-content">
+        <h3 id="cModalTitle">Create Main Course</h3>
+        <form onsubmit="saveCourse(event)">
+            <input type="hidden" id="cId">
+            <div class="form-group"><label>Course Title</label><input type="text" id="cTitle" required maxlength="120"></div>
+            <div class="form-group">
+                <label>Cover Thumbnail Image URL</label>
+                <input type="url" id="cThumb" placeholder="https://…" maxlength="500">
+            </div>
+            <div class="form-group">
+                <label>Course Access Type</label>
+                <select id="cIsPaid" onchange="document.getElementById('cPriceWrap').style.display = this.value === 'true' ? 'block' : 'none'">
+                    <option value="false">Free Course (all chapters free)</option>
+                    <option value="true">Paid Course (one-time unlock)</option>
+                </select>
+            </div>
+            <div class="form-group" id="cPriceWrap" style="display:none;">
+                <label>One-Time Course Price (₹)</label>
+                <input type="number" id="cPrice" min="1" value="499">
+            </div>
+            <p style="font-size:12px; color:#667085; margin-top:-4px;">
+                A paid course unlocks <b>all chapters at once</b> after one payment. You can still mark individual chapters as free previews inside the course.
+            </p>
+            <div style="display:flex; gap:10px; margin-top:14px;">
+                <button type="button" class="btn btn-secondary" onclick="document.getElementById('courseModal').style.display='none'">Cancel</button>
+                <button type="submit" class="btn btn-primary" id="cSaveBtn">Save Course</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Chapter -->
+<div id="chapterModal" class="modal">
+    <div class="modal-content">
+        <h3 id="chModalTitle">Add New Chapter</h3>
+        <form onsubmit="saveChapter(event)">
+            <input type="hidden" id="chId">
+            <div class="form-group"><label>Chapter Title</label><input type="text" id="chTitle" required maxlength="140"></div>
+            <div class="form-group">
+                <label>Video URL</label>
+                <input type="url" id="chVideo" placeholder="YouTube / Vimeo / Drive / .mp4 …" required maxlength="500">
+                <small style="color:#667085; font-size:12px;">Supports YouTube (watch, youtu.be, shorts), Vimeo, Google Drive, direct MP4/WebM.</small>
+            </div>
+            <div class="form-group"><label>Study Notes URL (Optional)</label><input type="url" id="chNotes" maxlength="500"></div>
+            <div class="form-group">
+                <label>Chapter Type</label>
+                <select id="chType" onchange="document.getElementById('chPriceDiv').style.display = this.value === 'Paid' ? 'block' : 'none'">
+                    <option value="Free">Free Chapter</option>
+                    <option value="Paid">Paid Chapter</option>
+                </select>
+            </div>
+            <div class="form-group" id="chPriceDiv" style="display:none;">
+                <label>Chapter Price (₹)</label>
+                <input type="number" id="chPrice" value="0" min="0">
+            </div>
+            <div style="display:flex; gap:10px; margin-top:14px;">
+                <button type="button" class="btn btn-secondary" onclick="document.getElementById('chapterModal').style.display='none'">Cancel</button>
+                <button type="submit" class="btn btn-success" id="chSaveBtn">Save Chapter</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Quiz -->
+<div id="quizModal" class="modal">
+    <div class="modal-content">
+        <h3 id="quizModalTitle">Manage Chapter Quiz</h3>
+        <form onsubmit="saveQuiz(event)">
+            <input type="hidden" id="qId">
+            <input type="hidden" id="qChId">
+            <div class="form-group"><label>Quiz Question</label><textarea id="qQuestion" rows="2" required maxlength="300"></textarea></div>
+            <div class="form-group"><label>Options</label>
+                <input type="text" id="qOpt0" placeholder="Option A" required maxlength="150" style="margin-bottom:6px;">
+                <input type="text" id="qOpt1" placeholder="Option B" required maxlength="150" style="margin-bottom:6px;">
+                <input type="text" id="qOpt2" placeholder="Option C" required maxlength="150" style="margin-bottom:6px;">
+                <input type="text" id="qOpt3" placeholder="Option D" required maxlength="150">
+            </div>
+            <div class="form-group"><label>Correct Option</label>
+                <select id="qCorrect">
+                    <option value="0">Option A</option><option value="1">Option B</option>
+                    <option value="2">Option C</option><option value="3">Option D</option>
+                </select>
+            </div>
+            <div style="display:flex; gap:10px; margin-top:14px;">
+                <button type="button" class="btn btn-secondary" onclick="document.getElementById('quizModal').style.display='none'">Cancel</button>
+                <button type="submit" class="btn btn-primary" id="qSaveBtn">Save Quiz</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Coupon -->
+<div id="couponModal" class="modal">
+    <div class="modal-content">
+        <h3 style="margin-bottom:5px;">Create Promo Code</h3>
+        <p style="font-size:12px; color:#dc3545; margin-top:0; font-weight:700;">Note: New codes require Admin approval to become active.</p>
+        <form onsubmit="saveCoupon(event)">
+            <div class="form-group"><label>Coupon Code Name</label><input type="text" id="cpCode" style="text-transform:uppercase;" required maxlength="30"></div>
+            <div class="form-group"><label>Discount Percentage (%)</label><input type="number" id="cpDiscount" min="1" max="100" required></div>
+            <div class="form-group"><label>Applicable Course</label>
+                <select id="cpTargetCourse" required><option value="All">All My Courses</option></select>
+            </div>
+            <div style="display:flex; gap:10px; margin-top:18px;">
+                <button type="button" class="btn btn-secondary" onclick="document.getElementById('couponModal').style.display='none'">Cancel</button>
+                <button type="submit" class="btn btn-success" id="cpSaveBtn">Request Approval</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Video Preview -->
+<div id="previewModal" class="modal">
+    <div class="modal-content" style="max-width:760px;">
+        <h3 id="previewTitle" style="margin-top:0;">Preview</h3>
+        <div id="previewBody" style="width:100%; aspect-ratio:16/9; background:#000; border-radius:10px; overflow:hidden;"></div>
+        <div style="display:flex; gap:10px; margin-top:14px;">
+            <a id="previewOpenLink" class="btn btn-secondary" href="#" target="_blank" rel="noopener noreferrer"
+               style="text-align:center; text-decoration:none; display:flex; align-items:center; justify-content:center;">Open in New Tab</a>
+            <button class="btn btn-dark" onclick="document.getElementById('previewModal').style.display='none'">Close</button>
+        </div>
+    </div>
+</div>
+
+<!-- Hidden PDF -->
+<div id="pdf-statement-container">
+    <div id="pdf-statement" class="statement-box">
+        <div class="statement-header">
+            <div>
+                <h1>Financial Statement</h1>
+                <h3 id="pdf-academy-name" style="margin:5px 0;">[Academy Name]</h3>
+                <p id="pdf-academy-email" style="margin:0; font-size:14px;">[Email]</p>
+            </div>
+            <div style="text-align:right;">
+                <p style="margin:0; font-weight:bold;">Gen-Z Gravity Platform</p>
+                <p style="margin:0; font-size:12px;">Generated on: <span id="pdf-date"></span></p>
+            </div>
+        </div>
+        <div style="display:flex; justify-content:space-between; margin-bottom:20px; background:#f9f9f9; padding:15px; border:1px solid #ddd; border-radius:8px;">
+            <div><p style="margin:0 0 5px; font-size:12px; color:#666;">Total Lifetime Earnings</p><h3 style="margin:0; color:#28a745;">₹<span id="pdf-total-earn">0</span></h3></div>
+            <div><p style="margin:0 0 5px; font-size:12px; color:#666;">Total Requested / Withdrawn</p><h3 style="margin:0; color:#dc3545;">₹<span id="pdf-total-withdrawn">0</span></h3></div>
+            <div><p style="margin:0 0 5px; font-size:12px; color:#666;">Current Balance</p><h3 style="margin:0; color:#007bff;">₹<span id="pdf-curr-bal">0</span></h3></div>
+        </div>
+        <h4 style="margin-bottom:10px; border-bottom:1px solid #ccc; padding-bottom:5px;">Recent Withdrawal Requests</h4>
+        <table class="statement-table">
+            <thead><tr><th>Date</th><th>Status</th><th style="text-align:right;">Amount (₹)</th></tr></thead>
+            <tbody id="pdf-withdrawal-tbody"></tbody>
+        </table>
+        <p style="font-size:11px; color:#888; text-align:center; margin-top:30px;">
+            Note: Final payout may differ due to Admin platform deductions.
+        </p>
+    </div>
+</div>
+
+<script>
+/* ============================================================
+   SUPABASE
+   ============================================================ */
+const SUPABASE_URL = 'https://goqmkifenqeussjcgdub.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdvcW1raWZlbnFldXNzamNnZHViIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUxNTIyNDMsImV4cCI6MjEwMDcyODI0M30.7lp9uJuJTfO5Wf0V59kGv4GGqdyk0FBtelOUu6UD7ic';
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+/* ============================================================
+   STATE
+   ============================================================ */
+let currentUserEmail   = "";
+let currentAcademyName = "Academy";
+let isSignUpMode       = false;
+let currentActiveCourseId = null;
+
+let coursesCache   = [];
+let chaptersCache  = [];
+let couponsCache   = [];
+let withdrawalHistoryData = [];
+
+let globalTotalEarnings  = 0;
+let globalTotalWithdrawn = 0;
+let globalCurrentBalance = 0;
+
+/* ============================================================
+   SECURITY HELPERS
+   ============================================================ */
+function esc(v) {
+    return String(v ?? '').replace(/[&<>"']/g, m => (
+        { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[m]
+    ));
+}
+function safeUrl(u) {
+    try {
+        const p = new URL(String(u || '').trim());
+        return (p.protocol === 'http:' || p.protocol === 'https:') ? p.href : '';
+    } catch { return ''; }
+}
+const FALLBACK_IMG = 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(
+    '<svg xmlns="http://www.w3.org/2000/svg" width="400" height="200">' +
+    '<rect width="100%" height="100%" fill="#eceff5"/>' +
+    '<text x="50%" y="50%" fill="#9aa3b2" font-family="Segoe UI,Arial" font-size="14" ' +
+    'text-anchor="middle" dominant-baseline="middle">No Image</text></svg>'
+);
+function imgFail(el) {
+    if (el.dataset.failed) return;
+    el.dataset.failed = '1';
+    el.src = FALLBACK_IMG;
+}
+
+/* ============================================================
+   VIDEO PARSER — supports every common link
+   ============================================================ */
+function parseVideo(url) {
+    const u = String(url || '').trim();
+    if (!u) return { kind: 'none', thumb: '', embed: '' };
+
+    // YouTube (watch / youtu.be / shorts / embed / live)
+    let m = u.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/|live\/)|youtu\.be\/)([\w-]{11})/i);
+    if (m) return {
+        kind: 'youtube',
+        thumb: `https://img.youtube.com/vi/${m[1]}/hqdefault.jpg`,
+        embed: `https://www.youtube.com/embed/${m[1]}?rel=0`
+    };
+
+    // Vimeo
+    m = u.match(/vimeo\.com\/(?:video\/)?(\d+)/i);
+    if (m) return {
+        kind: 'vimeo',
+        thumb: '',
+        embed: `https://player.vimeo.com/video/${m[1]}`
+    };
+
+    // Google Drive
+    m = u.match(/drive\.google\.com\/file\/d\/([\w-]+)/i);
+    if (m) return {
+        kind: 'gdrive',
+        thumb: '',
+        embed: `https://drive.google.com/file/d/${m[1]}/preview`
+    };
+
+    // Direct video file
+    if (/\.(mp4|webm|ogg|ogv|mov|m4v)(\?.*)?$/i.test(u)) {
+        return { kind: 'file', thumb: '', embed: u };
+    }
+
+    return { kind: 'other', thumb: '', embed: u };
+}
+const KIND_LABEL = {
+    youtube: 'YouTube', vimeo: 'Vimeo', gdrive: 'Drive',
+    file: 'Video File', other: 'Link', none: 'No Video'
+};
+
+/* ============================================================
+   AUTH
+   ============================================================ */
+async function checkSession() {
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    if (session && session.user) {
+        currentUserEmail = session.user.email;
+        showDashboard();
+    } else {
+        document.getElementById('auth-section').style.display = 'block';
+    }
+}
+
+function toggleAuthMode() {
+    isSignUpMode = !isSignUpMode;
+    document.getElementById('auth-title').innerText =
+        isSignUpMode ? "Register Academy" : "Academy Sign In";
+    document.getElementById('auth-submit-btn').innerText =
+        isSignUpMode ? "Create Studio Account" : "Login to Studio";
+    document.getElementById('auth-error').innerText = '';
+}
+
+async function handleAuth() {
+    const email    = document.getElementById('auth-email').value.trim();
+    const password = document.getElementById('auth-password').value;
+    const errEl    = document.getElementById('auth-error');
+    const btn      = document.getElementById('auth-submit-btn');
+    errEl.innerText = '';
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email))
+        return errEl.innerText = 'Please enter a valid email address.';
+    if (password.length < 6)
+        return errEl.innerText = 'Password must be at least 6 characters.';
+
+    btn.disabled = true;
+    btn.innerText = 'Please wait…';
+    try {
+        if (isSignUpMode) {
+            const { error } = await supabaseClient.auth.signUp({ email, password });
+            if (error) throw error;
+            alert('Account created! If email confirmation is enabled, verify your inbox, then log in.');
+        } else {
+            const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+            if (error) throw error;
+        }
+        location.reload();
+    } catch (err) {
+        errEl.innerText = err.message || 'Authentication failed.';
+    } finally {
+        btn.disabled = false;
+        btn.innerText = isSignUpMode ? "Create Studio Account" : "Login to Studio";
+    }
+}
+
+async function logoutUser() {
+    await supabaseClient.auth.signOut();
+    location.reload();
+}
+
+/* ============================================================
+   DASHBOARD
+   ============================================================ */
+function showDashboard() {
+    document.getElementById('auth-section').style.display = 'none';
+    document.getElementById('dashboard-section').style.display = 'block';
+    loadAll();
+}
+
+async function loadAll() {
+    await loadProfile();
+    await Promise.all([loadCourses(), loadSalesAndWallet(), loadCoupons()]);
+}
+
+function switchMenu(menuId) {
+    document.querySelectorAll('.content-section').forEach(c => c.classList.remove('active'));
+    document.querySelectorAll('.menu-item, .nav-tab').forEach(i => i.classList.remove('active'));
+
+    const section = document.getElementById('content-' + menuId);
+    if (section) section.classList.add('active');
+
+    document.querySelectorAll(`[onclick="switchMenu('${menuId}')"]`)
+        .forEach(el => el.classList.add('active'));
+
+    const titles = {
+        dashboard: 'Dashboard', mycourses: 'Manage Courses',
+        coupons: 'Promo Engine', history: 'Sales Analytics', profile: 'Profile Settings'
+    };
+    document.getElementById('page-title-header').innerText = titles[menuId] || '';
+
+    if (menuId === 'mycourses') { closeChapterManager(); loadCourses(); }
+    if (menuId === 'history')   loadSalesAndWallet();
+    if (menuId === 'coupons')   loadCoupons();
+}
+
+/* ============================================================
+   AI SUGGESTION
+   ============================================================ */
+function generateAISuggestion(courseCount, salesCount) {
+    let t;
+    if (courseCount === 0) {
+        t = "<strong>💡 Suggestion:</strong> It's quiet here! Create your first course and upload a high-quality, eye-catching thumbnail to attract students.";
+    } else if (salesCount === 0) {
+        t = "<strong>📈 Strategy:</strong> You have courses but no enrollments yet. Add a <b>Free preview chapter</b> or generate a <b>Promo Code</b> and share it with your audience.";
+    } else if (salesCount < 10) {
+        t = "<strong>🚀 Growth:</strong> Great start! Keep students engaged by adding a <b>Quiz</b> at the end of each chapter — this boosts completion rates and reviews.";
+    } else {
+        t = "<strong>🔥 Scaling:</strong> Excellent performance! Find your top-selling course and consider creating an advanced Part-2 to maximize revenue.";
+    }
+    document.getElementById('ai-suggestion-text').innerHTML = t;
+}
+
+/* ============================================================
+   PROFILE
+   ============================================================ */
+async function loadProfile() {
+    const { data, error } = await supabaseClient
+        .from('academy_profiles').select('*')
+        .eq('email', currentUserEmail).maybeSingle();
+
+    if (error) { console.warn('profile:', error.message); return; }
+
+    if (data) {
+        currentAcademyName = data.academy_name || 'Academy';
+        document.getElementById('aName').value    = data.academy_name    || '';
+        document.getElementById('aTeacher').value = data.teacher_name    || '';
+        document.getElementById('aMobile').value  = data.mobile          || '';
+        document.getElementById('aAddress').value = data.location        || '';
+        document.getElementById('aPayment').value = data.payment_details || '';
+    }
+}
+
+async function saveProfile(e) {
+    e.preventDefault();
+    const payload = {
+        email: currentUserEmail,
+        academy_name:    document.getElementById('aName').value.trim(),
+        teacher_name:    document.getElementById('aTeacher').value.trim(),
+        mobile:          document.getElementById('aMobile').value.trim(),
+        location:        document.getElementById('aAddress').value.trim(),
+        payment_details: document.getElementById('aPayment').value.trim()
+    };
+    const { error } = await supabaseClient
+        .from('academy_profiles').upsert([payload], { onConflict: 'email' });
+
+    if (error) return alert('Error saving profile: ' + error.message);
+    alert('Profile saved successfully!');
+    loadProfile();
+}
+
+/* ============================================================
+   SALES & WALLET
+   ============================================================ */
+async function loadSalesAndWallet() {
+    const list = document.getElementById('sales-list');
+
+    const { data: myCourses, error } = await supabaseClient
+        .from('courses').select('title')
+        .eq('academy_email', currentUserEmail);
+
+    if (error) { list.innerHTML = `<p style="color:#dc3545;">Error: ${esc(error.message)}</p>`; return; }
+
+    const cCount = myCourses ? myCourses.length : 0;
+    document.getElementById('stat-courses').innerText = cCount;
+
+    if (!myCourses || cCount === 0) {
+        list.innerHTML = '<p>No active courses found.</p>';
+        generateAISuggestion(0, 0);
+        globalTotalEarnings = 0;
+        await loadWithdrawals();
+        updateWalletUI();
+        return;
+    }
+
+    const titles = myCourses.map(c => c.title);
+    const { data: sales } = await supabaseClient
+        .from('enrollments').select('*')
+        .in('course_title', titles)
+        .order('created_at', { ascending: false });
+
+    const sCount = sales ? sales.length : 0;
+    document.getElementById('stat-sales').innerText = sCount;
+    generateAISuggestion(cCount, sCount);
+
+    globalTotalEarnings = 0;
+    if (sales && sCount > 0) {
+        list.innerHTML = sales.map(sale => {
+            const amt = (sale.course_price === 'Free' || !sale.course_price)
+                ? 0 : (parseInt(sale.course_price, 10) || 0);
+            if (sale.status === 'Active') globalTotalEarnings += amt;
+
+            return `
+                <div class="list-card">
+                    <div style="flex:1;">
+                        <h4 style="margin:0 0 5px; font-size:16px;">${esc(sale.course_title)}</h4>
+                        <p style="margin:3px 0; font-size:14px;"><strong>Student:</strong> ${esc(sale.user_email)}</p>
+                        <p style="margin:3px 0; font-size:14px;">
+                            <strong>Amount:</strong> ${amt === 0 ? 'Free' : '₹' + amt}
+                            &nbsp;|&nbsp; <strong>Status:</strong> ${esc(sale.status)}
+                        </p>
+                        <p style="margin:3px 0; font-size:12px; color:#888;">
+                            Date: ${new Date(sale.created_at).toLocaleDateString()}
+                        </p>
+                    </div>
+                </div>`;
+        }).join('');
+    } else {
+        list.innerHTML = '<p>No sales yet.</p>';
+    }
+
+    await loadWithdrawals();
+    updateWalletUI();
+}
+
+async function loadWithdrawals() {
+    const { data } = await supabaseClient
+        .from('withdrawals').select('*')
+        .eq('academy_email', currentUserEmail)
+        .order('created_at', { ascending: false });
+
+    withdrawalHistoryData = data || [];
+    globalTotalWithdrawn = withdrawalHistoryData
+        .reduce((sum, w) => sum + (parseInt(w.amount, 10) || 0), 0);
+}
+
+function updateWalletUI() {
+    globalCurrentBalance = Math.max(0, globalTotalEarnings - globalTotalWithdrawn);
+
+    document.getElementById('top-wallet-bal').innerText   = globalCurrentBalance;
+    document.getElementById('modal-wallet-bal').innerText = globalCurrentBalance;
+
+    const hist = document.getElementById('withdrawal-history');
+    if (withdrawalHistoryData.length === 0) {
+        hist.innerHTML = '<p style="color:#666;">No previous requests.</p>';
+        return;
+    }
+    hist.innerHTML = withdrawalHistoryData.map(w => {
+        const color = w.status === 'Approved' ? 'green'
+                    : w.status === 'Pending'  ? 'orange' : 'red';
+        return `
+            <div style="display:flex; justify-content:space-between; border-bottom:1px solid #eee; padding:6px 0; gap:8px;">
+                <span>${new Date(w.created_at).toLocaleDateString()}</span>
+                <span style="font-weight:700; color:${color};">${esc(w.status)}</span>
+                <span>₹${esc(w.amount)}</span>
+            </div>`;
+    }).join('');
+}
+
+function openWalletModal() {
+    document.getElementById('walletModal').style.display = 'flex';
+}
+
+async function requestWithdrawal() {
+    const amt = parseInt(document.getElementById('withdrawAmount').value, 10);
+    if (!amt || amt <= 0) return alert('Enter a valid amount.');
+    if (amt > globalCurrentBalance)
+        return alert('Insufficient balance! You can withdraw up to ₹' + globalCurrentBalance);
+
+    const { error } = await supabaseClient.from('withdrawals').insert([{
+        academy_email: currentUserEmail,
+        amount: amt,
+        status: 'Pending'
+    }]);
+
+    if (error) return alert('Error requesting withdrawal: ' + error.message);
+
+    alert('Withdrawal request sent to Admin successfully!');
+    document.getElementById('withdrawAmount').value = '';
+    await loadSalesAndWallet();
+}
+
+/* ============================================================
+   PDF STATEMENT
+   ============================================================ */
+async function downloadFinancialStatement() {
+    document.getElementById('pdf-academy-name').innerText  = currentAcademyName;
+    document.getElementById('pdf-academy-email').innerText = currentUserEmail;
+    document.getElementById('pdf-date').innerText          = new Date().toLocaleString();
+    document.getElementById('pdf-total-earn').innerText      = globalTotalEarnings;
+    document.getElementById('pdf-total-withdrawn').innerText = globalTotalWithdrawn;
+    document.getElementById('pdf-curr-bal').innerText        = globalCurrentBalance;
+
+    const tbody = document.getElementById('pdf-withdrawal-tbody');
+    tbody.innerHTML = withdrawalHistoryData.length === 0
+        ? '<tr><td colspan="3" style="text-align:center;">No withdrawal history available.</td></tr>'
+        : withdrawalHistoryData.map(w => `
+            <tr>
+                <td>${new Date(w.created_at).toLocaleDateString()}</td>
+                <td>${esc(w.status)}</td>
+                <td style="text-align:right;">₹${esc(w.amount)}</td>
+            </tr>`).join('');
+
+    const element   = document.getElementById('pdf-statement');
+    const container = document.getElementById('pdf-statement-container');
+
+    container.style.left = '0';
+    container.style.zIndex = '-1';
+
+    alert('⏳ Generating Financial Statement PDF…');
+    try {
+        await html2pdf().set({
+            margin: 0,
+            filename: `Statement_${currentAcademyName.replace(/\s+/g, '_')}.pdf`,
+            image: { type: 'jpeg', quality: 1 },
+            html2canvas: { scale: 2, useCORS: true },
+            jsPDF: { unit: 'px', format: [800, 1000], orientation: 'portrait' }
+        }).from(element).save();
+    } catch (e) {
+        alert('PDF error: ' + e.message);
+    } finally {
+        container.style.left = '-9999px';
+        container.style.zIndex = '';
+    }
+}
+
+/* ============================================================
+   COURSES  — event delegation, no inline JS injection
+   ============================================================ */
+async function loadCourses() {
+    const list = document.getElementById('course-list');
+    const { data, error } = await supabaseClient
+        .from('courses').select('*')
+        .eq('academy_email', currentUserEmail)
+        .order('created_at', { ascending: false });
+
+    if (error) { list.innerHTML = `<p style="color:#dc3545;">Error: ${esc(error.message)}</p>`; return; }
+
+    coursesCache = data || [];
+    renderCourses();
+}
+
+function renderCourses() {
+    const list = document.getElementById('course-list');
+    if (coursesCache.length === 0) {
+        list.innerHTML = '<p>No courses created yet.</p>';
+        return;
+    }
+
+    list.innerHTML = coursesCache.map(c => {
+        const thumb  = safeUrl(c.thumbnail_url) || FALLBACK_IMG;
+        const status = c.status || 'Pending';
+        const statusClass = status === 'Approved' ? 'status-approved'
+                          : status === 'Rejected' ? 'status-rejected'
+                          : 'status-pending';
+        const isPaid = !!c.is_paid;
+        const priceLabel = isPaid ? `₹${Number(c.price) || 0}` : 'FREE';
+
+        return `
+            <div class="course-card">
+                <div class="thumb-wrap">
+                    <img src="${esc(thumb)}" alt="Course cover" onerror="imgFail(this)">
+                    <span class="price-tag ${isPaid ? 'paid' : 'free'}">${priceLabel}</span>
+                </div>
+                <div class="course-card-content">
+                    <h4>${esc(c.title)}</h4>
+                    <p style="margin:0;">
+                        <span class="status-badge ${statusClass}">${esc(status)}</span>
+                    </p>
+                </div>
+                <div class="action-row">
+                    <button class="btn btn-primary btn-small" data-action="chapters" data-id="${esc(c.id)}" style="flex:1;">📚 Chapters</button>
+                    <button class="btn btn-secondary btn-small" data-action="edit" data-id="${esc(c.id)}">✎ Edit</button>
+                    <button class="btn btn-danger btn-small" data-action="delete" data-id="${esc(c.id)}">🗑</button>
+                </div>
+            </div>`;
+    }).join('');
+}
+
+/* -------- delegated click handler for course cards -------- */
+document.getElementById('course-list').addEventListener('click', e => {
+    const btn = e.target.closest('button[data-action]');
+    if (!btn) return;
+
+    const id  = btn.dataset.id;
+    const act = btn.dataset.action;
+    const course = coursesCache.find(c => String(c.id) === String(id));
+    if (!course) return;
+
+    if (act === 'chapters') openChapterManager(course.id, course.title);
+    if (act === 'edit')     editCourse(course);
+    if (act === 'delete')   deleteCourse(course.id);
+});
+
+function openCourseModal() {
+    document.getElementById('cId').value    = '';
+    document.getElementById('cTitle').value = '';
+    document.getElementById('cThumb').value = '';
+    document.getElementById('cIsPaid').value = 'false';
+    document.getElementById('cPriceWrap').style.display = 'none';
+    document.getElementById('cPrice').value = '499';
+    document.getElementById('cModalTitle').innerText = 'Create Main Course';
+    document.getElementById('courseModal').style.display = 'flex';
+}
+
+function editCourse(course) {
+    document.getElementById('cId').value    = course.id;
+    document.getElementById('cTitle').value = course.title || '';
+    document.getElementById('cThumb').value = course.thumbnail_url || '';
+    document.getElementById('cIsPaid').value = course.is_paid ? 'true' : 'false';
+    document.getElementById('cPriceWrap').style.display = course.is_paid ? 'block' : 'none';
+    document.getElementById('cPrice').value = course.price || 0;
+    document.getElementById('cModalTitle').innerText = 'Edit Course';
+    document.getElementById('courseModal').style.display = 'flex';
+}
+
+async function saveCourse(e) {
+    e.preventDefault();
+    const btn = document.getElementById('cSaveBtn');
+    const id  = document.getElementById('cId').value;
+
+    const title   = document.getElementById('cTitle').value.trim();
+    const thumb   = document.getElementById('cThumb').value.trim();
+    const isPaid  = document.getElementById('cIsPaid').value === 'true';
+    const price   = Number(document.getElementById('cPrice').value) || 0;
+
+    if (!title) return alert('Course title is required.');
+    if (thumb && !safeUrl(thumb)) return alert('Thumbnail URL must start with http:// or https://');
+    if (isPaid && price <= 0) return alert('Enter a valid price for a paid course.');
+
+    const payload = {
+        title,
+        thumbnail_url: safeUrl(thumb),
+        is_paid: isPaid,
+        price: isPaid ? price : 0,
+        academy_email: currentUserEmail
+    };
+
+    btn.disabled = true; btn.innerText = 'Saving…';
+
+    let error;
+    if (id) {
+        ({ error } = await supabaseClient.from('courses')
+            .update(payload).eq('id', id).eq('academy_email', currentUserEmail));
+    } else {
+        payload.status = 'Pending';
+        ({ error } = await supabaseClient.from('courses').insert([payload]));
+    }
+
+    btn.disabled = false; btn.innerText = 'Save Course';
+
+    if (error) return alert('Error saving course: ' + error.message);
+
+    document.getElementById('courseModal').style.display = 'none';
+    await loadCourses();
+    await loadSalesAndWallet();
+}
+
+async function deleteCourse(id) {
+    if (!confirm('Delete this course and ALL its chapters? This cannot be undone.')) return;
+
+    // remove chapters first (in case FK cascade is not configured)
+    await supabaseClient.from('chapters').delete().eq('course_id', id);
+    const { error } = await supabaseClient.from('courses')
+        .delete().eq('id', id).eq('academy_email', currentUserEmail);
+
+    if (error) return alert('Error deleting course: ' + error.message);
+
+    await loadCourses();
+    await loadSalesAndWallet();
+}
+
+/* ============================================================
+   CHAPTERS
+   ============================================================ */
+function openChapterManager(courseId, courseTitle) {
+    currentActiveCourseId = courseId;
+    document.getElementById('manager-course-title').innerText = courseTitle;
+
+    const course = coursesCache.find(c => String(c.id) === String(courseId));
+    document.getElementById('manager-course-sub').innerHTML = course
+        ? (course.is_paid
+            ? `🔒 Paid course — one-time unlock at ₹${Number(course.price) || 0}`
+            : '✅ Free course — every chapter is open')
+        : '';
+
+    document.getElementById('course-grid-view').style.display = 'none';
+    document.getElementById('chapter-manager-view').style.display = 'block';
+    loadChapters();
+}
+
+function closeChapterManager() {
+    currentActiveCourseId = null;
+    document.getElementById('chapter-manager-view').style.display = 'none';
+    document.getElementById('course-grid-view').style.display = 'block';
+}
+
+async function loadChapters() {
+    const list = document.getElementById('chapter-list');
+    if (!currentActiveCourseId) return;
+
+    const { data, error } = await supabaseClient
+        .from('chapters').select('*')
+        .eq('course_id', currentActiveCourseId)
+        .order('created_at', { ascending: true });
+
+    if (error) { list.innerHTML = `<p style="color:#dc3545;">Error: ${esc(error.message)}</p>`; return; }
+
+    chaptersCache = data || [];
+    renderChapters();
+}
+
+function renderChapters() {
+    const list = document.getElementById('chapter-list');
+    if (chaptersCache.length === 0) {
+        list.innerHTML = '<p>No chapters added yet.</p>';
+        return;
+    }
+
+    list.innerHTML = chaptersCache.map((ch, i) => {
+        const v      = parseVideo(ch.video_url);
+        const thumb  = v.thumb || FALLBACK_IMG;
+        const isPaid = ch.type === 'Paid';
+        const badge  = isPaid
+            ? `<span class="chip chip-paid">🔒 PAID · ₹${Number(ch.price) || 0}</span>`
+            : `<span class="chip chip-free">✅ FREE</span>`;
+        const notes  = safeUrl(ch.notes)
+            ? `<a class="chip chip-muted" href="${esc(safeUrl(ch.notes))}" target="_blank" rel="noopener noreferrer">📄 Notes</a>`
+            : '';
+
+        return `
+            <div class="chapter-item">
+                <img src="${esc(thumb)}" class="chapter-img" alt="Chapter thumb" onerror="imgFail(this)">
+                <div class="chapter-details">
+                    <h5>Ep ${i + 1}: ${esc(ch.chapter_title)}</h5>
+                    <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
+                        ${badge}
+                        <span class="chip chip-muted">${esc(KIND_LABEL[v.kind] || v.kind)}</span>
+                        ${notes}
+                    </div>
+                </div>
+                <div class="chapter-actions">
+                    <button class="btn btn-dark btn-small"    data-action="preview" data-id="${esc(ch.id)}">▶ Preview</button>
+                    <button class="btn btn-warning btn-small" data-action="quiz"    data-id="${esc(ch.id)}">📝 Quiz</button>
+                    <button class="btn btn-secondary btn-small" data-action="edit"  data-id="${esc(ch.id)}">✎</button>
+                    <button class="btn btn-danger btn-small"  data-action="delete"  data-id="${esc(ch.id)}">🗑</button>
+                </div>
+            </div>`;
+    }).join('');
+}
+
+document.getElementById('chapter-list').addEventListener('click', e => {
+    const btn = e.target.closest('button[data-action]');
+    if (!btn) return;
+
+    const id = btn.dataset.id;
+    const act = btn.dataset.action;
+    const ch  = chaptersCache.find(x => String(x.id) === String(id));
+    if (!ch) return;
+
+    if (act === 'preview') openPreview(ch);
+    if (act === 'quiz')    openQuizModal(ch);
+    if (act === 'edit')    editChapter(ch);
+    if (act === 'delete')  deleteChapter(ch.id);
+});
+
+function openChapterModal() {
+    document.getElementById('chId').value    = '';
+    document.getElementById('chTitle').value = '';
+    document.getElementById('chVideo').value = '';
+    document.getElementById('chNotes').value = '';
+    document.getElementById('chType').value  = 'Free';
+    document.getElementById('chPrice').value = '0';
+    document.getElementById('chPriceDiv').style.display = 'none';
+    document.getElementById('chModalTitle').innerText = 'Add New Chapter';
+    document.getElementById('chapterModal').style.display = 'flex';
+}
+
+function editChapter(ch) {
+    document.getElementById('chId').value    = ch.id;
+    document.getElementById('chTitle').value = ch.chapter_title || '';
+    document.getElementById('chVideo').value = ch.video_url || '';
+    document.getElementById('chNotes').value = ch.notes || '';
+    document.getElementById('chType').value  = ch.type || 'Free';
+    document.getElementById('chPrice').value = ch.price || 0;
+    document.getElementById('chPriceDiv').style.display = ch.type === 'Paid' ? 'block' : 'none';
+    document.getElementById('chModalTitle').innerText = 'Edit Chapter';
+    document.getElementById('chapterModal').style.display = 'flex';
+}
+
+async function saveChapter(e) {
+    e.preventDefault();
+    const btn = document.getElementById('chSaveBtn');
+    const id  = document.getElementById('chId').value;
+
+    const title = document.getElementById('chTitle').value.trim();
+    const video = document.getElementById('chVideo').value.trim();
+    const notes = document.getElementById('chNotes').value.trim();
+    const type  = document.getElementById('chType').value;
+    const price = Number(document.getElementById('chPrice').value) || 0;
+
+    if (!title) return alert('Chapter title is required.');
+    if (!safeUrl(video)) return alert('Video URL must start with http:// or https://');
+
+    const payload = {
+        course_id: currentActiveCourseId,
+        chapter_title: title,
+        video_url: safeUrl(video),
+        notes: safeUrl(notes),
+        type,
+        price: type === 'Paid' ? price : 0
+    };
+
+    btn.disabled = true; btn.innerText = 'Saving…';
+
+    let error;
+    if (id) {
+        ({ error } = await supabaseClient.from('chapters').update(payload).eq('id', id));
+    } else {
+        ({ error } = await supabaseClient.from('chapters').insert([payload]));
+    }
+
+    btn.disabled = false; btn.innerText = 'Save Chapter';
+
+    if (error) return alert('Error saving chapter: ' + error.message);
+    document.getElementById('chapterModal').style.display = 'none';
+    await loadChapters();
+}
+
+async function deleteChapter(id) {
+    if (!confirm('Delete this chapter?')) return;
+    const { error } = await supabaseClient.from('chapters').delete().eq('id', id);
+    if (error) return alert('Error: ' + error.message);
+    await loadChapters();
+}
+
+/* ============================================================
+   VIDEO PREVIEW (works for YouTube / Vimeo / Drive / MP4)
+   ============================================================ */
+function openPreview(ch) {
+    const v     = parseVideo(ch.video_url);
+    const body  = document.getElementById('previewBody');
+    const link  = document.getElementById('previewOpenLink');
+
+    document.getElementById('previewTitle').innerText = ch.chapter_title;
+
+    if (v.kind === 'youtube' || v.kind === 'vimeo' || v.kind === 'gdrive') {
+        body.innerHTML = `<iframe src="${esc(v.embed)}"
+            style="width:100%;height:100%;border:0;"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowfullscreen referrerpolicy="no-referrer-when-downgrade"></iframe>`;
+    } else if (v.kind === 'file') {
+        body.innerHTML = `<video src="${esc(v.embed)}" controls playsinline
+            style="width:100%;height:100%;background:#000;"></video>`;
+    } else {
+        body.innerHTML = `<div style="color:#fff; display:flex; align-items:center;
+            justify-content:center; height:100%; font-size:14px; padding:20px; text-align:center;">
+            This link type can't be embedded. Use "Open in New Tab".</div>`;
+    }
+
+    link.href = safeUrl(ch.video_url) || '#';
+    document.getElementById('previewModal').style.display = 'flex';
+}
+
+/* ============================================================
+   QUIZ
+   ============================================================ */
+async function openQuizModal(ch) {
+    document.getElementById('qChId').value = ch.id;
+    document.getElementById('quizModalTitle').innerText = `Set Quiz for "${ch.chapter_title}"`;
+    document.getElementById('qId').value      = '';
+    document.getElementById('qQuestion').value = '';
+    ['qOpt0','qOpt1','qOpt2','qOpt3'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('qCorrect').value = '0';
+
+    const { data } = await supabaseClient
+        .from('quizzes').select('*').eq('chapter_id', ch.id).maybeSingle();
+
+    if (data) {
+        document.getElementById('qId').value       = data.id;
+        document.getElementById('qQuestion').value = data.question || '';
+        const opts = Array.isArray(data.options) ? data.options : [];
+        document.getElementById('qOpt0').value = opts[0] || '';
+        document.getElementById('qOpt1').value = opts[1] || '';
+        document.getElementById('qOpt2').value = opts[2] || '';
+        document.getElementById('qOpt3').value = opts[3] || '';
+        document.getElementById('qCorrect').value = data.correct_option ?? 0;
+    }
+    document.getElementById('quizModal').style.display = 'flex';
+}
+
+async function saveQuiz(e) {
+    e.preventDefault();
+    const btn  = document.getElementById('qSaveBtn');
+    const qId  = document.getElementById('qId').value;
+
+    const payload = {
+        chapter_id: document.getElementById('qChId').value,
+        question:   document.getElementById('qQuestion').value.trim(),
+        options: [
+            document.getElementById('qOpt0').value.trim(),
+            document.getElementById('qOpt1').value.trim(),
+            document.getElementById('qOpt2').value.trim(),
+            document.getElementById('qOpt3').value.trim()
+        ],
+        correct_option: parseInt(document.getElementById('qCorrect').value, 10)
+    };
+
+    if (!payload.question || payload.options.some(o => !o))
+        return alert('Please fill the question and all four options.');
+
+    btn.disabled = true; btn.innerText = 'Saving…';
+
+    let error;
+    if (qId) ({ error } = await supabaseClient.from('quizzes').update(payload).eq('id', qId));
+    else     ({ error } = await supabaseClient.from('quizzes').insert([payload]));
+
+    btn.disabled = false; btn.innerText = 'Save Quiz';
+
+    if (error) return alert('Error saving quiz: ' + error.message);
+
+    document.getElementById('quizModal').style.display = 'none';
+    alert('✅ Quiz saved successfully!');
+}
+
+/* ============================================================
+   COUPONS
+   ============================================================ */
+async function loadCoupons() {
+    const list = document.getElementById('coupon-list');
+    const { data, error } = await supabaseClient
+        .from('coupons').select('*')
+        .eq('academy_email', currentUserEmail)
+        .order('id', { ascending: false });
+
+    if (error) { list.innerHTML = `<p style="color:#dc3545;">Error: ${esc(error.message)}</p>`; return; }
+
+    couponsCache = data || [];
+    if (couponsCache.length === 0) {
+        list.innerHTML = '<p>No coupons requested or created yet.</p>';
+        return;
+    }
+
+    list.innerHTML = couponsCache.map(cp => {
+        const color = cp.status === 'Approved' ? '#28a745'
+                    : cp.status === 'Pending'  ? '#ffc107' : '#dc3545';
+        const target = cp.target_course === 'All' ? 'All My Courses' : cp.target_course;
+
+        return `
+            <div class="list-card" style="border-left-color:${color};">
+                <div style="flex:1;">
+                    <h4 style="margin:0 0 6px; font-size:17px;">🎟️ ${esc(cp.code)}</h4>
+                    <p style="margin:0; font-size:14px; color:#555;">
+                        Discount: <strong>${esc(cp.discount_percent)}%</strong>
+                        &nbsp;|&nbsp; On: <strong>${esc(target)}</strong>
+                    </p>
+                    <p style="margin:6px 0 0; font-size:13px;">
+                        Status: <span style="color:${color}; font-weight:700;">${esc(cp.status)}</span>
+                        &nbsp;|&nbsp; Used: <strong>${esc(cp.usage_count || 0)}</strong> times
+                    </p>
+                </div>
+                <div>
+                    <button class="btn btn-danger btn-small" data-action="delete-coupon" data-id="${esc(cp.id)}">🗑 Delete</button>
+                </div>
+            </div>`;
+    }).join('');
+}
+
+document.getElementById('coupon-list').addEventListener('click', e => {
+    const btn = e.target.closest('button[data-action="delete-coupon"]');
+    if (!btn) return;
+    deleteCoupon(btn.dataset.id);
+});
+
+async function populateCouponCourses() {
+    const select = document.getElementById('cpTargetCourse');
+    const { data } = await supabaseClient
+        .from('courses').select('title').eq('academy_email', currentUserEmail);
+
+    select.innerHTML = '<option value="All">All My Courses</option>';
+    (data || []).forEach(c => {
+        select.innerHTML += `<option value="${esc(c.title)}">${esc(c.title)}</option>`;
+    });
+}
+
+async function openCouponModal() {
+    document.getElementById('cpCode').value = '';
+    document.getElementById('cpDiscount').value = '';
+    await populateCouponCourses();
+    document.getElementById('couponModal').style.display = 'flex';
+}
+
+async function saveCoupon(e) {
+    e.preventDefault();
+    const btn = document.getElementById('cpSaveBtn');
+    const code = document.getElementById('cpCode').value.trim().toUpperCase();
+
+    if (!/^[A-Z0-9_-]{3,30}$/.test(code))
+        return alert('Coupon code must be 3–30 characters (A–Z, 0–9, _ or -).');
+
+    const payload = {
+        code,
+        discount_percent: parseInt(document.getElementById('cpDiscount').value, 10),
+        target_course: document.getElementById('cpTargetCourse').value,
+        status: 'Pending',
+        active: false,
+        academy_email: currentUserEmail
+    };
+
+    btn.disabled = true; btn.innerText = 'Requesting…';
+    const { error } = await supabaseClient.from('coupons').insert([payload]);
+    btn.disabled = false; btn.innerText = 'Request Approval';
+
+    if (error) {
+        if (error.code === '23505') alert('❌ This promo code already exists!');
+        else alert('❌ Error: ' + error.message);
+        return;
+    }
+    document.getElementById('couponModal').style.display = 'none';
+    await loadCoupons();
+    alert('✅ Sent to Admin for approval!');
+}
+
+async function deleteCoupon(id) {
+    if (!confirm('Delete this promo code?')) return;
+    const { error } = await supabaseClient
+        .from('coupons').delete().eq('id', id).eq('academy_email', currentUserEmail);
+    if (error) return alert('Error: ' + error.message);
+    await loadCoupons();
+}
+
+/* ============================================================
+   BOOT
+   ============================================================ */
+window.addEventListener('DOMContentLoaded', () => {
+    checkSession();
+    supabaseClient.auth.onAuthStateChange((event) => {
+        if (event === 'SIGNED_OUT') location.reload();
+    });
+});
+</script>
+</body>
+</html>
