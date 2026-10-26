@@ -5,14 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Student Portal - Gen-Z Gravity</title>
 
-    <!-- ================= SECURITY: CSP (blocks injected scripts / unknown hosts) ================= -->
+    <!-- ================= SECURITY: CSP ================= -->
     <meta http-equiv="Content-Security-Policy" content="
         default-src 'self';
         script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com;
         style-src 'self' 'unsafe-inline';
-        img-src 'self' data: blob: https://img.youtube.com https://via.placeholder.com https://api.qrserver.com https://*.supabase.co https://www.transparenttextures.com;
+        img-src 'self' data: blob: https:;
+        media-src 'self' blob: https:;
         connect-src 'self' https://*.supabase.co wss://*.supabase.co;
-        frame-src https://www.youtube.com https://www.youtube-nocookie.com;
+        frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com https://drive.google.com https://docs.google.com https://player.vimeo.com https://*.supabase.co;
         font-src 'self' data:;
         object-src 'none';
         base-uri 'self';
@@ -20,18 +21,15 @@
     ">
     <meta name="referrer" content="strict-origin-when-cross-origin">
 
-    <!-- Supabase CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <!-- HTML2PDF CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
     <style>
         * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; transition: all 0.3s ease; }
 
-        /* SECURITY: Disable Text Selection */
         body { margin: 0; padding: 0; background: #f4f7f6; color: #333; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none; overflow-x: hidden; }
 
-        /* Auth Styles */
+        /* Auth */
         .auth-container { max-width: 400px; margin: 80px auto; background: #fff; padding: 35px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); animation: slideUp 0.5s ease-out;}
         @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         .form-group { margin-bottom: 20px; }
@@ -41,7 +39,7 @@
         .auth-btn { width: 100%; padding: 15px; background: linear-gradient(135deg, #007bff, #0056b3); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer;}
         .toggle-link { text-align: center; margin-top: 20px; color: #007bff; cursor: pointer; font-size: 15px; font-weight: bold;}
 
-        /* Dashboard Layout */
+        /* Dashboard */
         #dashboard-section { display: none; height: 100vh; overflow: hidden; }
         .dashboard-layout { display: flex; height: 100%; }
         .sidebar { width: 280px; background: #fff; box-shadow: 4px 0 15px rgba(0,0,0,0.03); display: flex; flex-direction: column; z-index: 10;}
@@ -56,54 +54,51 @@
         /* Banners */
         .banner-container { display: flex; overflow-x: auto; gap: 15px; padding-bottom: 15px; margin-bottom: 20px; scroll-snap-type: x mandatory; scrollbar-width: none;}
         .banner-container::-webkit-scrollbar { display: none; }
-        .banner-item { flex: 0 0 90%; max-width: 500px; height: 160px; border-radius: 16px; scroll-snap-align: center; overflow: hidden; box-shadow: 0 6px 15px rgba(0,0,0,0.1); background: #ddd; display:block;}
+        .banner-item { flex: 0 0 90%; max-width: 500px; height: 160px; border-radius: 16px; scroll-snap-align: center; overflow: hidden; box-shadow: 0 6px 15px rgba(0,0,0,0.1); background: #eef3f9; display:block;}
         .banner-item img { width: 100%; height: 100%; object-fit: cover; pointer-events: none;}
 
         /* Grid */
         .grid-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; }
         @media (max-width: 768px) { .grid-cards { grid-template-columns: repeat(2, 1fr); gap: 12px; } }
-
         .course-card { background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.05); cursor: pointer; position: relative; display: flex; flex-direction: column;}
         .course-card:hover { transform: translateY(-4px); box-shadow: 0 10px 22px rgba(0,0,0,0.12); }
-        .course-card img { width: 100%; height: 130px; object-fit: cover; pointer-events: none;}
+        .course-card img { width: 100%; height: 130px; object-fit: cover; pointer-events: none; background:#eef3f9;}
         .course-card-content { padding: 12px; flex: 1; display: flex; flex-direction: column; justify-content: space-between;}
         .course-card h4 { margin: 0 0 8px; font-size: 14px; line-height: 1.4; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;}
         .badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; }
         .badge-free { background: #e8f5e9; color: #2e7d32; }
         .badge-paid { background: #e3f2fd; color: #1565c0; }
 
-        /* Floating Actions */
         .card-actions { position: absolute; top: 8px; right: 8px; display: flex; flex-direction: column; gap: 8px; z-index: 5;}
         .icon-btn { background: rgba(255,255,255,0.95); border: none; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; font-size: 15px; display:flex; justify-content:center; align-items:center; box-shadow: 0 2px 5px rgba(0,0,0,0.2);}
         .icon-btn.active { color: #dc3545; transform: scale(1.08); }
 
-        /* ====== COURSE HEADER + PROGRESS ====== */
+        /* Course view */
         .chapter-header { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 2px solid #e1e5eb;}
         .course-progress { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
         .course-progress-track { flex: 1; height: 10px; background: #e6ebf2; border-radius: 99px; overflow: hidden; }
         #course-progress-bar { height: 100%; width: 0%; border-radius: 99px; background: linear-gradient(90deg,#28a745,#00c853); transition: width .5s ease; }
         #course-progress-text { font-size: 12px; font-weight: 700; color: #555; white-space: nowrap; }
 
-        /* ====== VIDEO PLAYER ====== */
+        /* Player */
         .video-player-container { background: #000; border-radius: 12px; overflow: hidden; margin-bottom: 12px; aspect-ratio: 16/9; display: none; position: relative; box-shadow: 0 10px 25px rgba(0,0,0,0.25);}
         .video-player-container iframe, .video-player-container video { width: 100%; height: 100%; border: none; position: relative; z-index: 1; display: block;}
         .watermark { position: absolute; top: 30%; left: 10%; opacity: 0.3; color: white; pointer-events: none; z-index: 10; font-size: 18px; font-weight: bold; transform: rotate(-25deg);}
 
-        /* ====== PLAYER NAV (PREV / NEXT) ====== */
         #player-nav { display: none; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 18px; background:#fff; padding: 10px 14px; border-radius: 12px; box-shadow: 0 3px 10px rgba(0,0,0,0.06); }
         .nav-btn { display:flex; align-items:center; gap:6px; padding: 10px 16px; border: none; border-radius: 10px; font-size: 13px; font-weight: 800; cursor: pointer; color:#fff; background: linear-gradient(135deg,#007bff,#0056b3); box-shadow: 0 4px 12px rgba(0,123,255,.3); }
         .nav-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 18px rgba(0,123,255,.35); }
         .nav-btn:disabled { background: #dfe4ea; color: #9aa5b1; cursor: not-allowed; box-shadow: none; }
         #chapter-indicator { font-size: 12px; font-weight: 800; color: #555; text-align: center; }
 
-        /* ====== CHAPTER LIST (REDESIGNED) ====== */
+        /* Chapter list */
         .chapter-list-item { display: flex; align-items: center; gap: 12px; background: #fff; padding: 10px; border-radius: 12px; margin-bottom: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.05); cursor: pointer; border-left: 4px solid transparent; position: relative; overflow: hidden; }
         .chapter-list-item:hover { transform: translateX(4px); box-shadow: 0 6px 16px rgba(0,0,0,0.10); }
         .chapter-list-item.locked { opacity: 0.65; }
         .chapter-list-item.completed { border-left-color: #28a745; }
         .chapter-list-item.playing { border-left-color: #007bff; background: linear-gradient(90deg,#f0f7ff,#ffffff); box-shadow: 0 6px 18px rgba(0,123,255,.15); }
         .ch-thumb-wrap { position: relative; flex: 0 0 auto; }
-        .ch-thumb { width: 96px; height: 58px; border-radius: 8px; object-fit: cover; display:block; background:#ddd;}
+        .ch-thumb { width: 96px; height: 58px; border-radius: 8px; object-fit: cover; display:block; background:#eef3f9;}
         .ch-play-overlay { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:18px; color:#fff; background: rgba(0,0,0,0.32); border-radius:8px; }
         .chapter-list-item.playing .ch-play-overlay { background: rgba(0,123,255,0.55); }
         .ch-index { position:absolute; top:-6px; left:-6px; background:#007bff; color:#fff; font-size:10px; font-weight:800; width:20px; height:20px; border-radius:50%; display:flex; align-items:center; justify-content:center; border:2px solid #fff; }
@@ -121,12 +116,12 @@
 
         .academy-info-box { background: #fff; padding: 15px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); display: none;}
 
-        /* Quiz Box */
+        /* Quiz */
         .quiz-box { background: #fdfdfd; border: 1px solid #ddd; padding: 20px; border-radius: 12px; margin-top: 15px; display: none;}
         .quiz-option { display: block; padding: 12px; margin-bottom: 8px; background: #f4f7f6; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight:bold; border: 2px solid transparent; pointer-events:auto;}
         .quiz-option.selected { background: #cce5ff; border-color: #007bff; }
 
-        /* Modals & Inputs */
+        /* Modals */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 2000; justify-content: center; align-items: center; backdrop-filter: blur(5px);}
         .modal-content { background: #fff; padding: 25px; border-radius: 16px; width: 90%; max-width: 400px; text-align: center;}
         .coupon-box { display: flex; gap: 5px; margin: 15px 0; }
@@ -138,6 +133,47 @@
         .btn-warning { background: #ffc107; color: black; }
         .btn-outline { background: transparent; border: 2px solid #007bff; color: #007bff; width: auto;}
 
+        /* ================= NOTES MODAL (NEW) ================= */
+        .notes-modal-content {
+            max-width: 740px; width: 94%; max-height: 88vh; padding: 0; overflow: hidden;
+            display: flex; flex-direction: column; text-align: left; border-radius: 16px;
+        }
+        .notes-modal-header {
+            display: flex; align-items: center; justify-content: space-between; gap: 12px;
+            padding: 14px 18px; background: linear-gradient(135deg,#007bff,#00c6ff); color: #fff;
+        }
+        .notes-modal-header h3 { margin: 0; font-size: 15px; font-weight: 800; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+        .notes-close {
+            flex: 0 0 auto; background: rgba(255,255,255,0.22); color: #fff; border: none;
+            width: 34px; height: 34px; border-radius: 50%; cursor: pointer; font-size: 16px;
+            display:flex; align-items:center; justify-content:center;
+        }
+        .notes-close:hover { background: rgba(255,255,255,0.4); }
+        .notes-content {
+            padding: 18px 20px; overflow-y: auto; font-size: 14px; line-height: 1.75; color: #333;
+            pointer-events: auto; text-align: left;
+        }
+        .notes-content p { margin: 0 0 12px; word-break: break-word; }
+        .notes-content a { color: #007bff; text-decoration: underline; word-break: break-all; }
+        .notes-content img {
+            max-width: 100%; height: auto; border-radius: 10px; display: block;
+            margin: 12px 0; box-shadow: 0 6px 18px rgba(0,0,0,0.12); background: #eef3f9;
+        }
+        .notes-content .notes-embed {
+            width: 100%; border-radius: 10px; overflow: hidden; background: #000;
+            margin: 12px 0; aspect-ratio: 16/9;
+        }
+        .notes-content .notes-embed iframe { width: 100%; height: 100%; border: none; display: block; }
+        .notes-content .notes-embed.notes-embed-tall { aspect-ratio: auto; height: 520px; background: #fff; }
+        .notes-content .notes-file-link {
+            display: inline-flex; align-items: center; gap: 8px; padding: 10px 14px;
+            background: #f0f7ff; border: 1px solid #cfe3ff; border-radius: 8px;
+            color: #007bff; text-decoration: none; font-weight: 700; margin: 6px 0;
+            pointer-events: auto;
+        }
+        .notes-content .notes-file-link:hover { background: #e1efff; }
+        .notes-empty { color: #888; text-align: center; padding: 26px 12px; font-weight: 600; }
+
         /* Toast */
         #toast-wrap { position: fixed; top: 18px; left: 50%; transform: translateX(-50%); z-index: 5000; display: flex; flex-direction: column; gap: 8px; align-items: center; pointer-events: none; }
         .toast { background: #2c3e50; color: #fff; padding: 12px 20px; border-radius: 99px; font-size: 13px; font-weight: 700; box-shadow: 0 10px 25px rgba(0,0,0,.25); animation: toastIn .35s ease; }
@@ -146,36 +182,13 @@
         .toast.err { background: #b91c1c; }
         @keyframes toastIn { from { opacity:0; transform: translateY(-12px);} to { opacity:1; transform: translateY(0);} }
 
-        /* Invoice Details */
-        .invoice-box { text-align: left; background: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px dashed #ccc; margin-bottom: 15px; font-size: 13px;}
-
-        /* Professional Certificate Design (Hidden until print) */
-        #certificate-container { display: none; }
-
-        /* Intelligent Print Media Queries */
+        /* Print */
         @media print {
             body * { visibility: hidden; }
-            body.print-cert #certificate-container, body.print-cert #certificate-container * { visibility: visible; }
-            body.print-cert #certificate-container {
-                display: flex !important; position: absolute; left: 0; top: 0; width: 1123px; height: 794px;
-                background: url('https://www.transparenttextures.com/patterns/cream-paper.png'), linear-gradient(135deg, #ffffff, #f3f3f3);
-                border: 20px solid #2c3e50; padding: 50px; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: #2c3e50; font-family: 'Times New Roman', serif;
-            }
-            body.print-cert .cert-header { font-size: 65px; font-weight: bold; text-transform: uppercase; letter-spacing: 5px; color: #c0392b; margin-bottom: 20px;}
-            body.print-cert .cert-sub { font-size: 25px; font-style: italic; margin-bottom: 40px; }
-            body.print-cert .cert-name { font-size: 55px; font-weight: bold; text-decoration: underline; margin-bottom: 30px; font-family: 'Arial', sans-serif;}
-            body.print-cert .cert-desc { font-size: 22px; max-width: 800px; line-height: 1.6; margin-bottom: 50px; }
-            body.print-cert .cert-footer { display: flex; justify-content: space-between; width: 80%; margin-top: auto; padding-top: 30px; border-top: 2px solid #2c3e50;}
-            body.print-cert .cert-footer div { text-align: center; font-size: 18px; font-weight: bold;}
-            body.print-cert .cert-stamp { width: 120px; height: 120px; background: gold; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: bold; text-align: center; border: 4px dashed #c0392b; position: absolute; bottom: 80px; right: 100px; color:#c0392b;}
-
-            body.print-inv #invoiceModal, body.print-inv #invoiceModal * { visibility: visible; }
-            body.print-inv #invoiceModal { position: absolute; left: 0; top: 0; width: 100%; background: white; padding: 20px; }
-
             .btn, .close-btn, .card-actions { display: none !important; }
         }
 
-        /* Mobile Nav */
+        /* Mobile */
         .bottom-nav { display: none; }
         @media (max-width: 768px) {
             .dashboard-layout { flex-direction: column; }
@@ -183,29 +196,24 @@
             .bottom-nav { display: flex; position: fixed; bottom: 0; left: 0; width: 100%; background: #fff; box-shadow: 0 -5px 20px rgba(0,0,0,0.05); z-index: 1000; border-top-left-radius: 15px; border-top-right-radius: 15px;}
             .nav-tab { flex: 1; text-align: center; padding: 12px 2px; font-size: 11px; font-weight: bold; color: #888; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px;}
             .nav-tab.active { color: #007bff; }
+            .notes-content { font-size: 13px; padding: 14px; }
         }
 
-        /* ========================================= */
-        /* HIDDEN PDF TEMPLATES (Used for html2pdf)  */
-        /* ========================================= */
+        /* Hidden PDF templates */
         #pdf-generator-container { position: absolute; left: -9999px; top: 0; width: 0; height: 0; overflow: hidden; }
-
         .pdf-invoice { width: 800px; padding: 40px; background: #fff; font-family: 'Arial', sans-serif; color: #333; display: none; }
         .pdf-invoice-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #007bff; padding-bottom: 20px; margin-bottom: 30px;}
         .pdf-invoice-header h1 { margin: 0; color: #007bff; font-size: 36px; text-transform: uppercase;}
         .pdf-invoice-header .brand { text-align: right; }
         .pdf-invoice-header .brand h2 { margin: 0; font-size: 24px; color: #333;}
         .pdf-invoice-header .brand p { margin: 2px 0; font-size: 12px; color: #666;}
-
         .pdf-inv-row { display: flex; justify-content: space-between; margin-bottom: 30px;}
         .pdf-inv-box { background: #f9f9f9; padding: 15px; border-radius: 8px; width: 48%; border: 1px solid #eee;}
         .pdf-inv-box h3 { margin: 0 0 10px; font-size: 16px; color: #007bff; border-bottom: 1px solid #ddd; padding-bottom: 5px;}
         .pdf-inv-box p { margin: 5px 0; font-size: 14px; }
-
         .pdf-table { width: 100%; border-collapse: collapse; margin-bottom: 30px;}
         .pdf-table th { background: #007bff; color: #fff; padding: 12px; text-align: left; font-size: 14px;}
         .pdf-table td { padding: 12px; border-bottom: 1px solid #eee; font-size: 14px;}
-
         .pdf-footer { text-align: center; border-top: 1px solid #ddd; padding-top: 20px; margin-top: 40px;}
         .pdf-footer h4 { margin: 0 0 5px; color: #333;}
         .pdf-footer p { margin: 2px 0; font-size: 12px; color: #666;}
@@ -213,13 +221,11 @@
         .pdf-certificate { width: 1056px; height: 816px; padding: 40px; background: #fff; position: relative; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; font-family: 'Times New Roman', serif; }
         .cert-border-outer { position: absolute; top: 20px; left: 20px; right: 20px; bottom: 20px; border: 10px solid #2c3e50; }
         .cert-border-inner { position: absolute; top: 35px; left: 35px; right: 35px; bottom: 35px; border: 2px solid #c0392b; }
-
         .pdf-certificate .cert-logo { font-size: 30px; font-weight: bold; color: #007bff; margin-bottom: 20px; font-family: 'Arial', sans-serif;}
         .pdf-certificate h1 { font-size: 60px; font-weight: bold; text-transform: uppercase; letter-spacing: 6px; color: #2c3e50; margin: 0 0 10px;}
         .pdf-certificate h3 { font-size: 24px; font-style: italic; color: #555; margin: 0 0 40px;}
         .cert-name-display { font-size: 55px; font-weight: bold; color: #c0392b; border-bottom: 2px solid #2c3e50; padding: 0 40px 10px; margin-bottom: 30px; font-family: 'Arial', sans-serif;}
         .cert-text { font-size: 22px; max-width: 800px; line-height: 1.6; color: #444; margin-bottom: 50px;}
-
         .cert-bottom-grid { display: flex; justify-content: space-between; width: 85%; margin-top: 30px; align-items: flex-end;}
         .cert-sig-box { text-align: center; }
         .cert-sig-line { width: 250px; border-bottom: 2px solid #333; margin-bottom: 10px; height: 40px; display: flex; align-items: flex-end; justify-content: center; font-family: 'Brush Script MT', cursive; font-size: 32px; color: #2c3e50;}
@@ -266,7 +272,6 @@
                         <button class="btn btn-outline" style="padding:6px 12px; font-size:12px;" onclick="closeChapterView()">⬅ Back</button>
                     </div>
 
-                    <!-- ✅ NEW: Course progress bar -->
                     <div class="course-progress">
                         <div class="course-progress-track"><div id="course-progress-bar"></div></div>
                         <span id="course-progress-text">0 / 0</span>
@@ -280,7 +285,6 @@
                         <video id="main-video" controls playsinline style="display:none; background:#000;"></video>
                     </div>
 
-                    <!-- ✅ NEW: Previous / Next video controls -->
                     <div id="player-nav">
                         <button class="nav-btn" id="prev-chapter-btn" onclick="playPrevChapter()">⬅ Previous</button>
                         <span id="chapter-indicator"></span>
@@ -291,8 +295,11 @@
                         <h3 style="color:#007bff; margin:0 0 5px;">About the Author</h3>
                         <p><strong>Provider:</strong> <span id="cv-academy-name">Loading...</span></p>
                         <p><strong>Instructor:</strong> <span id="cv-teacher-name">Loading...</span></p>
-                        <div id="cv-notes" style="margin-top:10px; padding-top:10px; border-top:1px solid #eee; display:none;">
-                            <strong>📝 Study Notes: </strong> <a id="cv-notes-link" href="#" target="_blank" rel="noopener noreferrer" style="color:#007bff; pointer-events:auto;">View Material</a>
+                        <!-- ✅ FIXED: notes now open in a POPUP window -->
+                        <div id="cv-notes" style="margin-top:12px; padding-top:12px; border-top:1px solid #eee; display:none;">
+                            <button class="btn btn-primary"
+                                    style="display:inline-flex; align-items:center; gap:8px; width:auto; padding:10px 18px; margin:0; font-size:14px;"
+                                    onclick="openNotesViewer()">📖 Open Study Notes</button>
                         </div>
                     </div>
 
@@ -315,7 +322,6 @@
                         <button class="btn btn-success" style="max-width:300px; font-size:18px;" onclick="promptCertificate()">🏆 Download Verified Certificate</button>
                     </div>
 
-                    <!-- Payment Prompt For Whole Course -->
                     <div id="payment-box" style="display:none; background:#fff3cd; padding:20px; border-radius:10px; text-align:center; margin-bottom:20px; border:1px solid #ffeeba;">
                         <h3 style="margin:0 0 10px; color:#856404;">Unlock Full Course Access</h3>
                         <p style="font-size:14px; color:#666; margin-bottom:15px;">Pay once to unlock <strong>all premium videos, quizzes, and the certificate</strong> for this entire course.</p>
@@ -379,7 +385,18 @@
     </div>
 </div>
 
-<!-- === PAYMENT MODAL WITH COUPON === -->
+<!-- ============ STUDY NOTES POPUP (NEW) ============ -->
+<div id="notesModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="notes-modal-title">
+    <div class="modal-content notes-modal-content">
+        <div class="notes-modal-header">
+            <h3 id="notes-modal-title">📝 Study Notes</h3>
+            <button class="notes-close" onclick="closeNotesViewer()" aria-label="Close">✕</button>
+        </div>
+        <div id="notes-modal-body" class="notes-content"></div>
+    </div>
+</div>
+
+<!-- ============ PAYMENT MODAL ============ -->
 <div id="paymentModal" class="modal">
     <div class="modal-content">
         <h3 style="margin-top:0;">Secure Payment</h3>
@@ -399,7 +416,7 @@
     </div>
 </div>
 
-<!-- === INVOICE PREVIEW MODAL === -->
+<!-- ============ INVOICE MODAL ============ -->
 <div id="invoiceModal" class="modal">
     <div class="modal-content">
         <h2 style="margin-top:0; color:#007bff; border-bottom:2px solid #eee; padding-bottom:10px;">Tax Invoice Ready</h2>
@@ -409,11 +426,8 @@
     </div>
 </div>
 
-<!-- ========================================================= -->
-<!-- HIDDEN CONTAINERS FOR HTML2PDF GENERATION (HIGH GRAPHICS) -->
-<!-- ========================================================= -->
+<!-- ============ HIDDEN PDF TEMPLATES ============ -->
 <div id="pdf-generator-container">
-
     <div id="pdf-invoice" class="pdf-invoice">
         <div class="pdf-invoice-header">
             <h1>TAX INVOICE</h1>
@@ -496,25 +510,9 @@
 </div>
 
 <script>
-/* =====================================================================================
-   ==============================  SECURITY NOTES  =====================================
-   =====================================================================================
-   1) The Supabase "anon" key below is PUBLIC BY DESIGN. It is safe to ship in a browser
-      ONLY IF you have Row Level Security (RLS) enabled on every table. Real protection
-      is done by RLS policies, NOT by hiding the key. Never put your "service_role" key
-      in frontend code — it bypasses RLS entirely.
-   2) Anything done in the browser can be inspected. Therefore:
-        - Coupon validation, price calculation and payment verification should be moved
-          to a Supabase Edge Function (server-side).
-        - The "I Have Paid" flow inserts an enrollment with status 'Pending'. Keep it that
-          way: an admin must approve it server-side before access is granted.
-   3) This file now escapes ALL database-driven text before injecting it into HTML
-      (escapeHtml) and validates every URL (safeUrl) to block "javascript:" injection XSS.
-   4) A Content-Security-Policy <meta> tag is set in <head> to block injected scripts.
-   5) Clickjacking protection + devtools/right-click deterrents are active.
-   ===================================================================================== */
-
-/* ---------- ANTI-CLICKJACKING: refuse to run inside an iframe ---------- */
+/* ============================================================
+   ANTI-CLICKJACKING
+   ============================================================ */
 if (window.top !== window.self) {
     try { window.top.location = window.self.location; } catch (e) {
         document.documentElement.innerHTML = '<h1 style="font-family:sans-serif;padding:40px;">Blocked: framing not allowed.</h1>';
@@ -522,7 +520,7 @@ if (window.top !== window.self) {
     }
 }
 
-/* ---------- BASIC CLIENT-SIDE HARDENING ---------- */
+/* ---------- CLIENT HARDENING ---------- */
 document.addEventListener('contextmenu', e => e.preventDefault());
 document.addEventListener('dragstart', e => e.preventDefault());
 document.addEventListener('copy', e => { if (!e.target.closest('input, textarea')) e.preventDefault(); });
@@ -537,14 +535,6 @@ document.addEventListener('keydown', e => {
         return false;
     }
 });
-
-/* ---------- OPTIONAL: DOMAIN LOCK ---------- */
-const ENFORCE_DOMAIN_LOCK = false; // <- set to true after you add your real domain
-const ALLOWED_HOSTS = ['genzgravity.com', 'www.genzgravity.com', 'localhost', '127.0.0.1'];
-if (ENFORCE_DOMAIN_LOCK && !ALLOWED_HOSTS.includes(location.hostname)) {
-    document.documentElement.innerHTML = '<h1 style="font-family:sans-serif;padding:40px;">Unauthorized domain.</h1>';
-    throw new Error('Domain lock');
-}
 
 /* ---------- HELPERS: XSS / URL SAFETY ---------- */
 function escapeHtml(str) {
@@ -565,6 +555,64 @@ function getYouTubeId(url) {
     return m ? m[1] : null;
 }
 
+/* ============================================================
+   ✅ IMAGE FALLBACK ENGINE
+   Handles every image on the page: course thumbnails, banners,
+   chapter thumbs, notes images — with a safe placeholder and
+   a YouTube thumbnail fallback chain.
+   ============================================================ */
+const FALLBACK_IMG = "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(
+    "<svg xmlns='http://www.w3.org/2000/svg' width='400' height='220'>" +
+    "<rect width='100%' height='100%' fill='#eef3f9'/>" +
+    "<g fill='#9aa9bb' font-family='Segoe UI, Arial, sans-serif' text-anchor='middle'>" +
+    "<text x='200' y='108' font-size='16' font-weight='700'>Image unavailable</text>" +
+    "<text x='200' y='132' font-size='12'>Check the link or try again</text>" +
+    "</g></svg>"
+);
+
+document.addEventListener('error', (e) => {
+    const t = e.target;
+    if (!t || t.tagName !== 'IMG') return;
+    const src = t.currentSrc || t.src || '';
+    // YouTube thumbnail fallback chain: hq → mq → default → placeholder
+    if (src.includes('/hqdefault.jpg')) { t.src = src.replace('/hqdefault.jpg', '/mqdefault.jpg'); return; }
+    if (src.includes('/mqdefault.jpg')) { t.src = src.replace('/mqdefault.jpg', '/default.jpg'); return; }
+    if (t.dataset.fallback) return;
+    t.dataset.fallback = '1';
+    t.src = FALLBACK_IMG;
+}, true);
+
+/* ============================================================
+   ✅ IMAGE URL RESOLVER
+   Converts Google Drive / Dropbox / Imgur page links into
+   direct image URLs that actually load in <img> tags.
+   ============================================================ */
+function resolveImageUrl(url) {
+    if (!url) return '';
+    let u = String(url).trim();
+    if (/^data:image\//i.test(u)) return u;
+    if (!/^https?:\/\//i.test(u)) return '';
+
+    // Google Drive file view → thumbnail
+    const gd = u.match(/drive\.google\.com\/file\/d\/([^/?#]+)/);
+    if (gd) return `https://drive.google.com/thumbnail?id=${encodeURIComponent(gd[1])}&sz=w1600`;
+
+    // Google Drive uc?id= / thumbnail?id=
+    if (/drive\.google\.com\/(?:uc|thumbnail)\?/i.test(u)) {
+        const m = u.match(/[?&]id=([^&]+)/);
+        if (m) return `https://drive.google.com/thumbnail?id=${encodeURIComponent(m[1])}&sz=w1600`;
+    }
+
+    // Dropbox → raw
+    if (/dropbox\.com/i.test(u)) return u.replace(/[?&]dl=0/, '?raw=1').replace(/&dl=0/, '&raw=1');
+
+    // Imgur page → direct
+    const imgurPage = u.match(/^https?:\/\/(?:www\.)?imgur\.com\/([a-zA-Z0-9]+)\/?$/);
+    if (imgurPage) return `https://i.imgur.com/${imgurPage[1]}.jpg`;
+
+    return u;
+}
+
 /* ---------- TOAST ---------- */
 function showToast(msg, type = '') {
     const wrap = document.getElementById('toast-wrap');
@@ -576,7 +624,9 @@ function showToast(msg, type = '') {
     setTimeout(() => el.remove(), 3100);
 }
 
-/* =========================== SUPABASE SETUP =========================== */
+/* ============================================================
+   SUPABASE
+   ============================================================ */
 const SUPABASE_URL = 'https://goqmkifenqeussjcgdub.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdvcW1raWZlbnFldXNzamNnZHViIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUxNTIyNDMsImV4cCI6MjEwMDcyODI0M30.7lp9uJuJTfO5Wf0V59kGv4GGqdyk0FBtelOUu6UD7ic';
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
@@ -590,7 +640,7 @@ let isSignUpMode = false;
 
 let activeCourseData = null;
 let activeChapterId = null;
-let currentChaptersList = [];      // ✅ NEW: full chapter array for prev/next nav
+let currentChaptersList = [];
 let currentQuizData = null;
 let userOwnedCourses = [];
 let favoriteCourses = [];
@@ -599,7 +649,9 @@ let completedChaptersList = [];
 let originalPrice = 0;
 let discountedPrice = 0;
 
-/* =========================== AUTHENTICATION =========================== */
+/* ============================================================
+   AUTH
+   ============================================================ */
 async function checkSession() {
     const { data: { session } } = await supabaseClient.auth.getSession();
     const urlParams = new URLSearchParams(window.location.search);
@@ -643,7 +695,9 @@ async function logoutUser() {
     location.replace(window.location.pathname);
 }
 
-/* =========================== UI NAV & FETCH =========================== */
+/* ============================================================
+   DASHBOARD
+   ============================================================ */
 async function showDashboard() {
     document.getElementById('auth-section').style.display = 'none';
     document.getElementById('dashboard-section').style.display = 'block';
@@ -672,17 +726,18 @@ function switchMenu(menuId) {
 async function loadBanners() {
     const container = document.getElementById('banner-slider');
     const { data } = await supabaseClient.from('banners').select('*').eq('active', true);
-    if (data) {
-        container.innerHTML = '';
-        data.forEach(b => {
-            const img = safeUrl(b.image_url);
-            if (!img) return;
-            const link = safeUrl(b.link_url);
-            container.innerHTML += link
-                ? `<a href="${escapeHtml(link)}" target="_blank" rel="noopener noreferrer" class="banner-item"><img src="${escapeHtml(img)}" alt=""></a>`
-                : `<div class="banner-item"><img src="${escapeHtml(img)}" alt=""></div>`;
-        });
-    }
+    if (!data) return;
+
+    container.innerHTML = '';
+    data.forEach(b => {
+        const raw = safeUrl(b.image_url);
+        const img = resolveImageUrl(raw);
+        if (!img) return;
+        const link = safeUrl(b.link_url);
+        container.innerHTML += link
+            ? `<a href="${escapeHtml(link)}" target="_blank" rel="noopener noreferrer" class="banner-item"><img src="${escapeHtml(img)}" alt="" loading="lazy" referrerpolicy="no-referrer"></a>`
+            : `<div class="banner-item"><img src="${escapeHtml(img)}" alt="" loading="lazy" referrerpolicy="no-referrer"></div>`;
+    });
 }
 
 async function loadUserAccess() {
@@ -696,7 +751,6 @@ async function loadCourses() {
     if (courses) { allCoursesData = courses; renderCourseGrid(courses, list); }
 }
 
-/* ✅ SAFE rendering — every DB string is escaped, no inline on* handlers */
 function renderCourseGrid(coursesArray, container) {
     container.innerHTML = '';
     if (!coursesArray || coursesArray.length === 0) {
@@ -706,7 +760,7 @@ function renderCourseGrid(coursesArray, container) {
     coursesArray.forEach(c => {
         const isFav = favoriteCourses.includes(c.id);
         const owned = userOwnedCourses.includes(c.title);
-        const thumb = safeUrl(c.thumbnail_url) || 'https://via.placeholder.com/400x200?text=Course';
+        const thumb = resolveImageUrl(safeUrl(c.thumbnail_url)) || FALLBACK_IMG;
 
         const card = document.createElement('div');
         card.className = 'course-card searchable-card';
@@ -716,7 +770,7 @@ function renderCourseGrid(coursesArray, container) {
                 <button class="icon-btn ${isFav ? 'active' : ''}" data-act="fav" aria-label="Favorite">❤️</button>
                 <button class="icon-btn" data-act="share" aria-label="Share">🔗</button>
             </div>
-            <img src="${escapeHtml(thumb)}" alt="">
+            <img src="${escapeHtml(thumb)}" alt="" loading="lazy" referrerpolicy="no-referrer">
             <div class="course-card-content">
                 <h4>${escapeHtml(c.title)}</h4>
                 <div><span class="badge ${owned ? 'badge-free' : 'badge-paid'}">${owned ? 'Enrolled' : 'Explore'}</span></div>
@@ -759,12 +813,10 @@ function shareCourse(e, courseId) {
     else { navigator.clipboard.writeText(shareUrl); showToast('🔗 Course link copied!', 'ok'); }
 }
 
-/* =====================================================================
-   ====================  COURSE / CHAPTER PLAYER  ======================
-   ===================================================================== */
-
+/* ============================================================
+   COURSE / CHAPTER VIEW
+   ============================================================ */
 async function openCourse(courseId) {
-    // ---- reset UI ----
     document.getElementById('course-grid-view').style.display = 'none';
     document.getElementById('chapter-view').style.display = 'block';
     document.getElementById('main-player-box').style.display = 'none';
@@ -787,7 +839,6 @@ async function openCourse(courseId) {
     activeCourseData = courseData;
     document.getElementById('cv-title').innerText = courseData.title;
 
-    // ---- academy info ----
     document.getElementById('cv-academy-name').innerText = "Gen-Z Gravity Admin";
     document.getElementById('cv-teacher-name').innerText = "Expert Instructor";
     if (courseData.academy_email) {
@@ -798,12 +849,10 @@ async function openCourse(courseId) {
         }
     }
 
-    // ---- progress ----
     const { data: progData } = await supabaseClient.from('course_progress').select('completed_chapters')
         .eq('user_email', currentUserEmail).eq('course_id', courseId).maybeSingle();
     completedChaptersList = Array.isArray(progData?.completed_chapters) ? progData.completed_chapters : [];
 
-    // ---- chapters ----
     const { data: chapters } = await supabaseClient.from('chapters').select('*').eq('course_id', courseId).order('created_at', { ascending: true });
     currentChaptersList = chapters || [];
 
@@ -813,7 +862,6 @@ async function openCourse(courseId) {
         return;
     }
 
-    // ---- access logic ----
     let hasAccess = userOwnedCourses.includes(courseData.title);
     let totalCoursePrice = 0;
     currentChaptersList.forEach(ch => { if (ch.type === 'Paid') totalCoursePrice += parseInt(ch.price || 0, 10) || 0; });
@@ -824,7 +872,6 @@ async function openCourse(courseId) {
         originalPrice = totalCoursePrice;
         discountedPrice = totalCoursePrice;
     } else if (!hasAccess && totalCoursePrice === 0) {
-        // Free course -> auto enroll, and immediately grant access in this session
         await supabaseClient.from('enrollments').insert([{
             user_email: currentUserEmail, course_title: courseData.title, course_price: 'Free', status: 'Active'
         }]);
@@ -837,7 +884,6 @@ async function openCourse(courseId) {
     checkCertificateEligibility();
 }
 
-/* ✅ NEW: renders the chapter list with active / completed / locked states */
 function renderChapters() {
     const list = document.getElementById('chapter-list-container');
     const hasAccess = activeCourseData ? userOwnedCourses.includes(activeCourseData.title) : false;
@@ -849,7 +895,7 @@ function renderChapters() {
         const isActive = String(ch.id) === String(activeChapterId);
 
         const ytId = getYouTubeId(ch.video_url);
-        const thumb = ytId ? `https://img.youtube.com/vi/${ytId}/hqdefault.jpg` : 'https://via.placeholder.com/160x90?text=Video';
+        const thumb = ytId ? `https://i.ytimg.com/vi/${ytId}/hqdefault.jpg` : FALLBACK_IMG;
 
         const item = document.createElement('div');
         item.className = 'chapter-list-item'
@@ -861,7 +907,7 @@ function renderChapters() {
 
         item.innerHTML = `
             <div class="ch-thumb-wrap">
-                <img src="${escapeHtml(thumb)}" class="ch-thumb" loading="lazy" alt="">
+                <img src="${escapeHtml(thumb)}" class="ch-thumb" loading="lazy" referrerpolicy="no-referrer" alt="">
                 <span class="ch-play-overlay">${isLocked ? '🔒' : '▶'}</span>
                 <span class="ch-index">${index + 1}</span>
             </div>
@@ -879,7 +925,6 @@ function renderChapters() {
     });
 }
 
-/* ✅ NEW: course progress bar */
 function renderCourseProgress() {
     const total = currentChaptersList.length;
     const done = currentChaptersList.filter(c => completedChaptersList.includes(c.id)).length;
@@ -888,7 +933,6 @@ function renderCourseProgress() {
     document.getElementById('course-progress-text').innerText = `${done} / ${total} • ${pct}%`;
 }
 
-/* ✅ REWRITTEN: playVideo(chapterId) — safe, supports YouTube + direct MP4 */
 function playVideo(chapterId) {
     const idx = currentChaptersList.findIndex(c => String(c.id) === String(chapterId));
     if (idx === -1) return;
@@ -908,7 +952,6 @@ function playVideo(chapterId) {
     const iframe = document.getElementById('main-player');
     const videoEl = document.getElementById('main-video');
 
-    // stop whatever was playing
     try { videoEl.pause(); } catch {}
     videoEl.removeAttribute('src');
     try { videoEl.load(); } catch {}
@@ -924,10 +967,7 @@ function playVideo(chapterId) {
         iframe.src = `https://www.youtube-nocookie.com/embed/${ytId}?autoplay=1&rel=0&modestbranding=1`;
     } else {
         const safe = safeUrl(ch.video_url);
-        if (!safe) {
-            showToast('Invalid video source.', 'err');
-            return;
-        }
+        if (!safe) { showToast('Invalid video source.', 'err'); return; }
         if (/\.(mp4|webm|ogg)(\?|#|$)/i.test(safe)) {
             videoEl.style.display = 'block';
             videoEl.src = safe;
@@ -938,24 +978,12 @@ function playVideo(chapterId) {
         }
     }
 
-    // ---- notes ----
+    // Academy info + notes button (notes opens in popup)
     document.getElementById('cv-academy-info').style.display = 'block';
     const notesWrap = document.getElementById('cv-notes');
-    const notesLink = document.getElementById('cv-notes-link');
-    const notesUrl = safeUrl(ch.notes);
-    if (notesUrl) {
-        notesWrap.style.display = 'block';
-        notesLink.href = notesUrl;
-        notesLink.innerText = 'View Material';
-    } else if (ch.notes && String(ch.notes).trim() !== '' && String(ch.notes) !== 'null') {
-        notesWrap.style.display = 'block';
-        notesLink.removeAttribute('href');
-        notesLink.innerText = String(ch.notes).slice(0, 120);
-    } else {
-        notesWrap.style.display = 'none';
-    }
+    const hasNotes = ch.notes && String(ch.notes).trim() !== '' && String(ch.notes) !== 'null';
+    notesWrap.style.display = hasNotes ? 'block' : 'none';
 
-    // ---- action buttons ----
     document.getElementById('progress-action-box').style.display = 'block';
     document.getElementById('quiz-area').style.display = 'none';
     document.getElementById('mark-complete-btn').style.display =
@@ -969,7 +997,6 @@ function playVideo(chapterId) {
     if (mc) mc.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-/* ✅ NEW: enable/disable + label the prev/next buttons */
 function updatePlayerNav() {
     const idx = currentChaptersList.findIndex(c => String(c.id) === String(activeChapterId));
     const prevBtn = document.getElementById('prev-chapter-btn');
@@ -992,7 +1019,6 @@ function updatePlayerNav() {
     nextBtn.innerText = (nextCh && !hasAccess && nextCh.type === 'Paid') ? 'Next 🔒' : 'Next ➡';
 }
 
-/* ✅ NEW: previous / next */
 function playNextChapter() {
     const idx = currentChaptersList.findIndex(c => String(c.id) === String(activeChapterId));
     if (idx === -1 || idx >= currentChaptersList.length - 1) return;
@@ -1004,13 +1030,11 @@ function playPrevChapter() {
     playVideo(currentChaptersList[idx - 1].id);
 }
 
-/* ✅ NEW: keyboard shortcuts (← / →) while a chapter is open */
 document.addEventListener('keydown', (e) => {
     if (e.target && e.target.matches && e.target.matches('input, textarea, select')) return;
     const cv = document.getElementById('chapter-view');
     if (!cv || cv.style.display === 'none') return;
     if (document.getElementById('player-nav').style.display === 'none') return;
-
     if (e.key === 'ArrowRight') { e.preventDefault(); playNextChapter(); }
     if (e.key === 'ArrowLeft') { e.preventDefault(); playPrevChapter(); }
 });
@@ -1028,7 +1052,6 @@ function closeChapterView() {
     window.history.replaceState({}, document.title, window.location.pathname);
 }
 
-/* ✅ REWRITTEN: completes in-place (no full reload, player keeps playing) */
 async function markChapterComplete() {
     if (!activeChapterId || !activeCourseData) return;
     if (completedChaptersList.includes(activeChapterId)) return;
@@ -1064,7 +1087,140 @@ function checkCertificateEligibility() {
         (hasAccess && total > 0 && done === total) ? 'block' : 'none';
 }
 
-/* =========================== QUIZ =========================== */
+/* ============================================================
+   ✅✅✅  STUDY NOTES POPUP ENGINE  ✅✅✅
+   Renders text, links, images, YouTube, PDF, Drive previews
+   ============================================================ */
+
+function isProbablyImageUrl(url) {
+    if (!url) return false;
+    if (/^data:image\//i.test(url)) return true;
+    const u = url.split('?')[0].split('#')[0].toLowerCase();
+    if (/\.(png|jpe?g|gif|webp|bmp|svg|avif|ico)$/.test(u)) return true;
+    if (/i\.imgur\.com\//i.test(url)) return true;
+    return false;
+}
+
+/* Render a single bare URL as the best-fitting block */
+function renderUrlBlock(rawUrl) {
+    const url = String(rawUrl).trim();
+    const safe = safeUrl(url);
+    if (!safe) return `<p>${escapeHtml(url)}</p>`;
+
+    // 1. YouTube → iframe
+    const ytId = getYouTubeId(safe);
+    if (ytId) {
+        return `<div class="notes-embed"><iframe src="https://www.youtube-nocookie.com/embed/${ytId}" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></div>`;
+    }
+
+    // 2. Direct video file → <video>
+    if (/\.(mp4|webm|ogg|mov)(\?|#|$)/i.test(safe)) {
+        return `<video controls playsinline src="${escapeHtml(safe)}" style="max-width:100%;border-radius:10px;display:block;margin:12px 0;background:#000;"></video>`;
+    }
+
+    // 3. PDF → iframe
+    if (/\.pdf($|\?)/i.test(safe)) {
+        return `<div class="notes-embed notes-embed-tall"><iframe src="${escapeHtml(safe)}" referrerpolicy="strict-origin-when-cross-origin"></iframe></div>`;
+    }
+
+    // 4. Google Drive file → official preview iframe (works for images + PDFs + docs)
+    const gd = safe.match(/drive\.google\.com\/file\/d\/([^/?#]+)/);
+    if (gd) {
+        return `<div class="notes-embed notes-embed-tall"><iframe src="https://drive.google.com/file/d/${encodeURIComponent(gd[1])}/preview" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></div>`;
+    }
+
+    // 5. Direct image → <img>
+    if (isProbablyImageUrl(safe)) {
+        return `<img src="${escapeHtml(resolveImageUrl(safe))}" alt="Study note image" loading="lazy" referrerpolicy="no-referrer">`;
+    }
+
+    // 6. Fallback: safe clickable link
+    return `<p><a class="notes-file-link" href="${escapeHtml(safe)}" target="_blank" rel="noopener noreferrer">🔗 Open Resource</a></p>`;
+}
+
+/* Turn inline URLs into anchors (input is already escapeHtml'd) */
+function linkifyText(safeHtml) {
+    return safeHtml.replace(/(https?:\/\/[^\s<>"']+)/g, (m) => {
+        const clean = m.replace(/[.,;:!?)]+$/, '');
+        const tail = m.slice(clean.length);
+        return `<a href="${clean}" target="_blank" rel="noopener noreferrer">${clean}</a>${tail}`;
+    });
+}
+
+/* Main notes renderer — handles plain text, URLs, markdown, images */
+function renderNotesContent(raw) {
+    if (raw == null || raw === '' || raw === 'null') {
+        return '<p class="notes-empty">📭 No study notes available for this chapter.</p>';
+    }
+    const text = String(raw).trim();
+    if (!text) return '<p class="notes-empty">📭 No study notes available for this chapter.</p>';
+
+    const blocks = text.split(/\r?\n+/).map(s => s.trim()).filter(Boolean);
+    const html = [];
+
+    blocks.forEach(block => {
+        // Markdown image: ![alt](url)
+        const mdImg = block.match(/^!\[([^\]]*)\]\(([^)\s]+)\)$/);
+        if (mdImg) {
+            const imgUrl = safeUrl(mdImg[2]);
+            if (imgUrl) {
+                html.push(`<img src="${escapeHtml(resolveImageUrl(imgUrl))}" alt="${escapeHtml(mdImg[1] || 'image')}" loading="lazy" referrerpolicy="no-referrer">`);
+                return;
+            }
+        }
+
+        // Markdown link: [text](url)
+        const mdLink = block.match(/^\[([^\]]+)\]\(([^)\s]+)\)$/);
+        if (mdLink) {
+            const linkUrl = safeUrl(mdLink[2]);
+            if (linkUrl) {
+                html.push(`<p><a href="${escapeHtml(linkUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(mdLink[1])}</a></p>`);
+                return;
+            }
+        }
+
+        // Bare URL line → smart embed
+        if (/^https?:\/\/\S+$/i.test(block)) {
+            html.push(renderUrlBlock(block));
+            return;
+        }
+
+        // Plain text with inline links
+        html.push(`<p>${linkifyText(escapeHtml(block))}</p>`);
+    });
+
+    return html.join('');
+}
+
+function openNotesViewer() {
+    const ch = currentChaptersList.find(c => String(c.id) === String(activeChapterId));
+    const title = document.getElementById('notes-modal-title');
+    const body = document.getElementById('notes-modal-body');
+
+    title.innerText = ch ? `📝 ${ch.chapter_title || 'Study Notes'}` : '📝 Study Notes';
+    body.innerHTML = renderNotesContent(ch?.notes);
+    body.scrollTop = 0;
+    document.getElementById('notesModal').style.display = 'flex';
+}
+
+function closeNotesViewer() {
+    document.getElementById('notesModal').style.display = 'none';
+    document.getElementById('notes-modal-body').innerHTML = '';
+}
+
+/* Close notes popup: backdrop click + ESC */
+document.getElementById('notesModal').addEventListener('click', (e) => {
+    if (e.target.id === 'notesModal') closeNotesViewer();
+});
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && document.getElementById('notesModal').style.display === 'flex') {
+        closeNotesViewer();
+    }
+});
+
+/* ============================================================
+   QUIZ
+   ============================================================ */
 let selectedOptionIdx = -1;
 
 async function loadQuizForChapter() {
@@ -1115,11 +1271,11 @@ function submitQuiz() {
     }
 }
 
-/* =========================== PDF GENERATION =========================== */
+/* ============================================================
+   PDF
+   ============================================================ */
 async function promptCertificate() {
     if (!activeCourseData) return;
-
-    // Security: only allow if actually eligible
     const hasAccess = userOwnedCourses.includes(activeCourseData.title);
     const done = currentChaptersList.filter(c => completedChaptersList.includes(c.id)).length;
     if (!hasAccess || done !== currentChaptersList.length || currentChaptersList.length === 0) {
@@ -1177,7 +1333,9 @@ async function downloadInvoicePDF() {
     invElement.style.display = 'none';
 }
 
-/* =========================== COUPON & PAYMENT =========================== */
+/* ============================================================
+   PAYMENT
+   ============================================================ */
 function openPaymentModal() {
     document.getElementById('modal-pay-amt').innerText = discountedPrice;
     updateQRCode(discountedPrice);
@@ -1189,7 +1347,6 @@ function closePaymentModal() {
 }
 
 async function applyCoupon() {
-    // sanitize input: uppercase letters/digits only
     const raw = document.getElementById('promo-code').value || '';
     const code = raw.toUpperCase().replace(/[^A-Z0-9_-]/g, '').slice(0, 24);
     document.getElementById('promo-code').value = code;
@@ -1225,8 +1382,6 @@ function updateQRCode(amount) {
 
 async function confirmPaymentSent() {
     if (!activeCourseData) return;
-
-    // Security: make sure the session is still valid before writing
     const { data: { session } } = await supabaseClient.auth.getSession();
     if (!session) { showToast('Session expired. Please log in again.', 'err'); return; }
 
@@ -1237,7 +1392,7 @@ async function confirmPaymentSent() {
         user_email: currentUserEmail,
         course_title: activeCourseData.title,
         course_price: String(discountedPrice),
-        status: 'Pending'          // ✅ admin must approve server-side
+        status: 'Pending'
     }]);
 
     let tempName = document.getElementById('user-fullname').value || currentUserName;
@@ -1251,7 +1406,9 @@ async function confirmPaymentSent() {
     loadSubscriptions();
 }
 
-/* =========================== MY SUBSCRIPTIONS =========================== */
+/* ============================================================
+   SUBSCRIPTIONS
+   ============================================================ */
 async function loadSubscriptions() {
     const list = document.getElementById('my-subs-list');
     const { data } = await supabaseClient.from('enrollments').select('*').eq('user_email', currentUserEmail).order('created_at', { ascending: false });
@@ -1318,7 +1475,9 @@ async function openInvoiceData(enrollmentId) {
     document.getElementById('invoiceModal').style.display = 'flex';
 }
 
-/* =========================== PROFILE =========================== */
+/* ============================================================
+   PROFILE
+   ============================================================ */
 async function updateProfile() {
     const mobile = (document.getElementById('user-mobile').value || '').trim().slice(0, 20);
     const fullName = (document.getElementById('user-fullname').value || '').trim().slice(0, 80);
@@ -1340,7 +1499,9 @@ async function updateProfile() {
     }
 }
 
-/* =========================== BOOT =========================== */
+/* ============================================================
+   BOOT
+   ============================================================ */
 window.addEventListener('load', checkSession);
 </script>
 </body>
